@@ -44,5 +44,10 @@
     },
     "extra": {
         "contao-manager-plugin": "Markocupic\\SacEventBlogBundle\\ContaoManager\\Plugin"
+    },
+    "config": {
+        "allow-plugins": {
+            "contao-components/installer": true
+        }
     }
 }
