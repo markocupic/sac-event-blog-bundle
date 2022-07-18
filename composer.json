@@ -1,0 +1,49 @@
+{
+    "name": "markocupic/sac-event-blog-bundle",
+    "description": "Manage event blogs in the Contao backend and display them in the frontend of your website.",
+    "keywords": ["SAC", "Swiss Alpine Club", "Contao", "event", "blog"],
+    "type": "contao-bundle",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Marko Cupic",
+            "email": "m.cupic@gmx.ch",
+            "homepage": "https://github.com/markocupic/event-blog-bundle",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/markocupic/sac-event-blog-bundle/issues",
+        "source": "https://github.com/markocupic/sac-event-blog-bundle"
+    },
+    "require": {
+        "php": "^8.0",
+        "contao/core-bundle": "^4.13",
+        "chillerlan/php-qrcode": "^4.3",
+        "codefog/contao-haste": "^4.25",
+        "markocupic/phpoffice-bundle": "^1.2",
+        "markocupic/sac-event-tool-bundle": "*",
+        "markocupic/zip-bundle": "^1.0",
+        "terminal42/contao-fineuploader": "^3.2"
+    },
+    "require-dev": {
+        "contao/manager-plugin": "^2.3.1",
+        "contao/test-case": "^4.5",
+        "phpunit/phpunit": "^9.3",
+        "symfony/http-client": "5.4.*",
+        "symfony/phpunit-bridge": "^5.4",
+        "contao/easy-coding-standard": "^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Markocupic\\SacEventBlogBundle\\": "src/"
+        },
+        "exclude-from-classmap": [
+            "src/Resources"
+        ]
+    },
+    "extra": {
+        "contao-manager-plugin": "Markocupic\\SacEventBlogBundle\\ContaoManager\\Plugin"
+    },
+    "version": "1.0"
+}
