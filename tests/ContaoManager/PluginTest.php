@@ -2,7 +2,7 @@
 
 /*
  * This file is part of SAC Event Blog Bundle.
- * 
+ *
  * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\Tests\ContaoManager;
 
-use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\DelegatingParser;
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\SacEventBlogBundle\ContaoManager\Plugin;
 use Markocupic\SacEventBlogBundle\MarkocupicSacEventBlogBundle;
+use Markocupic\SacEventToolBundle\MarkocupicSacEventToolBundle;
 
 /**
  * Class PluginTest
@@ -48,7 +48,7 @@ class PluginTest extends ContaoTestCase
         $this->assertCount(1, $bundles);
         $this->assertInstanceOf(BundleConfig::class, $bundles[0]);
         $this->assertSame(MarkocupicSacEventBlogBundle::class, $bundles[0]->getName());
-        $this->assertSame([ContaoCoreBundle::class], $bundles[0]->getLoadAfter());
+        $this->assertSame([MarkocupicSacEventToolBundle::class], $bundles[0]->getLoadAfter());
     }
 
 }
