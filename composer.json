@@ -44,6 +44,5 @@
     },
     "extra": {
         "contao-manager-plugin": "Markocupic\\SacEventBlogBundle\\ContaoManager\\Plugin"
-    },
-    "version": "1.0"
+    }
 }
