@@ -48,7 +48,8 @@
     "config": {
         "allow-plugins": {
             "contao-components/installer": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "contao/manager-plugin": true
         }
     }
 }
