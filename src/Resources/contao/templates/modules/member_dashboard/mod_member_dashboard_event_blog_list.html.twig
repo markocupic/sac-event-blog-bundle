@@ -1,0 +1,49 @@
+{% extends '@Contao/block_unsearchable' %}
+
+{% block content %}
+
+    {% if hasInfoMessage is defined and not hasInfoMessage is empty %}
+        <div class="alert alert-info" role="alert">
+            {{ infoMessage }}
+        </div>
+    {% endif %}
+
+    {% if errorMessages is defined and not errorMessages is empty %}
+        {% for msg in errorMessages %}
+            <div class="alert alert-danger" role="alert">
+                {{ msg }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="alert flex-column bg-light">
+        {{ newEventBlogForm|raw }}
+        <p class="small">*Tourenberichte können bis maximal <strong>{{ eventBlogTimeSpanForCreatingNew }} Tage nach Tourende</strong> verfasst werden.</p>
+    </div>
+
+    <table class="table layout-table table-responsive table-striped">
+        {% for blog in arrEventBlogs %}
+            <tr>
+                <td>{{ blog.date }}</td>
+                <td>{{ blog.eventTitle }}</td>
+                {% if blog.canEditBlog and blog.blogLink %}
+                    <td class="text-center">
+                        <a href="{{ blog.blogLink }}" role="button" title="Touren-/Kursbericht bearbeiten" class="btn btn-sm btn-success">
+                            <i class="fal fa-fw fa-pencil"></i>
+                        </a>
+                    </td>
+                {% elseif blog.blogLink %}
+                    <td class="text-center">
+                        <a href="{{ blog.blogLink }}" role="button" title="Touren-/Kursbericht ansehen" class="btn btn-sm btn-success">
+                            <i class="fal fa-fw fa-eye"></i>
+                        </a>
+                    </td>
+                {% else %}
+                    <td>&nbsp;</td>
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+
+{% endblock %}
+
