@@ -7,9 +7,7 @@
 
 ![Listenansicht](docs/images/sac_event_blog_bundle.gif)
 
-Dieses Bundle für das Contao CMS ist eine Erweiterung zum [**SAC Event Tool**]('https://github.com/markocupic/sac-event-tool-bundle') und enthält die Back- und Frontend-Erweiterungen, um SAC Tourenberichte auf der Sektionswebseite zu administrieren und zu veröffentlichen.
- Neben Bild und Text kann auch ein Youtube Film angezeigt werden. [**Demo**](https://www.sac-pilatus.ch/home.html#eventBlogList335)
-
+Dieses Bundle für das Contao CMS ist eine Erweiterung zum [**SAC Event Tool**]('https://github.com/markocupic/sac-event-blog-bundle') und enthält die Back- und Frontend-Erweiterungen, um SAC Tourenberichte auf der Sektionswebseite zu administrieren und zu veröffentlichen. Neben Bild und Text kann auch ein Youtube Film angezeigt werden. [**Demo**](https://www.sac-pilatus.ch/home.html#eventBlogList335)
 
 Mit dieser Erweiterung können folgende **Contao Frontend Module** erstellt werden:
 
@@ -27,12 +25,15 @@ Mit dieser Erweiterung kann folgendes **Backend Modul** erstellt werden:
 |Touren-/Kursberichte Tool | Im Backend lassen sich Tourenberichte freischalten, lektorieren und als zip-Archiv exportieren. |
 
 ## Abhängigkeiten
-Dieses Bundle setzt als Abhängigkeit das [**SAC Event Tool**]('https://github.com/markocupic/sac-event-tool-bundle') voraus.
+
+Dieses Bundle setzt als Abhängigkeit das [**SAC Event Tool**]('https://github.com/markocupic/sac-event-blog-bundle') voraus.
 
 ## Installation
+
 Mit **Contao Manager** oder mit Composer: `composer require markocupic/sac-event-blog-bundle`
 
 ## Konfiguration
+
 ```yaml
 # config/config.yml
 # see src/DependencyInjection/Configuration.php for more options

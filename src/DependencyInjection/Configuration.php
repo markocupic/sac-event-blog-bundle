@@ -27,8 +27,8 @@ class Configuration implements ConfigurationInterface
 
         $treeBuilder->getRootNode()
             ->children()
-                ->scalarNode('asset_dir')->defaultValue('files/sektion/events/tourenberichte')->end()
-                ->scalarNode('docx_export_template')->defaultValue('vendor/markocupic/sac-event-blog-bundle/src/Resources/contao/templates/docx/event_blog.docx')->end()
+            ->scalarNode('asset_dir')->defaultValue('files/sektion/events/tourenberichte')->end()
+            ->scalarNode('docx_export_template')->defaultValue('vendor/markocupic/sac-event-blog-bundle/src/Resources/contao/templates/docx/event_blog.docx')->end()
             ->end()
         ;
 

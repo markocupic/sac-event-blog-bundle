@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 /*
- * This file is part of SAC Event Tool Bundle.
+ * This file is part of SAC Event Blog Bundle.
  *
  * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
- * @link https://github.com/markocupic/sac-event-tool-bundle
+ * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
 namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
@@ -274,11 +274,11 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $template->eventDates = CalendarEventsHelper::getEventPeriod($objEvent, 'd.m.Y', false);
 
         // tour tech. difficulty
-        $template->tourTechDifficulty = null;
-        $arrTourTechDiff = $calendarEventsHelperAdapter->getTourTechDifficultiesAsArray($objEvent);
+        $template->tourTechDifficulty = $this->blog->tourTechDifficulty ?? null;
 
-        if (!empty($arrTourTechDiff)) {
-            $template->tourTechDifficulty = implode(', ', $arrTourTechDiff);
+        if (empty($template->tourTechDifficulty) && !empty($objEvent->tourTechDifficulty)) {
+            $arrTourTechDiff = $calendarEventsHelperAdapter->getTourTechDifficultiesAsArray($objEvent);
+            $template->tourTechDifficulty = !empty($arrTourTechDiff) ? implode(', ', $arrTourTechDiff) : null;
         }
 
         // event organizers

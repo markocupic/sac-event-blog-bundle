@@ -756,8 +756,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         // Generate frontend preview link
         $previewLink = '';
 
-        if ($objModule->eventBlogJumpTo > 0) {
-            $objTarget = $pageModelAdapter->findByPk($objModule->eventBlogJumpTo);
+        if ($objModule->eventBlogReaderPage > 0) {
+            $objTarget = $pageModelAdapter->findByPk($objModule->eventBlogReaderPage);
 
             if (null !== $objTarget) {
                 $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl($configAdapter->get('useAutoItem') ? '/%s' : '/items/%s'));

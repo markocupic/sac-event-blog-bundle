@@ -21,7 +21,7 @@ use Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEvent
 $GLOBALS['TL_DCA']['tl_module']['palettes'][EventBlogListController::TYPE] = '{title_legend},name,headline,type;{config_legend},eventBlogOrganizers,jumpTo,numberOfItems,skipFirst,perPage;{template_legend:hide},eventBlogListTemplate;{image_legend:hide},imgSize;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 $GLOBALS['TL_DCA']['tl_module']['palettes'][EventBlogReaderController::TYPE] = '{title_legend},name,headline,type;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 $GLOBALS['TL_DCA']['tl_module']['palettes'][MemberDashboardEventBlogListController::TYPE] = '{title_legend},name,headline,type;{events_blog_legend},eventBlogTimeSpanForCreatingNew,eventBlogFormJumpTo;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
-$GLOBALS['TL_DCA']['tl_module']['palettes'][MemberDashboardEventBlogWriteController::TYPE] = '{title_legend},name,headline,type;{events_blog_legend},eventBlogMaxImageWidth,eventBlogMaxImageHeight,eventBlogTimeSpanForCreatingNew,eventBlogOnPublishNotification;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
+$GLOBALS['TL_DCA']['tl_module']['palettes'][MemberDashboardEventBlogWriteController::TYPE] = '{title_legend},name,headline,type;{events_blog_legend},eventBlogReaderPage,eventBlogMaxImageWidth,eventBlogMaxImageHeight,eventBlogTimeSpanForCreatingNew,eventBlogOnPublishNotification;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 
 // Add fields to tl_module
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogOnPublishNotification'] = [
@@ -43,7 +43,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogFormJumpTo'] = [
     'relation'   => ['type' => 'hasOne', 'load' => 'eager'],
 ];
 
-$GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogJumpTo'] = [
+$GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogReaderPage'] = [
     'exclude'    => true,
     'inputType'  => 'pageTree',
     'foreignKey' => 'tl_page.title',
