@@ -115,7 +115,7 @@ class CalendarEventsBlog
         $limit = time() - 60 * 60 * 24 * 14;
 
         $this->connection->executeStatement(
-            'DELETE FROM tl_calendar_events_blog WHERE tstamp < ? AND text = ? AND youtubeId = ? AND multiSRC = ?',
+            'DELETE FROM tl_calendar_events_blog WHERE tstamp < ? AND text = ? AND youTubeId = ? AND multiSRC = ?',
             [$limit, '', '', null]
         );
 

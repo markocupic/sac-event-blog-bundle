@@ -18,6 +18,7 @@ use Contao\Config;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\Environment;
 use Contao\FilesModel;
@@ -42,51 +43,54 @@ class EventBlogListController extends AbstractFrontendModuleController
     public const TYPE = 'event_blog_list';
 
     private ContaoFramework $framework;
+    private ScopeMatcher $scopeMatcher;
     private string $projectDir;
     private Collection|null $blogs;
     private PageModel|null $page;
 
-    public function __construct(ContaoFramework $framework, string $projectDir)
+    public function __construct(ContaoFramework $framework, ScopeMatcher $scopeMatcher, string $projectDir)
     {
         $this->framework = $framework;
+        $this->scopeMatcher = $scopeMatcher;
         $this->projectDir = $projectDir;
     }
 
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
-        // Adapters
-        $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+        if ($this->scopeMatcher->isFrontendRequest($request)) {
+            // Adapters
+            $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
+            $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
-        $this->page = $page;
+            $this->page = $page;
 
-        $arrIds = [];
-        $arrOptions = ['order' => 'dateAdded DESC'];
+            $arrIds = [];
+            $arrOptions = ['order' => 'dateAdded DESC'];
 
-        // Find all published blogs
-        $objBlogs = $calendarEventsBlogModelAdapter->findBy(
-            ['tl_calendar_events_blog.publishState = ?'],
-            [PublishState::PUBLISHED],
-            $arrOptions
-        );
+            // Find all published blogs
+            $objBlogs = $calendarEventsBlogModelAdapter->findBy(
+                ['tl_calendar_events_blog.publishState = ?'],
+                [PublishState::PUBLISHED],
+                $arrOptions
+            );
 
-        if (null !== $objBlogs) {
-            while ($objBlogs->next()) {
-                $arrOrganizers = $stringUtilAdapter->deserialize($objBlogs->organizers, true);
+            if (null !== $objBlogs) {
+                while ($objBlogs->next()) {
+                    $arrOrganizers = $stringUtilAdapter->deserialize($objBlogs->organizers, true);
 
-                if (\count(array_intersect($arrOrganizers, $stringUtilAdapter->deserialize($model->eventBlogOrganizers, true))) > 0) {
-                    $arrIds[] = $objBlogs->id;
+                    if (\count(array_intersect($arrOrganizers, $stringUtilAdapter->deserialize($model->eventBlogOrganizers, true))) > 0) {
+                        $arrIds[] = $objBlogs->id;
+                    }
                 }
+            }
+
+            $this->blogs = $calendarEventsBlogModelAdapter->findMultipleByIds($arrIds, $arrOptions);
+
+            if (null === $this->blogs) {
+                return new Response('', Response::HTTP_NO_CONTENT);
             }
         }
 
-        $this->blogs = $calendarEventsBlogModelAdapter->findMultipleByIds($arrIds, $arrOptions);
-
-        if (null === $this->blogs) {
-            return new Response('', Response::HTTP_NO_CONTENT);
-        }
-
-        // Call the parent method
         return parent::__invoke($request, $model, $section, $classes);
     }
 

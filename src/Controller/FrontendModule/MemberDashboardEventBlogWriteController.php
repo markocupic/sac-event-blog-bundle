@@ -21,6 +21,7 @@ use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
+use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\Dbafs;
 use Contao\Environment;
@@ -60,6 +61,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     public const TYPE = 'member_dashboard_write_event_blog';
     private ContaoFramework $framework;
     private Connection $connection;
+    private ScopeMatcher $scopeMatcher;
     private RequestStack $requestStack;
     private TranslatorInterface $translator;
     private Security $security;
@@ -70,10 +72,11 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     private FrontendUser|null $user;
     private PageModel|null $page;
 
-    public function __construct(ContaoFramework $framework, Connection $connection, RequestStack $requestStack, TranslatorInterface $translator, Security $security, string $projectDir, string $eventBlogAssetDir, string $locale)
+    public function __construct(ContaoFramework $framework, Connection $connection, ScopeMatcher $scopeMatcher, RequestStack $requestStack, TranslatorInterface $translator, Security $security, string $projectDir, string $eventBlogAssetDir, string $locale)
     {
         $this->framework = $framework;
         $this->connection = $connection;
+        $this->scopeMatcher = $scopeMatcher;
         $this->requestStack = $requestStack;
         $this->translator = $translator;
         $this->security = $security;
@@ -89,17 +92,18 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
-        if (null !== $page) {
-            // Neither cache nor search page
-            $page->noSearch = 1;
-            $page->cache = 0;
-            $page->clientCache = 0;
+        if ($this->scopeMatcher->isFrontendRequest($request)) {
+            if (null !== $page) {
+                // Neither cache nor search page
+                $page->noSearch = 1;
+                $page->cache = 0;
+                $page->clientCache = 0;
 
-            // Set the page object
-            $this->page = $page;
+                // Set the page object
+                $this->page = $page;
+            }
         }
 
-        // Call the parent method
         return parent::__invoke($request, $model, $section, $classes);
     }
 
@@ -214,7 +218,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 $template->eventName = $objEvent->title;
                 $template->executionState = $objEvent->executionState;
                 $template->eventSubstitutionText = $objEvent->eventSubstitutionText;
-                $template->youtubeId = $objReportModel->youtubeId;
+                $template->youTubeId = $objReportModel->youTubeId;
                 $template->text = $objReportModel->text;
                 $template->title = $objReportModel->title;
                 $template->publishState = (int) $objReportModel->publishState;
@@ -354,7 +358,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $inputAdapter = $this->framework->getAdapter(Input::class);
 
         $objForm = new Form(
-            'form-event-blog-text-and-youtube',
+            'form-event-blog-text-and-youTube',
             'POST',
             function ($objHaste) {
                 /** @var Input $inputAdapter */
@@ -369,7 +373,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
         // Title
         $objForm->addFormField('title', [
-            'label' => 'Tourname/Tourtitel',
+            'label' => $this->translator->trans('FORM.md_write_event_blog_title', [], 'contao_default'),
             'inputType' => 'text',
             'eval' => ['mandatory' => true, 'decodeEntities' => true],
             'value' => $this->getTourTitle($objEventBlogModel),
@@ -378,7 +382,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         // text
         $maxlength = 1700;
         $objForm->addFormField('text', [
-            'label' => 'Touren-/Lager-/Kursbericht (max. '.$maxlength.' Zeichen, inkl. Leerzeichen)',
+            'label' => $this->translator->trans('FORM.md_write_event_blog_text', [$maxlength], 'contao_default'),
             'inputType' => 'textarea',
             'eval' => ['mandatory' => true, 'maxlength' => $maxlength, 'rows' => 8, 'decodeEntities' => true],
             'value' => (string) $objEventBlogModel->text,
@@ -390,7 +394,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm->addFormField(
             'tourWaypoints',
             [
-                'label' => 'Tourenstationen mit Höhenangaben (nur stichwortartig)',
+                'label' => $this->translator->trans('FORM.md_write_event_blog_tourWaypoints', [], 'contao_default'),
                 'inputType' => 'textarea',
                 'eval' => $eval,
                 'value' => $this->getTourWaypoints($objEventBlogModel),
@@ -403,7 +407,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm->addFormField(
             'tourProfile',
             [
-                'label' => 'Höhenmeter und Zeitangabe pro Tag',
+                'label' => $this->translator->trans('FORM.md_write_event_blog_tourProfile', [], 'contao_default'),
                 'inputType' => 'textarea',
                 'eval' => $eval,
                 'value' => $this->getTourProfile($objEventBlogModel),
@@ -414,7 +418,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $eval = ['mandatory' => true, 'rows' => 2, 'decodeEntities' => true];
 
         $objForm->addFormField('tourTechDifficulty', [
-            'label' => 'Technische Schwierigkeiten',
+            'label' => $this->translator->trans('FORM.md_write_event_blog_tourTechDifficulty', [], 'contao_default'),
             'inputType' => 'textarea',
             'eval' => $eval,
             'value' => $this->getTourTechDifficulties($objEventBlogModel),
@@ -424,7 +428,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $eval = ['mandatory' => true, 'class' => 'publish-clubmagazine-field', 'rows' => 2, 'decodeEntities' => true];
 
         $objForm->addFormField('tourHighlights', [
-            'label' => 'Highlights/Bemerkungen (max. 3 Sätze)',
+            'label' => $this->translator->trans('FORM.md_write_event_blog_tourHighlights', [], 'contao_default'),
             'inputType' => 'textarea',
             'eval' => $eval,
             'value' => (string) $objEventBlogModel->tourHighlights,
@@ -434,26 +438,26 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $eval = ['mandatory' => false, 'class' => 'publish-clubmagazine-field', 'rows' => 2, 'decodeEntities' => true];
 
         $objForm->addFormField('tourPublicTransportInfo', [
-            'label' => 'Mögliche ÖV-Verbindung',
+            'label' => $this->translator->trans('FORM.md_write_event_blog_tourPublicTransportInfo', [], 'contao_default'),
             'inputType' => 'textarea',
             'eval' => $eval,
             'value' => (string) $objEventBlogModel->tourPublicTransportInfo,
         ]);
 
-        // youtube id
+        // youTube id
         $objForm->addFormField(
-            'youtubeId',
+            'youTubeId',
             [
-                'label' => 'Youtube Film-Id',
+                'label' => $this->translator->trans('FORM.md_write_event_blog_youTubeId', [], 'contao_default'),
                 'inputType' => 'text',
                 'eval' => ['placeholder' => 'z.B. G02hYgT3nGw'],
-                'value' => (string) $objEventBlogModel->youtubeId,
+                'value' => (string) $objEventBlogModel->youTubeId,
             ]
         );
 
         // Let's add  a submit button
         $objForm->addFormField('submitEventReportTextFormBtn', [
-            'label' => 'Änderungen speichern',
+            'label' => $this->translator->trans('FORM.md_write_event_blog_submit', [], 'contao_default'),
             'inputType' => 'submit',
         ]);
 
@@ -465,7 +469,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             $objEventBlogModel->dateAdded = time();
             $objEventBlogModel->title = html_entity_decode((string) $objForm->getWidget('title')->value);
             $objEventBlogModel->text = html_entity_decode((string) $objForm->getWidget('text')->value);
-            $objEventBlogModel->youtubeId = $objForm->getWidget('youtubeId')->value;
+            $objEventBlogModel->youTubeId = $objForm->getWidget('youTubeId')->value;
             $objEventBlogModel->tourWaypoints = html_entity_decode((string) $objForm->getWidget('tourWaypoints')->value);
             $objEventBlogModel->tourProfile = html_entity_decode((string) $objForm->getWidget('tourProfile')->value);
             $objEventBlogModel->tourTechDifficulty = html_entity_decode((string) $objForm->getWidget('tourTechDifficulty')->value);
@@ -632,7 +636,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
         // Add some fields
         $objForm->addFormField('fileupload', [
-            'label' => 'Bildupload',
+            'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
             'inputType' => 'fineUploader',
             'eval' => [
                 'extensions' => 'jpg,jpeg',
@@ -649,7 +653,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
         // Let's add  a submit button
         $objForm->addFormField('submitImageUploadFormBtn', [
-            'label' => 'Bildupload starten',
+            'label' => $this->translator->trans('FORM.md_write_event_blog_startImageUpload', [], 'contao_default'),
             'inputType' => 'submit',
         ]);
 

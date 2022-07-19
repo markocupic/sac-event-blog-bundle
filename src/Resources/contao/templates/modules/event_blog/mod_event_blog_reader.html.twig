@@ -1,7 +1,10 @@
 <div class="{{ class }} block" {{ cssID }}{% if style is defined %} style="{{ style }}"{% endif %}>
 
     {% if headline %}
-        <h1 class="ce_headline mb-2">{{ headline }}</h1>
+        <h1 class="ce_headline mt-0 mb-0">{{ blog.title }}</h1>
+        {% if blog.title != event.title %}
+            <h3 class="mt-1">{{ event.title }}</h3>
+        {% endif %}
         <date class="d-block mb-3">vom: {{ eventDates }}</date>
     {% endif %}
 
@@ -40,10 +43,10 @@
                 </div>
             {% endif %}
 
-            {% if youtubeId is defined and not youtubeId is empty %}
+            {% if youTubeId is defined and not youTubeId is empty %}
                 <br>
                 <div class="ratio ratio-16x9">
-                    <iframe src="//www.youtube.com/embed/{{ youtubeId }}?rel=0" allowfullscreen=""></iframe>
+                    <iframe src="//www.youtube.com/embed/{{ youTubeId }}?rel=0" allowfullscreen=""></iframe>
                 </div>
             {% endif %}
         </div>

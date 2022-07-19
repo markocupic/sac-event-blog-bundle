@@ -21,6 +21,7 @@ use Contao\Config;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\CoreBundle\Util\SymlinkUtil;
 use Contao\Environment;
@@ -50,15 +51,17 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     public const TYPE = 'event_blog_reader';
 
     private ContaoFramework $framework;
+    private ScopeMatcher $scopeMatcher;
     private RequestStack $requestStack;
     private string $projectDir;
     private string $locale;
     private CalendarEventsBlogModel|null $blog = null;
     private bool $isPreviewMode = false;
 
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, string $projectDir, string $locale)
+    public function __construct(ContaoFramework $framework, ScopeMatcher $scopeMatcher, RequestStack $requestStack, string $projectDir, string $locale)
     {
         $this->framework = $framework;
+        $this->scopeMatcher = $scopeMatcher;
         $this->requestStack = $requestStack;
         $this->projectDir = $projectDir;
         $this->locale = $locale;
@@ -66,41 +69,42 @@ class EventBlogReaderController extends AbstractFrontendModuleController
 
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
-        // Adapters
-        $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
-        $configAdapter = $this->framework->getAdapter(Config::class);
-        $environmentAdapter = $this->framework->getAdapter(Environment::class);
-        $inputAdapter = $this->framework->getAdapter(Input::class);
+        if ($this->scopeMatcher->isFrontendRequest($request)) {
+            // Adapters
+            $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
+            $configAdapter = $this->framework->getAdapter(Config::class);
+            $environmentAdapter = $this->framework->getAdapter(Environment::class);
+            $inputAdapter = $this->framework->getAdapter(Input::class);
 
-        // Set the item from the auto_item parameter
-        if (!isset($_GET['items']) && $configAdapter->get('useAutoItem') && isset($_GET['auto_item'])) {
-            $inputAdapter->setGet('items', $inputAdapter->get('auto_item'));
+            // Set the item from the auto_item parameter
+            if (!isset($_GET['items']) && $configAdapter->get('useAutoItem') && isset($_GET['auto_item'])) {
+                $inputAdapter->setGet('items', $inputAdapter->get('auto_item'));
+            }
+
+            // Do not index or cache the page if no event has been specified
+            if ($page && empty($inputAdapter->get('items'))) {
+                $page->noSearch = 1;
+                $page->cache = 0;
+
+                return new Response('', Response::HTTP_NO_CONTENT);
+            }
+
+            if (!empty($inputAdapter->get('securityToken'))) {
+                $arrColumns = ['tl_calendar_events_blog.securityToken = ?', 'tl_calendar_events_blog.id = ?'];
+                $arrValues = [$inputAdapter->get('securityToken'), $inputAdapter->get('items')];
+                $this->isPreviewMode = true;
+            } else {
+                $arrColumns = ['tl_calendar_events_blog.publishState = ?', 'tl_calendar_events_blog.id = ?'];
+                $arrValues = [PublishState::PUBLISHED, $inputAdapter->get('items')];
+            }
+
+            $this->blog = $calendarEventsBlogModelAdapter->findOneBy($arrColumns, $arrValues);
+
+            if (null === $this->blog) {
+                throw new PageNotFoundException('Page not found: '.$environmentAdapter->get('uri'));
+            }
         }
 
-        // Do not index or cache the page if no event has been specified
-        if ($page && empty($inputAdapter->get('items'))) {
-            $page->noSearch = 1;
-            $page->cache = 0;
-
-            return new Response('', Response::HTTP_NO_CONTENT);
-        }
-
-        if (!empty($inputAdapter->get('securityToken'))) {
-            $arrColumns = ['tl_calendar_events_blog.securityToken = ?', 'tl_calendar_events_blog.id = ?'];
-            $arrValues = [$inputAdapter->get('securityToken'), $inputAdapter->get('items')];
-            $this->isPreviewMode = true;
-        } else {
-            $arrColumns = ['tl_calendar_events_blog.publishState = ?', 'tl_calendar_events_blog.id = ?'];
-            $arrValues = [PublishState::PUBLISHED, $inputAdapter->get('items')];
-        }
-
-        $this->blog = $calendarEventsBlogModelAdapter->findOneBy($arrColumns, $arrValues);
-
-        if (null === $this->blog) {
-            throw new PageNotFoundException('Page not found: '.$environmentAdapter->get('uri'));
-        }
-
-        // Call the parent method
         return parent::__invoke($request, $model, $section, $classes);
     }
 
@@ -136,7 +140,8 @@ class EventBlogReaderController extends AbstractFrontendModuleController
 
         // !!! $objEvent can be NULL, if the related event no more exists
         $objEvent = $calendarEventsModelAdapter->findByPk($this->blog->eventId);
-        $template->objEvent = $objEvent;
+        $template->event = $objEvent->row();
+        $template->blog = $this->blog->row();
 
         // Add qr code, if it is not preview mode
         $request = $this->requestStack->getCurrentRequest();
@@ -253,7 +258,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $template->images = \count($images) ? $images : null;
 
         // Add YouTube movie
-        $template->youtubeId = '' !== $this->blog->youtubeId ? $this->blog->youtubeId : null;
+        $template->youTubeId = '' !== $this->blog->youTubeId ? $this->blog->youTubeId : null;
 
         // tour guides
         $template->tourInstructors = null;

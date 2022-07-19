@@ -24,6 +24,7 @@ services:
     Markocupic\SacEventBlogBundle\Controller\FrontendModule\EventBlogListController:
         arguments:
             - '@contao.framework'
+            - '@contao.routing.scope_matcher'
             - '%kernel.project_dir%'
         public: true
 
@@ -31,18 +32,19 @@ services:
     Markocupic\SacEventBlogBundle\Controller\FrontendModule\EventBlogReaderController:
         arguments:
             - '@contao.framework'
+            - '@contao.routing.scope_matcher'
             - '@request_stack'
             - '%kernel.project_dir%'
             - '%sacevt.locale%'
-        tags:
-            - { name: contao.frontend_module, category: sac_event_tool_frontend_modules }
         public: true
 
     # Member dashboard module: list event reports and the form to generate new event reports
     Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogListController:
         arguments:
             - '@contao.framework'
+            - '@contao.routing.scope_matcher'
             - '@security.helper'
+            - '@translator'
         public: true
 
     # Member dashboard module: display the forms for writing new event reports
@@ -50,16 +52,13 @@ services:
         arguments:
             - '@contao.framework'
             - '@database_connection'
+            - '@contao.routing.scope_matcher'
             - '@request_stack'
             - '@translator'
             - '@security.helper'
             - '%kernel.project_dir%'
             - '%sac_event_blog.asset_dir%'
             - '%sacevt.locale%'
-        calls:
-            - [ 'setContainer', [ '@Psr\Container\ContainerInterface' ] ]
-        tags:
-            - { name: contao.frontend_module, category: sac_event_tool_frontend_modules }
         public: true
 
 
@@ -75,8 +74,6 @@ services:
             - '%kernel.project_dir%'
             - '%contao.csrf_token_name%'
             - '%sacevt.locale%'
-        calls:
-            - [ 'setContainer', [ '@Psr\Container\ContainerInterface' ] ]
         public: true
 
     # Contao Backend Module "Maintenance": Delete no more used event blog media directories

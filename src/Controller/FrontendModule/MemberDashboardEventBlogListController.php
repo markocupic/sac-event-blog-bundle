@@ -20,6 +20,7 @@ use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\Database;
 use Contao\Date;
@@ -39,6 +40,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * @FrontendModule(MemberDashboardEventBlogListController::TYPE, category="sac_event_tool_frontend_modules")
@@ -48,13 +50,17 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
     public const TYPE = 'member_dashboard_event_blog_list';
 
     private ContaoFramework $framework;
+    private ScopeMatcher $scopeMatcher;
     private Security $security;
+    private TranslatorInterface $translator;
     protected FrontendUser|null $user;
 
-    public function __construct(ContaoFramework $framework, Security $security)
+    public function __construct(ContaoFramework $framework, ScopeMatcher $scopeMatcher, Security $security, TranslatorInterface $translator)
     {
         $this->framework = $framework;
+        $this->scopeMatcher = $scopeMatcher;
         $this->security = $security;
+        $this->translator = $translator;
 
         // Get logged in member
         if (($user = $this->security->getUser()) instanceof FrontendUser) {
@@ -64,13 +70,14 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
 
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
-        if (null !== $page) {
-            // Neither cache nor search page
-            $page->noSearch = 1;
-            $page->cache = 0;
+        if ($this->scopeMatcher->isFrontendRequest($request)) {
+            if (null !== $page) {
+                // Neither cache nor search page
+                $page->noSearch = 1;
+                $page->cache = 0;
+            }
         }
 
-        // Call the parent method
         return parent::__invoke($request, $model, $section, $classes);
     }
 
@@ -87,7 +94,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
 
         // Handle messages
         if (empty($this->user->email) || !$validatorAdapter->isEmail($this->user->email)) {
-            $messageAdapter->addInfo('Leider wurde für dieses Konto in der Datenbank keine E-Mail-Adresse gefunden. Daher stehen einige Funktionen nur eingeschränkt zur Verfügung. Bitte hinterlegen Sie auf der Internetseite des Zentralverbands Ihre E-Mail-Adresse.');
+            $messageAdapter->addInfo($this->translator->trans('md_write_event_blog_emailAddressNotFound', [], 'contao_default'));
         }
 
         // Get the time span for creating a new event blog

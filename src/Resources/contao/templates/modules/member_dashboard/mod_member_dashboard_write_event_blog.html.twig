@@ -128,12 +128,12 @@
         {# Gallery #}
         {% include('@Contao_MarkocupicSacEventBlogBundle/write_event_blog_gallery_partial.html.twig') %}
 
-        {% if youtubeId is defined and not youtubeId is empty %}
+        {% if youTubeId is defined and not youTubeId is empty %}
             <br>
             <hr>
             <br>
             <div class="ratio ratio-16x9">
-                <iframe src="//www.youtube.com/embed/{{ youtubeId }}?rel=0" allowfullscreen=""></iframe>
+                <iframe src="//www.youtube.com/embed/{{ youTubeId }}?rel=0" allowfullscreen=""></iframe>
             </div>
         {% endif %}
 
