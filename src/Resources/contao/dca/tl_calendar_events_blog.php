@@ -80,7 +80,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
         'default' => '
 		{publishState_legend},publishState,checkedByInstructor;
 		{author_legend},dateAdded,sacMemberId,authorName;
-		{event_legend},eventId,title,eventTitle,eventSubstitutionText,organizers,tourWaypoints,tourProfile,tourTechDifficulty,text,tourHighlights,tourPublicTransportInfo,youtubeId,multiSRC',
+		{event_legend},eventId,title,eventTitle,eventSubstitutionText,organizers,tourWaypoints,tourProfile,tourTechDifficulty,text,tourHighlights,tourPublicTransportInfo,youTubeId,multiSRC',
     ],
     'fields'   => [
         'id'                      => [
@@ -162,7 +162,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'eval'      => ['doNotCopy' => true, 'max-length' => 1700, 'mandatory' => true, 'tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
-        'youtubeId'               => [
+        'youTubeId'               => [
             'filter'    => true,
             'sort'      => true,
             'search'    => true,
