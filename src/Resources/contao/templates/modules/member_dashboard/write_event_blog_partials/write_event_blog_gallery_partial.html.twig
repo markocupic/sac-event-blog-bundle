@@ -1,0 +1,179 @@
+{% if images is defined and not images is empty %}
+    <br>
+    <hr>
+
+    {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+        <p><i class="fas fa-info-circle"></i> Bildreihenfolge kann durch Drag-and-drop verändert werden.</p>
+    {% endif %}
+
+    <div id="dashboardEventBlogGallery" class="{% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}sortable-thumbnail-container {% endif %} dashboard-event-blog-gallery row gx-2 gy-1">
+        {% for arrFile in images %}
+            {% set counter = ( counter | default(-1) ) + 1 %}
+
+            <div class="col-12 col-sm-6 col-lg-3 thumbnail {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}sortable-item {% endif %}responsive" data-item="{{ counter }}" data-path="{{ arrFile.path }}" data-file-id="{{ arrFile.id }}" data-file-uuid="{{ binToUuid.invoke(arrFile.uuid) }}" title="Sortierung mit Drag and Drop ändern">
+                {{ '{{image::' ~ binToUuid.invoke(arrFile.uuid) ~ '?width=400&height=400&mode=crop}}' }}
+
+                <div class="d-none">{{ arrFile.caption }}</div>
+                {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+                    <div class="dashboard-event-blog-thumb-buttons-container d-flex">
+                        {% if arrFile.caption is empty or arrFile.photographer is empty %}
+                            <button class="btn blinking missing-caption-or-photographer-name add-caption" title="Fehlende Bildlegende oder Name des Fotografen fehlt"><i class="fal fa-exclamation-circle"></i></button>
+                        {% endif %}
+                        <button class="btn btn-danger rotate-image" title="Bild im GUZ 90° drehen"><i class="fal fa-history"></i></button>
+                        <button class="btn btn-danger remove-image" title="Bild löschen"><i class="fal fa-trash"></i></button>
+                        <button class="btn btn-danger add-caption" title="Bildunterschrift und Fotografen-Name hinzufügen"><i class="fal fa-pencil"></i></button>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+    <!-- End gallery -->
+
+
+    {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+        <script>
+            (function ($) {
+                jQuery(document).ready(function () {
+
+                    // Open modal for caption edit
+                    $('button.add-caption').click(function () {
+                        let path = $(this).closest('.thumbnail').attr('data-path');
+                        let item = $(this).closest('.thumbnail').attr('data-item');
+                        let fileUuid = $(this).closest('.thumbnail').attr('data-file-uuid');
+                        let modal = $('.modal.write-event-blog-image-caption').first();
+                        $(modal).find('.image-full-res').attr('src', path);
+                        $(modal).attr('data-item', item);
+
+                        // Get caption text by xhr request
+                        $.post('ajaxMemberDashboardWriteEventBlog/getCaption', {
+                            'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                            'fileUuid': fileUuid
+                        }).done(function (json) {
+                            if (json.status !== 'success') {
+                                console.log(json);
+                            } else {
+                                $(modal).modal('toggle');
+                                $(modal).find('#imageCaptionInput').val(json.caption);
+                                $(modal).find('#imagePhotographerInput').val(json.photographer);
+                            }
+                        }).always(function () {
+                            //window.location.reload();
+                        });
+                    });
+
+
+                    // Save caption to the server
+                    $('.modal.write-event-blog-image-caption button#saveCaptionButton').click(function () {
+                        $('.write-event-blog-image-caption').modal('hide');
+                        let caption = $('.modal.write-event-blog-image-caption #imageCaptionInput').val();
+                        let photographer = $('.modal.write-event-blog-image-caption #imagePhotographerInput').val();
+                        let modal = $(this).closest('.modal');
+                        let item = $(modal).attr('data-item');
+                        let thumbnail = $('#dashboardEventBlogGallery').find('.thumbnail[data-item="' + item + '"]');
+                        thumbnail.attr('data-caption', caption);
+                        let fileUuid = $(thumbnail).attr('data-file-uuid');
+                        $(modal).modal('hide');
+
+                        $.post('ajaxMemberDashboardWriteEventBlog/setCaption', {
+                            'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                            'fileUuid': fileUuid,
+                            'caption': caption,
+                            'photographer': photographer
+                        }).done(function (json) {
+                            if (json.status !== 'success') {
+                                console.log(json);
+                            }
+                        }).always(function () {
+                            window.location.reload();
+                        });
+                    });
+                });
+            })(jQuery);
+        </script>
+    {% endif %}
+
+
+    {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+
+        <script>
+            /**
+             * Remove image from collection
+             */
+            (function ($) {
+                $(document).ready(function () {
+                    "use strict";
+                    $('.remove-image').on('click touchmove', function (e) {
+                        e.preventDefault();
+                        let elImage = $(this).closest('[data-file-uuid]');
+                        if (elImage.length) {
+                            let uuid = $(elImage).data('file-uuid');
+                            if (typeof uuid !== 'undefined') {
+                                $.post('ajaxMemberDashboardWriteEventBlog/removeImage', {
+                                    'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                                    'eventId': '{{ eventId }}',
+                                    'uuid': uuid
+                                }).done(function (json) {
+                                    if (json.status !== 'success') {
+                                        console.log(json);
+                                    }
+                                    elImage.fadeOut(400, function () {
+                                        $(this).remove();
+                                    });
+                                });
+                            }
+                        }
+                    });
+
+                    // Rotate image
+                    $('.rotate-image').on('click touchmove', function (e) {
+                        e.preventDefault();
+                        let elImage = $(this).closest('[data-file-id]');
+                        if (elImage.length) {
+                            let fileId = $(elImage).data('file-id');
+                            if (typeof fileId !== 'undefined') {
+                                $.post('ajaxMemberDashboardWriteEventBlog/rotateImage', {
+                                    'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                                    'fileId': fileId
+                                }).done(function (json) {
+                                    if (json.status !== 'success') {
+                                        console.log(json);
+                                    } else {
+                                        window.location = document.URL;
+                                    }
+                                });
+                            }
+                        }
+                    });
+
+                    /**
+                     * Image drag and drop sorting
+                     * @type {Element|*}
+                     */
+                    let container = document.getElementById("dashboardEventBlogGallery");
+                    Sortable.create(container, {
+                        animation: 50, // ms, animation speed moving items when sorting, `0` — without animation
+                        //handle: ".sortable-item", // Restricts sort start click/touch to the specified element
+                        draggable: ".sortable-item", // Specifies which items inside the element should be sortable
+                        onUpdate: function (event) {
+                            let item = event.item; // the current dragged HTMLElement
+                            let arrUuid = [];
+                            let collection = $(item).closest('.sortable-thumbnail-container').find('.sortable-item');
+                            $(collection).each(function () {
+                                arrUuid.push($(this).data('fileUuid'));
+                            });
+                            $.post('ajaxMemberDashboardWriteEventBlog/sortGallery', {
+                                'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                                'eventId': '{{ eventId }}',
+                                'uuids': JSON.stringify(arrUuid)
+                            }).done(function (json) {
+                                if (json.status !== 'success') {
+                                    console.log(json);
+                                }
+                            });
+                        }
+                    });
+                });
+            })(jQuery);
+        </script>
+    {% endif %}
+{% endif %}

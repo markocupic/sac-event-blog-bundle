@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 /*
- * This file is part of SAC Event Tool Bundle.
+ * This file is part of SAC Event Blog Bundle.
  *
  * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
- * @link https://github.com/markocupic/sac-event-tool-bundle
+ * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
 namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
@@ -40,6 +40,7 @@ use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Haste\Form\Form;
 use Haste\Util\Url;
+use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
 use Markocupic\SacEventToolBundle\Config\EventExecutionState;
@@ -84,13 +85,10 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         if (($user = $this->security->getUser()) instanceof FrontendUser) {
             $this->user = $user;
         }
-
     }
 
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
-
-
         if (null !== $page) {
             // Neither cache nor search page
             $page->noSearch = 1;
@@ -103,11 +101,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
         // Call the parent method
         return parent::__invoke($request, $model, $section, $classes);
-    }
-
-    public static function getSubscribedServices(): array
-    {
-        return parent::getSubscribedServices();
     }
 
     /**
@@ -198,14 +191,14 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                         'dateAdded' => time(),
                     ];
 
-                    $affected = $this->connection->insert('tl_calendar_events_blog',$set);
+                    $affected = $this->connection->insert('tl_calendar_events_blog', $set);
 
                     // Set security token for frontend preview
                     if ($affected) {
                         $insertId = $this->connection->lastInsertId();
                         $set = [
                             'securityToken' => md5((string) random_int(100000000, 999999999)).$insertId,
-                            ];
+                        ];
 
                         $this->connection->update('tl_calendar_events_blog', $set, ['id' => $insertId]);
 
@@ -216,14 +209,15 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 if (!isset($objReportModel)) {
                     throw new \Exception('Event report model not found.');
                 }
-
+                $template->event = $objEvent->row;
+                $template->eventId = $objEvent->id;
                 $template->eventName = $objEvent->title;
                 $template->executionState = $objEvent->executionState;
                 $template->eventSubstitutionText = $objEvent->eventSubstitutionText;
                 $template->youtubeId = $objReportModel->youtubeId;
                 $template->text = $objReportModel->text;
                 $template->title = $objReportModel->title;
-                $template->publishState = $objReportModel->publishState;
+                $template->publishState = (int) $objReportModel->publishState;
                 $template->eventPeriod = $calendarEventsHelperAdapter->getEventPeriod($objEvent);
 
                 // Get the gallery
@@ -255,11 +249,14 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
                 // Get the preview link
                 $template->previewLink = $this->getPreviewLink($objReportModel, $model);
+
+                // Twig callable
+                $template->binToUuid = static fn (string $uuid): string => StringUtil::binToUuid($uuid);
             }
         }
 
         // Check if all images are labeled with a legend and a photographer name
-        if (isset($objReportModel) && $objReportModel->publishState < 2) {
+        if (isset($objReportModel) && PublishState::STILL_IN_PROGRESS === (int) $objReportModel->publishState) {
             if (!$this->validateImageUploads($objReportModel)) {
                 $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_blog_missingImageLegend', [], 'contao_default'));
             }
@@ -271,66 +268,85 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         return $template->getResponse();
     }
 
-    protected function validateImageUploads(CalendarEventsBlogModel $objReportModel): bool
+    /**
+     * @throws \Exception
+     */
+    private function getGalleryImages(CalendarEventsBlogModel $objBlog): array
     {
+        // Set adapters
+        /** @var Validator $validatorAdapter */
+        $validatorAdapter = $this->framework->getAdapter(Validator::class);
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
         /** @var FilesModel $filesModelAdapter */
         $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
 
-        // Check for a valid photographer name an exiting image legends
-        if (!empty($objReportModel->multiSRC) && !empty($stringUtilAdapter->deserialize($objReportModel->multiSRC, true))) {
-            $arrUuids = $stringUtilAdapter->deserialize($objReportModel->multiSRC, true);
-            $objFiles = $filesModelAdapter->findMultipleByUuids($arrUuids);
-            $blnMissingLegend = false;
-            $blnMissingPhotographerName = false;
+        $images = [];
+        $arrMultiSRC = $stringUtilAdapter->deserialize($objBlog->multiSRC, true);
 
-            while ($objFiles->next()) {
-                $arrMeta = $stringUtilAdapter->deserialize($objFiles->meta, true);
+        foreach ($arrMultiSRC as $uuid) {
+            if ($validatorAdapter->isUuid($uuid)) {
+                $objFiles = $filesModelAdapter->findByUuid($uuid);
 
-                if (!isset($arrMeta[$this->locale]['caption']) || '' === $arrMeta[$this->locale]['caption']) {
-                    $blnMissingLegend = true;
-                }
+                if (null !== $objFiles) {
+                    if (is_file($this->projectDir.'/'.$objFiles->path)) {
+                        $objFile = new File($objFiles->path);
 
-                if (!isset($arrMeta[$this->locale]['photographer']) || '' === $arrMeta[$this->locale]['photographer']) {
-                    $blnMissingPhotographerName = true;
+                        if ($objFile->isImage) {
+                            $arrMeta = $stringUtilAdapter->deserialize($objFiles->meta, true);
+                            $images[$objFiles->path] = [
+                                'id' => $objFiles->id,
+                                'path' => $objFiles->path,
+                                'uuid' => $objFiles->uuid,
+                                'name' => $objFile->basename,
+                                'singleSRC' => $objFiles->path,
+                                'title' => $stringUtilAdapter->specialchars($objFile->basename),
+                                'filesModel' => $objFiles->current(),
+                                'caption' => $arrMeta[$this->locale]['caption'] ?? '',
+                                'photographer' => $arrMeta[$this->locale]['photographer'] ?? '',
+                                'alt' => $arrMeta[$this->locale]['alt'] ?? '',
+                            ];
+                        }
+                    }
                 }
             }
+        }
 
-            if ($blnMissingLegend || $blnMissingPhotographerName) {
-                return false;
+        // Custom image sorting
+        if ('' !== $objBlog->orderSRC) {
+            $tmp = $stringUtilAdapter->deserialize($objBlog->orderSRC);
+
+            if (!empty($tmp) && \is_array($tmp)) {
+                // Remove all values
+                $arrOrder = array_map(
+                    static function (): void {
+                    },
+                    array_flip($tmp)
+                );
+
+                // Move the matching elements to their position in $arrOrder
+                foreach ($images as $k => $v) {
+                    if (\array_key_exists($v['uuid'], $arrOrder)) {
+                        $arrOrder[$v['uuid']] = $v;
+                        unset($images[$k]);
+                    }
+                }
+
+                // Append the left-over images at the end
+                if (!empty($images)) {
+                    $arrOrder = array_merge($arrOrder, array_values($images));
+                }
+
+                // Remove empty (unreplaced) entries
+                $images = array_values(array_filter($arrOrder));
+                unset($arrOrder);
             }
         }
 
-        return true;
+        return array_values($images);
     }
 
-    /**
-     * Add messages from session to template.
-     */
-    protected function addMessagesToTemplate(Template $template): void
-    {
-        // Set adapters
-        $messageAdapter = $this->framework->getAdapter(Message::class);
-
-        if ($messageAdapter->hasInfo()) {
-            $template->hasInfoMessage = true;
-            $session = $this->requestStack->getCurrentRequest()->getSession()->getFlashBag()->get('contao.FE.info');
-            $template->infoMessage = $session[0];
-        }
-
-        if ($messageAdapter->hasError()) {
-            $template->hasErrorMessage = true;
-            $session = $this->requestStack->getCurrentRequest()->getSession()->getFlashBag()->get('contao.FE.error');
-            $template->errorMessage = $session[0];
-            $template->errorMessages = $session;
-        }
-
-        $messageAdapter->reset();
-    }
-
-    protected function generateTextAndYoutubeForm(CalendarEventsBlogModel $objEventBlogModel): string
+    private function generateTextAndYoutubeForm(CalendarEventsBlogModel $objEventBlogModel): string
     {
         // Set adapters
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
@@ -478,13 +494,40 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         return $objForm->generate();
     }
 
-    protected function addVueAttributesToFormWidget(Form $objForm): void
+    private function getTourTitle(CalendarEventsBlogModel $objEventBlogModel): string
     {
-        $objForm->getWidget('text')->addAttribute('v-model', 'ctrl_text.value');
-        $objForm->getWidget('text')->addAttribute('v-on:keyup', 'onKeyUp("ctrl_text")');
+        $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
+
+        if (!empty($objEventBlogModel->title)) {
+            return $objEventBlogModel->title;
+        }
+
+        $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
+
+        if (null !== $objEvent) {
+            return '' !== $objEvent->title ? $objEvent->title : '';
+        }
+
+        return '';
     }
 
-    protected function getTourProfile(CalendarEventsBlogModel $objEventBlogModel): string
+    private function getTourWaypoints(CalendarEventsBlogModel $objEventBlogModel): string
+    {
+        $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
+
+        if (!empty($objEventBlogModel->tourWaypoints)) {
+            return $objEventBlogModel->tourWaypoints;
+        }
+        $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
+
+        if (null !== $objEvent) {
+            return !empty($objEvent->tourDetailText) ? $objEvent->tourDetailText : '';
+        }
+
+        return '';
+    }
+
+    private function getTourProfile(CalendarEventsBlogModel $objEventBlogModel): string
     {
         $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
@@ -503,40 +546,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         return '';
     }
 
-    protected function getTourTitle(CalendarEventsBlogModel $objEventBlogModel): string
-    {
-        $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
-
-        if (!empty($objEventBlogModel->title)) {
-            return $objEventBlogModel->title;
-        }
-
-        $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
-
-        if (null !== $objEvent) {
-            return '' !== $objEvent->title ? $objEvent->title : '';
-        }
-
-        return '';
-    }
-
-    protected function getTourWaypoints(CalendarEventsBlogModel $objEventBlogModel): string
-    {
-        $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
-
-        if (!empty($objEventBlogModel->tourWaypoints)) {
-            return $objEventBlogModel->tourWaypoints;
-        }
-        $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
-
-        if (null !== $objEvent) {
-            return !empty($objEvent->tourDetailText) ? $objEvent->tourDetailText : '';
-        }
-
-        return '';
-    }
-
-    protected function getTourTechDifficulties(CalendarEventsBlogModel $objEventBlogModel): string
+    private function getTourTechDifficulties(CalendarEventsBlogModel $objEventBlogModel): string
     {
         $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
@@ -559,10 +569,16 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         return '';
     }
 
+    private function addVueAttributesToFormWidget(Form $objForm): void
+    {
+        $objForm->getWidget('text')->addAttribute('v-model', 'ctrl_text.value');
+        $objForm->getWidget('text')->addAttribute('v-on:keyup', 'onKeyUp("ctrl_text")');
+    }
+
     /**
      * @throws \Exception
      */
-    protected function generatePictureUploadForm(CalendarEventsBlogModel $objEventBlogModel, ModuleModel $moduleModel): string
+    private function generatePictureUploadForm(CalendarEventsBlogModel $objEventBlogModel, ModuleModel $moduleModel): string
     {
         // Set adapters
         /** @var Environment $environmentAdapter */
@@ -618,7 +634,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm->addFormField('fileupload', [
             'label' => 'Bildupload',
             'inputType' => 'fineUploader',
-            'eval' => ['extensions' => 'jpg,jpeg',
+            'eval' => [
+                'extensions' => 'jpg,jpeg',
                 'storeFile' => true,
                 'addToDbafs' => true,
                 'isGallery' => false,
@@ -719,85 +736,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         return $objForm->generate();
     }
 
-    /**
-     * @throws \Exception
-     */
-    protected function getGalleryImages(CalendarEventsBlogModel $objBlog): array
-    {
-        // Set adapters
-        /** @var Validator $validatorAdapter */
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
-        /** @var StringUtil $stringUtilAdapter */
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-        /** @var FilesModel $filesModelAdapter */
-        $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
-
-        $images = [];
-        $arrMultiSRC = $stringUtilAdapter->deserialize($objBlog->multiSRC, true);
-
-        foreach ($arrMultiSRC as $uuid) {
-            if ($validatorAdapter->isUuid($uuid)) {
-                $objFiles = $filesModelAdapter->findByUuid($uuid);
-
-                if (null !== $objFiles) {
-                    if (is_file($this->projectDir.'/'.$objFiles->path)) {
-                        $objFile = new File($objFiles->path);
-
-                        if ($objFile->isImage) {
-                            $arrMeta = $stringUtilAdapter->deserialize($objFiles->meta, true);
-                            $images[$objFiles->path] = [
-                                'id' => $objFiles->id,
-                                'path' => $objFiles->path,
-                                'uuid' => $objFiles->uuid,
-                                'name' => $objFile->basename,
-                                'singleSRC' => $objFiles->path,
-                                'title' => $stringUtilAdapter->specialchars($objFile->basename),
-                                'filesModel' => $objFiles->current(),
-                                'caption' => $arrMeta[$this->locale]['caption'] ?? '',
-                                'photographer' => $arrMeta[$this->locale]['photographer'] ?? '',
-                                'alt' => $arrMeta[$this->locale]['alt'] ?? '',
-                            ];
-                        }
-                    }
-                }
-            }
-        }
-
-        // Custom image sorting
-        if ('' !== $objBlog->orderSRC) {
-            $tmp = $stringUtilAdapter->deserialize($objBlog->orderSRC);
-
-            if (!empty($tmp) && \is_array($tmp)) {
-                // Remove all values
-                $arrOrder = array_map(
-                    static function (): void {
-                    },
-                    array_flip($tmp)
-                );
-
-                // Move the matching elements to their position in $arrOrder
-                foreach ($images as $k => $v) {
-                    if (\array_key_exists($v['uuid'], $arrOrder)) {
-                        $arrOrder[$v['uuid']] = $v;
-                        unset($images[$k]);
-                    }
-                }
-
-                // Append the left-over images at the end
-                if (!empty($images)) {
-                    $arrOrder = array_merge($arrOrder, array_values($images));
-                }
-
-                // Remove empty (unreplaced) entries
-                $images = array_values(array_filter($arrOrder));
-                unset($arrOrder);
-            }
-        }
-
-        return array_values($images);
-    }
-
-    protected function getPreviewLink(CalendarEventsBlogModel $objBlog, ModuleModel $objModule): string
+    private function getPreviewLink(CalendarEventsBlogModel $objBlog, ModuleModel $objModule): string
     {
         /** @var PageModel $pageModelAdapter */
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
@@ -828,5 +767,71 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         }
 
         return $previewLink;
+    }
+
+    private function validateImageUploads(CalendarEventsBlogModel $objReportModel): bool
+    {
+        /** @var StringUtil $stringUtilAdapter */
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+
+        /** @var FilesModel $filesModelAdapter */
+        $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
+
+        // Check for a valid photographer name an exiting image legends
+        if (!empty($objReportModel->multiSRC) && !empty($stringUtilAdapter->deserialize($objReportModel->multiSRC, true))) {
+            $arrUuids = $stringUtilAdapter->deserialize($objReportModel->multiSRC, true);
+            $objFiles = $filesModelAdapter->findMultipleByUuids($arrUuids);
+
+            if (null !== $objFiles) {
+                $blnMissingLegend = false;
+                $blnMissingPhotographerName = false;
+
+                while ($objFiles->next()) {
+                    $arrMeta = $stringUtilAdapter->deserialize($objFiles->meta, true);
+
+                    if (!isset($arrMeta[$this->locale]['caption']) || '' === $arrMeta[$this->locale]['caption']) {
+                        $blnMissingLegend = true;
+                    }
+
+                    if (!isset($arrMeta[$this->locale]['photographer']) || '' === $arrMeta[$this->locale]['photographer']) {
+                        $blnMissingPhotographerName = true;
+                    }
+                }
+
+                if ($blnMissingLegend || $blnMissingPhotographerName) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Add messages from session to template.
+     */
+    private function addMessagesToTemplate(Template $template): void
+    {
+        // Set adapters
+        $messageAdapter = $this->framework->getAdapter(Message::class);
+
+        $template->hasInfoMessage = false;
+        $template->hasErrorMessage = false;
+
+        if ($messageAdapter->hasInfo()) {
+            $template->hasInfoMessage = true;
+            $arrInfoMsg = $this->requestStack->getCurrentRequest()->getSession()->getFlashBag()->get('contao.FE.info');
+            $template->infoMessage = $arrInfoMsg[0];
+            $template->infoMessages = $arrInfoMsg;
+        }
+
+        if ($messageAdapter->hasError()) {
+            $template->hasErrorMessage = true;
+            $arrErrMsg = $this->requestStack->getCurrentRequest()->getSession()->getFlashBag()->get('contao.FE.error');
+            $template->errorMessage = $arrErrMsg[0];
+            $template->errorMessages = $arrErrMsg;
+        }
+
+        $messageAdapter->reset();
     }
 }
