@@ -67,8 +67,10 @@
                 <div class="card event-item">
 
                     <div class="p-2 d-flex align-items-center">
-                        {{ '{{image::' ~ getAvatar.invoke(blog.authorId, 'FE') ~ '?width=32&height=32&mode=crop&class=rounded-circle}}' }}
-                        <p class="card-text fw-bold small m-0 ms-2">von {{ blog.authorName }}</p>
+                        {% if  blog.author.model is defined %}
+                            {{ '{{image::' ~ getAvatarResourcePath(blog.author.model) ~ '?width=32&height=32&mode=crop&class=rounded-circle}}' }}
+                            <p class="card-text fw-bold small m-0 ms-2">von {{ blog.author.name }}</p>
+                        {% endif %}
                     </div>
 
                     {% if blog.singleSRC %}

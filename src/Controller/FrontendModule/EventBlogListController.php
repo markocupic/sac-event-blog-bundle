@@ -118,8 +118,9 @@ class EventBlogListController extends AbstractFrontendModuleController
             $arrBlog = $this->blogs->row();
             $arrBlogIds[] = $arrBlog['id'];
             $objMember = $memberModelModelAdapter->findOneBySacMemberId($arrBlog['sacMemberId']);
-            $arrBlog['authorId'] = $objMember->id;
-            $arrBlog['authorName'] = null !== $objMember ? $objMember->firstname.' '.$objMember->lastname : $arrBlog['authorName'];
+            $arrBlog['author'] = $objMember->row();
+            $arrBlog['author']['model'] = $objMember;
+            $arrBlog['author']['name'] = null !== $objMember ? $objMember->firstname.' '.$objMember->lastname : $this->blogs->authorname;
             $arrBlog['href'] = null !== $objPageModel ? $stringUtilAdapter->ampersand($objPageModel->getFrontendUrl(($configAdapter->get('useAutoItem') ? '/' : '/items/').$this->blogs->id)) : null;
 
             $multiSRC = $stringUtilAdapter->deserialize($arrBlog['multiSRC'], true);
@@ -195,9 +196,6 @@ class EventBlogListController extends AbstractFrontendModuleController
         $template->blogs = $arrBlogs;
         $template->language = $this->page->language;
         $template->isAjaxRequest = $environmentAdapter->get('isAjaxRequest');
-
-        // Twig callable
-        $template->getAvatar = static fn (int $userId, string $scope): string => getAvatar($userId, $scope);
 
         return $template->getResponse();
     }
