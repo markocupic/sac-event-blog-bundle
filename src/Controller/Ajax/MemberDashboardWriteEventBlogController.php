@@ -260,13 +260,14 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         $this->checkIsTokenValid();
         $this->checkIsXmlHttpRequest();
 
+        $user = $this->security->getUser();
         $request = $this->requestStack->getCurrentRequest();
 
         // Adapters
         $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
-        if (!$request->request->get('uuids') || !$request->request->get('eventId') || !FE_USER_LOGGED_IN) {
+        if (!$request->request->get('uuids') || !$request->request->get('eventId') || !$user instanceof FrontendUser) {
             return new JsonResponse(['status' => 'error']);
         }
 
