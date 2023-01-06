@@ -19,7 +19,7 @@ use Contao\Config;
 use Contao\CoreBundle\Exception\InvalidRequestTokenException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
-use Contao\EventOrganizerModel;
+use Markocupic\SacEventToolBundle\Model\EventOrganizerModel;
 use Contao\FilesModel;
 use Contao\FrontendUser;
 use Contao\ModuleModel;
