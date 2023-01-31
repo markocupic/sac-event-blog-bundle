@@ -24,7 +24,7 @@
     <table class="table layout-table table-responsive table-striped">
         {% for blog in arrEventBlogs %}
             <tr>
-                <td>{{ blog.date }}</td>
+                <td>{{ blog.date|raw }}</td>
                 <td>{{ blog.eventTitle }}</td>
                 {% if blog.canEditBlog and blog.blogLink %}
                     <td class="text-center">
