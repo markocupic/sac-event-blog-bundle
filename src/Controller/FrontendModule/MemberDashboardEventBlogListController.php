@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -14,14 +14,13 @@ declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
 
-use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Contao\CalendarEventsModel;
 use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
-use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\Database;
 use Contao\Date;
 use Contao\Environment;
@@ -36,32 +35,25 @@ use Contao\Validator;
 use Haste\Form\Form;
 use Haste\Util\Url;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
+use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * @FrontendModule(MemberDashboardEventBlogListController::TYPE, category="sac_event_tool_frontend_modules")
- */
+#[AsFrontendModule(MemberDashboardEventBlogListController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_member_dashboard_event_blog_list')]
 class MemberDashboardEventBlogListController extends AbstractFrontendModuleController
 {
     public const TYPE = 'member_dashboard_event_blog_list';
-
-    private ContaoFramework $framework;
-    private ScopeMatcher $scopeMatcher;
-    private Security $security;
-    private TranslatorInterface $translator;
     protected FrontendUser|null $user;
 
-    public function __construct(ContaoFramework $framework, ScopeMatcher $scopeMatcher, Security $security, TranslatorInterface $translator)
-    {
-        $this->framework = $framework;
-        $this->scopeMatcher = $scopeMatcher;
-        $this->security = $security;
-        $this->translator = $translator;
-
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly ScopeMatcher $scopeMatcher,
+        private readonly Security $security,
+        private readonly TranslatorInterface $translator,
+    ) {
         // Get logged in member
         if (($user = $this->security->getUser()) instanceof FrontendUser) {
             $this->user = $user;
@@ -81,7 +73,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response|null
+    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
         // Do not allow for not authorized users
         if (null === $this->user) {
@@ -189,7 +181,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         $intStartDateMin = $model->eventBlogTimeSpanForCreatingNew > 0 ? time() - $model->eventBlogTimeSpanForCreatingNew * 24 * 3600 : time();
         $arrEvents = $calendarEventsMemberModelAdapter->findEventsByMemberId($this->user->id, [], $intStartDateMin, time(), true);
 
-        if (!empty($arrEvents) && \is_array($arrEvents)) {
+        if (!empty($arrEvents)) {
             foreach ($arrEvents as $event) {
                 if (null !== $event['objEvent']) {
                     $objEvent = $event['objEvent'];

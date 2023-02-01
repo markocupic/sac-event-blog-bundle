@@ -1,0 +1,4 @@
+sac_event_blog_bundle:
+    resource: ../src/Controller
+    type: annotation
+

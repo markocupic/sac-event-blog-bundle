@@ -5,7 +5,7 @@
         {% if blog.title != event.title %}
             <h3 class="mt-1">{{ event.title }}</h3>
         {% endif %}
-        <date class="d-block mb-3">vom: {{ eventDates }}</date>
+        <date class="d-block mb-3">vom: {{ eventDates|raw }}</date>
     {% endif %}
 
     {% if eventSubstitutionText is defined and not eventSubstitutionText is empty %}

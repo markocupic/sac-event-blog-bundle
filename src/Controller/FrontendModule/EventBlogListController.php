@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -16,10 +16,10 @@ namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
 
 use Contao\Config;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
-use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\Environment;
 use Contao\FilesModel;
 use Contao\MemberModel;
@@ -35,24 +35,19 @@ use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * @FrontendModule(EventBlogListController::TYPE, category="sac_event_tool_frontend_modules")
- */
+#[AsFrontendModule(EventBlogListController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_event_blog_list')]
 class EventBlogListController extends AbstractFrontendModuleController
 {
     public const TYPE = 'event_blog_list';
 
-    private ContaoFramework $framework;
-    private ScopeMatcher $scopeMatcher;
-    private string $projectDir;
     private Collection|null $blogs;
     private PageModel|null $page;
 
-    public function __construct(ContaoFramework $framework, ScopeMatcher $scopeMatcher, string $projectDir)
-    {
-        $this->framework = $framework;
-        $this->scopeMatcher = $scopeMatcher;
-        $this->projectDir = $projectDir;
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly ScopeMatcher $scopeMatcher,
+        private readonly string $projectDir,
+    ) {
     }
 
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
@@ -94,7 +89,7 @@ class EventBlogListController extends AbstractFrontendModuleController
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response|null
+    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
         // Adapters
         $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);

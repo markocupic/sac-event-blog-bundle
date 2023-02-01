@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -14,15 +14,14 @@ declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
 
-use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Contao\CalendarEventsModel;
 use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\CoreBundle\Routing\ScopeMatcher;
-use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\Dbafs;
 use Contao\Environment;
 use Contao\File;
@@ -45,6 +44,7 @@ use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
 use Markocupic\SacEventToolBundle\Config\EventExecutionState;
+use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Psr\Log\LogLevel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -53,37 +53,25 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * @FrontendModule(MemberDashboardEventBlogWriteController::TYPE, category="sac_event_tool_frontend_modules")
- */
+#[AsFrontendModule(MemberDashboardEventBlogWriteController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_member_dashboard_write_event_blog')]
 class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleController
 {
     public const TYPE = 'member_dashboard_write_event_blog';
-    private ContaoFramework $framework;
-    private Connection $connection;
-    private ScopeMatcher $scopeMatcher;
-    private RequestStack $requestStack;
-    private TranslatorInterface $translator;
-    private Security $security;
-    private string $projectDir;
-    private string $eventBlogAssetDir;
-    private string $locale;
 
     private FrontendUser|null $user;
     private PageModel|null $page;
 
-    public function __construct(ContaoFramework $framework, Connection $connection, ScopeMatcher $scopeMatcher, RequestStack $requestStack, TranslatorInterface $translator, Security $security, string $projectDir, string $eventBlogAssetDir, string $locale)
-    {
-        $this->framework = $framework;
-        $this->connection = $connection;
-        $this->scopeMatcher = $scopeMatcher;
-        $this->requestStack = $requestStack;
-        $this->translator = $translator;
-        $this->security = $security;
-        $this->projectDir = $projectDir;
-        $this->eventBlogAssetDir = $eventBlogAssetDir;
-        $this->locale = $locale;
-
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly Connection $connection,
+        private readonly ScopeMatcher $scopeMatcher,
+        private readonly RequestStack $requestStack,
+        private readonly TranslatorInterface $translator,
+        private readonly Security $security,
+        private readonly string $projectDir,
+        private readonly string $eventBlogAssetDir,
+        private readonly string $locale,
+    ) {
         // Get logged in member object
         if (($user = $this->security->getUser()) instanceof FrontendUser) {
             $this->user = $user;
@@ -591,8 +579,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
         /** @var Input $inputAdapter */
         $inputAdapter = $this->framework->getAdapter(Input::class);
-        /** @var Validator $validatorAdapter */
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
         /** @var Files $filesAdapter */
         $filesAdapter = $this->framework->getAdapter(Files::class);
         /** @var StringUtil $stringUtilAdapter */
@@ -604,7 +590,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
 
-        // Set max image widht and height
+        // Set max image width and height
         if ((int) $moduleModel->eventBlogMaxImageWidth > 0) {
             $configAdapter->set('imageWidth', (int) $moduleModel->eventBlogMaxImageWidth);
         }
@@ -635,7 +621,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm->setFormActionFromUri($url);
 
         // Add some fields
-        $objForm->addFormField('fileupload', [
+        $objForm->addFormField('fileUpload', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
             'inputType' => 'fineUploader',
             'eval' => [
@@ -646,7 +632,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 'directUpload' => false,
                 'multiple' => true,
                 'useHomeDir' => false,
-                'uploadFolder' => $objUploadFolder->path,
+                'uploadFolder' => $objUploadFolder->getModel()->uuid,
                 'mandatory' => true,
             ],
         ]);
@@ -658,24 +644,23 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         ]);
 
         // Add attributes
-        $objWidgetFileupload = $objForm->getWidget('fileupload');
-        $objWidgetFileupload->addAttribute('accept', '.jpg, .jpeg');
-        $objWidgetFileupload->storeFile = true;
+        $objWidgetFileUpload = $objForm->getWidget('fileUpload');
+        $objWidgetFileUpload->addAttribute('accept', '.jpg, .jpeg');
+        $objWidgetFileUpload->storeFile = true;
 
         // validate() also checks whether the form has been submitted
         if ($objForm->validate() && $inputAdapter->post('FORM_SUBMIT') === $objForm->getFormId()) {
-            if (!empty($_SESSION['FILES']) && \is_array($_SESSION['FILES'])) {
-                foreach ($_SESSION['FILES'] as $file) {
-                    $uuid = $file['uuid'];
+            if ($inputAdapter->post('fileUpload')) {
+                $arrFiles = explode(',', $inputAdapter->post('fileUpload'));
 
-                    if ($validatorAdapter->isStringUuid($uuid)) {
-                        $binUuid = $stringUtilAdapter->uuidToBin($uuid);
-                        $objModel = $filesModelAdapter->findByUuid($binUuid);
+                if (!empty($arrFiles)) {
+                    foreach ($arrFiles as $path) {
+                        $objFile = new File($objUploadFolder->path.'/'.basename($path));
 
-                        if (null !== $objModel) {
-                            $objFile = new File($objModel->path);
+                        if ($objFile->isImage) {
+                            $dbafsAdapter->addResource($objFile->path);
 
-                            if ($objFile->isImage) {
+                            if (null !== ($objModel = $objFile->getModel())) {
                                 // Rename file
                                 $newFilename = sprintf('event-blog-%s-img-%s.%s', $objEventBlogModel->id, $objModel->id, strtolower($objFile->extension));
                                 $newPath = $objUploadFolder->path.'/'.$newFilename;
@@ -719,7 +704,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                                     }
 
                                     // Log
-                                    $strText = sprintf('User with username %s has uploadad a new picture ("%s").', $this->user->username, $objModel->path);
+                                    $strText = sprintf('User with username %s has uploaded a new picture ("%s").', $this->user->username, $objModel->path);
                                     $logger = System::getContainer()->get('monolog.logger.contao');
                                     $logger->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
                                 }
@@ -729,13 +714,11 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 }
             }
 
-            if (!$objWidgetFileupload->hasErrors()) {
+            if (!$objWidgetFileUpload->hasErrors()) {
                 // Reload page
                 $controllerAdapter->reload();
             }
         }
-
-        unset($_SESSION['FILES']);
 
         return $objForm->generate();
     }

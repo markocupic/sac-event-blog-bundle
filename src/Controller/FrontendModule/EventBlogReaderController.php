@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -19,10 +19,10 @@ use chillerlan\QRCode\QROptions;
 use Contao\CalendarEventsModel;
 use Contao\Config;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
-use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\CoreBundle\Util\SymlinkUtil;
 use Contao\Environment;
 use Contao\File;
@@ -43,28 +43,21 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * @FrontendModule(EventBlogReaderController::TYPE, category="sac_event_tool_frontend_modules")
- */
+#[AsFrontendModule(EventBlogReaderController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_event_blog_reader')]
 class EventBlogReaderController extends AbstractFrontendModuleController
 {
     public const TYPE = 'event_blog_reader';
 
-    private ContaoFramework $framework;
-    private ScopeMatcher $scopeMatcher;
-    private RequestStack $requestStack;
-    private string $projectDir;
-    private string $locale;
     private CalendarEventsBlogModel|null $blog = null;
     private bool $isPreviewMode = false;
 
-    public function __construct(ContaoFramework $framework, ScopeMatcher $scopeMatcher, RequestStack $requestStack, string $projectDir, string $locale)
-    {
-        $this->framework = $framework;
-        $this->scopeMatcher = $scopeMatcher;
-        $this->requestStack = $requestStack;
-        $this->projectDir = $projectDir;
-        $this->locale = $locale;
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly ScopeMatcher $scopeMatcher,
+        private readonly RequestStack $requestStack,
+        private readonly string $projectDir,
+        private readonly string $locale,
+    ) {
     }
 
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response

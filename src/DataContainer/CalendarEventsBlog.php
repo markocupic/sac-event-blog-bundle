@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -16,7 +16,7 @@ namespace Markocupic\SacEventBlogBundle\DataContainer;
 
 use Contao\Backend;
 use Contao\CalendarEventsModel;
-use Contao\CoreBundle\ServiceAnnotation\Callback;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
 use Contao\Environment;
 use Contao\Files;
@@ -40,32 +40,22 @@ use Symfony\Component\Security\Core\Security;
 
 class CalendarEventsBlog
 {
-    private Security $security;
-    private Connection $connection;
-    private RequestStack $requestStack;
-    private BinaryFileDownload $binaryFileDownload;
-    private string $projectDir;
-    private string $tempDir;
-    private string $eventBlogDocxExportTemplate;
-    private string $locale;
-
-    public function __construct(Security $security, Connection $connection, RequestStack $requestStack, BinaryFileDownload $binaryFileDownload, string $projectDir, string $tempDir, string $eventBlogDocxExportTemplate, string $locale)
-    {
-        $this->security = $security;
-        $this->connection = $connection;
-        $this->requestStack = $requestStack;
-        $this->binaryFileDownload = $binaryFileDownload;
-        $this->projectDir = $projectDir;
-        $this->tempDir = $tempDir;
-        $this->eventBlogDocxExportTemplate = $eventBlogDocxExportTemplate;
-        $this->locale = $locale;
+    public function __construct(
+        private readonly Security $security,
+        private readonly Connection $connection,
+        private readonly RequestStack $requestStack,
+        private readonly BinaryFileDownload $binaryFileDownload,
+        private readonly string $projectDir,
+        private readonly string $tempDir,
+        private readonly string $eventBlogDocxExportTemplate,
+        private readonly string $locale,
+    ) {
     }
 
     /**
-     * @Callback(table="tl_calendar_events_blog", target="config.onload")
-     *
      * @throws \Exception
      */
+    #[AsCallback(table: 'tl_calendar_events_blog', target: 'config.onload')]
     public function route(): void
     {
         $request = $this->requestStack->getCurrentRequest();
@@ -79,9 +69,7 @@ class CalendarEventsBlog
         }
     }
 
-    /**
-     * @Callback(table="tl_calendar_events_blog", target="config.onload")
-     */
+    #[AsCallback(table: 'tl_calendar_events_blog', target: 'config.onload')]
     public function setPalettes(): void
     {
         $user = $this->security->getUser();
@@ -97,10 +85,9 @@ class CalendarEventsBlog
     }
 
     /**
-     * @Callback(table="tl_calendar_events_blog", target="config.onload")
-     *
      * @throws \Exception
      */
+    #[AsCallback(table: 'tl_calendar_events_blog', target: 'config.onload')]
     public function deleteUnfinishedAndOldEntries(): void
     {
         // Delete old and unpublished blogs
@@ -148,12 +135,9 @@ class CalendarEventsBlog
 
     /**
      * Add an image to each record.
-     *
-     * @Callback(table="tl_calendar_events_blog", target="list.label.label")
-     *
-     * @param array $row
      */
-    public function addIcon($row, string $label, DataContainer $dc, array $args): array
+    #[AsCallback(table: 'tl_calendar_events_blog', target: 'list.label.label')]
+    public function addIcon(array $row, string $label, DataContainer $dc, array $args): array
     {
         $image = 'member';
         $disabled = false;

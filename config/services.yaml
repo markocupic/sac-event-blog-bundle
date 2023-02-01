@@ -6,8 +6,13 @@ services:
         #$projectDir: '%kernel.project_dir%'
 
     Markocupic\SacEventBlogBundle\:
-        resource: ../../
-        exclude: ../../{DependencyInjection,Model,Resources}
+        resource: ../src/
+        exclude: ../src/{DependencyInjection,Model,Resources}
+
+    Markocupic\SacEventBlogBundle\EventListener\FileUploadListener:
+        arguments:
+            - "@terminal42_fineuploader.uploader"
+
 
     Markocupic\SacEventBlogBundle\DataContainer\CalendarEventsBlog:
         arguments:

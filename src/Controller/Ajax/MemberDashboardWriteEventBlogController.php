@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -19,7 +19,6 @@ use Contao\Config;
 use Contao\CoreBundle\Exception\InvalidRequestTokenException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
-use Markocupic\SacEventToolBundle\Model\EventOrganizerModel;
 use Contao\FilesModel;
 use Contao\FrontendUser;
 use Contao\ModuleModel;
@@ -33,6 +32,7 @@ use Haste\Util\Url;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\Image\RotateImage;
+use Markocupic\SacEventToolBundle\Model\EventOrganizerModel;
 use NotificationCenter\Model\Notification;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
@@ -46,17 +46,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class MemberDashboardWriteEventBlogController extends AbstractController
 {
-    private ContaoFramework $framework;
-    private Connection $connection;
-    private CsrfTokenManagerInterface $tokenManager;
-    private RequestStack $requestStack;
-    private Security $security;
-    private TranslatorInterface $translator;
-    private RotateImage $rotateImage;
-    private string $projectDir;
-    private string $tokenName;
-    private string $locale;
-
     /**
      * Handles ajax requests.
      * Allow if ...
@@ -66,25 +55,24 @@ class MemberDashboardWriteEventBlogController extends AbstractController
      *
      * @throws \Exception
      */
-    public function __construct(ContaoFramework $framework, Connection $connection, CsrfTokenManagerInterface $tokenManager, RequestStack $requestStack, Security $security, TranslatorInterface $translator, RotateImage $rotateImage, string $projectDir, string $tokenName, string $locale)
-    {
-        $this->framework = $framework;
-        $this->connection = $connection;
-        $this->tokenManager = $tokenManager;
-        $this->requestStack = $requestStack;
-        $this->security = $security;
-        $this->translator = $translator;
-        $this->rotateImage = $rotateImage;
-        $this->projectDir = $projectDir;
-        $this->tokenName = $tokenName;
-        $this->locale = $locale;
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly Connection $connection,
+        private readonly CsrfTokenManagerInterface $tokenManager,
+        private readonly RequestStack $requestStack,
+        private readonly Security $security,
+        private readonly TranslatorInterface $translator,
+        private readonly RotateImage $rotateImage,
+        private readonly string $projectDir,
+        private readonly string $tokenName,
+        private readonly string $locale,
+    ) {
     }
 
     /**
-     * @Route("/ajaxMemberDashboardWriteEventBlog/setPublishState", name="sac_event_tool_ajax_member_dashboard_write_event_blog_set_publish_state", defaults={"_scope" = "frontend"})
-     *
      * @throws Exception
      */
+    #[Route('/ajaxMemberDashboardWriteEventBlog/setPublishState', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_publish_state', defaults: ['_scope' => 'frontend'])]
     public function setPublishStateAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -249,10 +237,9 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     }
 
     /**
-     * @Route("/ajaxMemberDashboardWriteEventBlog/sortGallery", name="sac_event_tool_ajax_member_dashboard_write_event_blog_sort_gallery", defaults={"_scope" = "frontend"})
-     *
      * @throws \Exception
      */
+    #[Route('/ajaxMemberDashboardWriteEventBlog/sortGallery', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_sort_gallery', defaults: ['_scope' => 'frontend'])]
     public function sortGalleryAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -301,8 +288,8 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
     /**
      * @throws \Exception
-     * @Route("/ajaxMemberDashboardWriteEventBlog/removeImage", name="sac_event_tool_ajax_member_dashboard_write_event_blog_remove_image", defaults={"_scope" = "frontend"})
      */
+    #[Route('/ajaxMemberDashboardWriteEventBlog/removeImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_remove_image', defaults: ['_scope' => 'frontend'])]
     public function removeImageAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -382,8 +369,8 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
     /**
      * @throws \Exception
-     * @Route("/ajaxMemberDashboardWriteEventBlog/rotateImage", name="sac_event_tool_ajax_member_dashboard_write_event_blog_rotate_image", defaults={"_scope" = "frontend"})
      */
+    #[Route('/ajaxMemberDashboardWriteEventBlog/rotateImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_rotate_image', defaults: ['_scope' => 'frontend'])]
     public function rotateImageAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -411,8 +398,8 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
     /**
      * @throws \Exception
-     * @Route("/ajaxMemberDashboardWriteEventBlog/getCaption", name="sac_event_tool_ajax_member_dashboard_write_event_blog_get_caption", defaults={"_scope" = "frontend"})
      */
+    #[Route('/ajaxMemberDashboardWriteEventBlog/getCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_get_caption', defaults: ['_scope' => 'frontend'])]
     public function getCaptionAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -463,8 +450,8 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
     /**
      * @throws \Exception
-     * @Route("/ajaxMemberDashboardWriteEventBlog/setCaption", name="sac_event_tool_ajax_member_dashboard_write_event_blog_set_caption", defaults={"_scope" = "frontend"})
      */
+    #[Route('/ajaxMemberDashboardWriteEventBlog/setCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_caption', defaults: ['_scope' => 'frontend'])]
     public function setCaptionAction(): JsonResponse
     {
         $this->framework->initialize();
