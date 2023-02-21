@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
 
+use Codefog\HasteBundle\Form\Form;
+use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
 use Contao\Config;
 use Contao\Controller;
@@ -38,8 +40,6 @@ use Contao\System;
 use Contao\Template;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
-use Haste\Form\Form;
-use Haste\Util\Url;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
@@ -67,6 +67,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         private readonly ScopeMatcher $scopeMatcher,
         private readonly RequestStack $requestStack,
         private readonly TranslatorInterface $translator,
+        private readonly UrlParser $urlParser,
         private readonly Security $security,
         private readonly string $projectDir,
         private readonly string $eventBlogAssetDir,
@@ -348,16 +349,10 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm = new Form(
             'form-event-blog-text-and-youTube',
             'POST',
-            function ($objHaste) {
-                /** @var Input $inputAdapter */
-                $inputAdapter = $this->framework->getAdapter(Input::class);
-
-                return $inputAdapter->post('FORM_SUBMIT') === $objHaste->getFormId();
-            }
         );
 
         $url = $environmentAdapter->get('uri');
-        $objForm->setFormActionFromUri($url);
+        $objForm->setAction($url);
 
         // Title
         $objForm->addFormField('title', [
@@ -450,7 +445,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         ]);
 
         // Bind model
-        $objForm->bindModel($objEventBlogModel);
+        $objForm->setBoundModel($objEventBlogModel);
 
         // validate() also checks whether the form has been submitted
         if ($objForm->validate() && $inputAdapter->post('FORM_SUBMIT') === $objForm->getFormId()) {
@@ -609,16 +604,10 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm = new Form(
             'form-event-blog-picture-upload',
             'POST',
-            function ($objHaste) {
-                /** @var Input $inputAdapter */
-                $inputAdapter = $this->framework->getAdapter(Input::class);
-
-                return $inputAdapter->post('FORM_SUBMIT') === $objHaste->getFormId();
-            }
         );
 
         $url = $environmentAdapter->get('uri');
-        $objForm->setFormActionFromUri($url);
+        $objForm->setAction($url);
 
         // Add some fields
         $objForm->addFormField('fileUpload', [
@@ -737,9 +726,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         /** @var Environment $environmentAdapterAdapter */
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
-        /** @var Url $urlAdapter */
-        $urlAdapter = $this->framework->getAdapter(Url::class);
-
         // Generate frontend preview link
         $previewLink = '';
 
@@ -749,7 +735,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             if (null !== $objTarget) {
                 $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl($configAdapter->get('useAutoItem') ? '/%s' : '/items/%s'));
                 $previewLink = sprintf($previewLink, $objBlog->id);
-                $previewLink = $environmentAdapter->get('url').'/'.$urlAdapter->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
+                $previewLink = $environmentAdapter->get('url').'/'.$this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
             }
         }
 

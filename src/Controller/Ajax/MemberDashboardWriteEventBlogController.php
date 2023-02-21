@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\Controller\Ajax;
 
+use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
 use Contao\Config;
 use Contao\CoreBundle\Exception\InvalidRequestTokenException;
@@ -28,7 +29,6 @@ use Contao\UserModel;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
-use Haste\Util\Url;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\Image\RotateImage;
@@ -63,6 +63,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         private readonly Security $security,
         private readonly TranslatorInterface $translator,
         private readonly RotateImage $rotateImage,
+        private readonly UrlParser $urlParser,
         private readonly string $projectDir,
         private readonly string $tokenName,
         private readonly string $locale,
@@ -92,7 +93,6 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
-        $urlAdapter = $this->framework->getAdapter(Url::class);
         $eventOrganizerModelAdapter = $this->framework->getAdapter(EventOrganizerModel::class);
         $validatorAdapter = $this->framework->getAdapter(Validator::class);
 
@@ -169,7 +169,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                     if (null !== $objTarget) {
                         $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl(Config::get('useAutoItem') ? '/%s' : '/items/%s'));
                         $previewLink = sprintf($previewLink, $objBlog->id);
-                        $previewLink = $environmentAdapter->get('url').'/'.$urlAdapter->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
+                        $previewLink = $environmentAdapter->get('url').'/'.$this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
                     }
                 }
 

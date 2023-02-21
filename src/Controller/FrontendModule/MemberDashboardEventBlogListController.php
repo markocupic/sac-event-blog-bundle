@@ -14,6 +14,8 @@ declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
 
+use Codefog\HasteBundle\Form\Form;
+use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
 use Contao\Config;
 use Contao\Controller;
@@ -32,8 +34,6 @@ use Contao\PageModel;
 use Contao\System;
 use Contao\Template;
 use Contao\Validator;
-use Haste\Form\Form;
-use Haste\Util\Url;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,6 +53,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         private readonly ScopeMatcher $scopeMatcher,
         private readonly Security $security,
         private readonly TranslatorInterface $translator,
+        private readonly UrlParser $urlParser,
     ) {
         // Get logged in member
         if (($user = $this->security->getUser()) instanceof FrontendUser) {
@@ -112,7 +113,6 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         $configAdapter = $this->framework->getAdapter(Config::class);
         $databaseAdapter = $this->framework->getAdapter(Database::class);
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
-        $urlAdapter = $this->framework->getAdapter(Url::class);
 
         $arrEventBlogs = [];
 
@@ -145,7 +145,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
                     $objPage = $pageModelAdapter->findByPk($model->eventBlogFormJumpTo);
 
                     if (null !== $objPage) {
-                        $arrEventBlog['blogLink'] = $urlAdapter->addQueryString('eventId='.$objEventBlog->eventId, $objPage->getFrontendUrl());
+                        $arrEventBlog['blogLink'] = $this->urlParser->addQueryString('eventId='.$objEventBlog->eventId, $objPage->getFrontendUrl());
                     }
                 }
                 $arrEventBlogs[] = $arrEventBlog;
@@ -161,21 +161,15 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         $calendarEventsMemberModelAdapter = $this->framework->getAdapter(CalendarEventsMemberModel::class);
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
-        $urlAdapter = $this->framework->getAdapter(Url::class);
         $inputAdapter = $this->framework->getAdapter(Input::class);
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
 
         $objForm = new Form(
             'form-create-new-event-blog',
             'POST',
-            function ($objHaste) {
-                $inputAdapter = $this->framework->getAdapter(Input::class);
-
-                return $inputAdapter->post('FORM_SUBMIT') === $objHaste->getFormId();
-            }
         );
 
-        $objForm->setFormActionFromUri($environmentAdapter->get('uri'));
+        $objForm->setAction($environmentAdapter->get('uri'));
 
         $arrOptions = [];
         $intStartDateMin = $model->eventBlogTimeSpanForCreatingNew > 0 ? time() - $model->eventBlogTimeSpanForCreatingNew * 24 * 3600 : time();
@@ -212,7 +206,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
                 $objPage = $pageModelAdapter->findByPk($model->eventBlogFormJumpTo);
 
                 if (null !== $objPage) {
-                    $href = $urlAdapter->addQueryString('eventId='.$objWidget->value, $objPage->getFrontendUrl());
+                    $href = $this->urlParser->addQueryString('eventId='.$objWidget->value, $objPage->getFrontendUrl());
                 }
                 $controllerAdapter->redirect($href);
             }

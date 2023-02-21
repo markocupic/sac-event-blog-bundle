@@ -39,6 +39,7 @@ services:
             - '@contao.framework'
             - '@contao.routing.scope_matcher'
             - '@request_stack'
+            - '@Codefog\HasteBundle\UrlParser'
             - '%kernel.project_dir%'
             - '%sacevt.locale%'
         public: true
@@ -50,6 +51,7 @@ services:
             - '@contao.routing.scope_matcher'
             - '@security.helper'
             - '@translator'
+            - '@Codefog\HasteBundle\UrlParser'
         public: true
 
     # Member dashboard module: display the forms for writing new event reports
@@ -60,7 +62,9 @@ services:
             - '@contao.routing.scope_matcher'
             - '@request_stack'
             - '@translator'
+            - '@Codefog\HasteBundle\UrlParser'
             - '@security.helper'
+            - '@Codefog\HasteBundle\UrlParser'
             - '%kernel.project_dir%'
             - '%sac_event_blog.asset_dir%'
             - '%sacevt.locale%'
@@ -76,6 +80,7 @@ services:
             - '@security.helper'
             - '@translator'
             - '@Markocupic\SacEventToolBundle\Image\RotateImage'
+            - '@Codefog\HasteBundle\UrlParser'
             - '%kernel.project_dir%'
             - '%contao.csrf_token_name%'
             - '%sacevt.locale%'

@@ -16,6 +16,7 @@ namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
 
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
+use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
 use Contao\Config;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
@@ -35,7 +36,6 @@ use Contao\PageModel;
 use Contao\StringUtil;
 use Contao\Template;
 use Contao\Validator;
-use Haste\Util\Url;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
@@ -55,6 +55,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         private readonly ContaoFramework $framework,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly RequestStack $requestStack,
+        private readonly UrlParser $urlParser,
         private readonly string $projectDir,
         private readonly string $locale,
     ) {
@@ -113,7 +114,6 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
         $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
-        $urlAdapter = $this->framework->getAdapter(Url::class);
 
         // Set data
         $template->setData($this->blog->row());
@@ -142,9 +142,9 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         if (!$this->isPreviewMode) {
             if ($request->query->has('referer')) {
                 $url = base64_decode($request->query->get('referer', ''), true);
-                $url = $urlAdapter->addQueryString('show_event_blog='.$this->blog->id, $url);
+                $url = $this->urlParser->addQueryString('show_event_blog='.$this->blog->id, $url);
             } else {
-                $url = $urlAdapter->addQueryString('show_event_blog='.$this->blog->id);
+                $url = $this->urlParser->addQueryString('show_event_blog='.$this->blog->id);
             }
 
             if ('' !== $url) {
