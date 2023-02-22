@@ -64,7 +64,6 @@ services:
             - '@translator'
             - '@Codefog\HasteBundle\UrlParser'
             - '@security.helper'
-            - '@Codefog\HasteBundle\UrlParser'
             - '%kernel.project_dir%'
             - '%sac_event_blog.asset_dir%'
             - '%sacevt.locale%'

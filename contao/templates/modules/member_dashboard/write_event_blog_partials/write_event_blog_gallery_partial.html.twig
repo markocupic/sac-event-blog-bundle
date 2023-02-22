@@ -3,15 +3,15 @@
     <hr>
 
     {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-        <p><i class="fas fa-info-circle"></i> Bildreihenfolge kann durch Drag-and-drop verändert werden.</p>
+        <p><i class="fas fa-info-circle"></i> Bildreihenfolge kann durch Drag-and-Drop verändert werden.</p>
     {% endif %}
 
     <div id="dashboardEventBlogGallery" class="{% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}sortable-thumbnail-container {% endif %} dashboard-event-blog-gallery row gx-2 gy-1">
         {% for arrFile in images %}
             {% set counter = ( counter | default(-1) ) + 1 %}
 
-            <div class="col-12 col-sm-6 col-lg-3 thumbnail {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}sortable-item {% endif %}responsive" data-item="{{ counter }}" data-path="{{ arrFile.path }}" data-file-id="{{ arrFile.id }}" data-file-uuid="{{ binToUuid.invoke(arrFile.uuid) }}" title="Sortierung mit Drag and Drop ändern">
-                {{ '{{image::' ~ binToUuid.invoke(arrFile.uuid) ~ '?width=400&height=400&mode=crop}}' }}
+            <div class="col-12 col-sm-6 col-lg-3 thumbnail {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}sortable-item {% endif %}responsive" data-item="{{ counter }}" data-path="{{ arrFile.path }}" data-file-id="{{ arrFile.id }}" data-file-uuid="{{ binToUuid.invoke(arrFile.uuid) }}" title="Sortierung mit Drag-and-Drop ändern">
+                {{ '{{image::' ~ binToUuid.invoke(arrFile.uuid) ~ '?width=400&height=400&mode=crop&class=w-100 img-fluid}}' }}
 
                 <div class="d-none">{{ arrFile.caption }}</div>
                 {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
