@@ -53,19 +53,19 @@
             </div>
 
             {% if not text is empty and publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-                {% include('@Contao_MarkocupicSacEventBlogBundle/write_event_blog_change_publish_state_partial.html.twig') %}
+                {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_change_publish_state_partial.html.twig') %}
             {% endif %}
         </div>
 
         {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
             <!-- Modal box tour report form -->
-            {% include('@Contao_MarkocupicSacEventBlogBundle/write_event_blog_create_report_form_partial.html.twig') %}
+            {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_create_report_form_partial.html.twig') %}
 
             <!-- Modal box photo upload -->
-            {% include('@Contao_MarkocupicSacEventBlogBundle/write_event_blog_photoupload_partial.html.twig') %}
+            {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_photoupload_partial.html.twig') %}
 
             <!-- Modal box photo details (cation, rotate image, photographer name -->
-            {% include('@Contao_MarkocupicSacEventBlogBundle/write_event_blog_image_modal_box_partial.html.twig') %}
+            {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_image_modal_box_partial.html.twig') %}
         {% endif %}
 
         <br>
@@ -93,40 +93,40 @@
         {% if tourTechDifficulty is defined and not tourTechDifficulty is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Schwierigkeit</h5>
-                <p>{{ tourTechDifficulty }}</p>
+                <p>{{ tourTechDifficulty|raw }}</p>
             </div>
         {% endif %}
 
         {% if tourWaypoints is defined and not tourWaypoints is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Tourenstationen mit Höhenangaben (nur stichwortartig)</h5>
-                <p>{{ tourWaypoints }}</p>
+                <p>{{ tourWaypoints|raw }}</p>
             </div>
         {% endif %}
 
         {% if tourPublicTransportInfo is defined and not tourPublicTransportInfo is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>ÖV</h5>
-                <p>{{ tourPublicTransportInfo }}</p>
+                <p>{{ tourPublicTransportInfo|raw }}</p>
             </div>
         {% endif %}
 
         {% if tourHighlights is defined and not tourHighlights is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Highlights</h5>
-                <p>{{ tourHighlights }}</p>
+                <p>{{ tourHighlights|raw }}</p>
             </div>
         {% endif %}
 
         {% if tourProfile is defined and not tourProfile is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Eckdaten</h5>
-                <p>{{ tourProfile }}</p>
+                <p>{{ tourProfile|raw }}</p>
             </div>
         {% endif %}
 
         {# Gallery #}
-        {% include('@Contao_MarkocupicSacEventBlogBundle/write_event_blog_gallery_partial.html.twig') %}
+        {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_gallery_partial.html.twig') %}
 
         {% if youTubeId is defined and not youTubeId is empty %}
             <br>
