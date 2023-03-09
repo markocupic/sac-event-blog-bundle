@@ -76,7 +76,7 @@
                         <i class="pt-1 fas fa-fw fa-pennant text-primary"></i>
                         <div class="ms-2">
                             <h5 class="mt-0 lh-1">Tourenstationen</h5>
-                            <div>{{ tourWaypoints }}</div>
+                            <div>{{ tourWaypoints|raw }}</div>
                         </div>
                     </div>
                 {% endif %}
@@ -89,11 +89,11 @@
                             <h5 class="mt-0 lh-1">Eckdaten</h5>
                             <div>
                                 {% if tourTechDifficulty is defined and not tourTechDifficulty is empty %}
-                                    {{ tourTechDifficulty }}<br>
+                                    {{ tourTechDifficulty|raw }}<br>
                                 {% endif %}
 
                                 {% if tourProfile is defined and not tourProfile is empty %}
-                                    {{ tourProfile }}
+                                    {{ tourProfile|raw }}
                                 {% endif %}
                             </div>
                         </div>
@@ -105,7 +105,7 @@
                         <i class="pt-1 fas fa-fw fa-star text-primary"></i>
                         <div class="ms-2">
                             <h5 class="mt-0 lh-1">Highlights/Bemerkungen</h5>
-                            <div>{{ tourHighlights }}</div>
+                            <div>{{ tourHighlights|raw }}</div>
                         </div>
                     </div>
                 {% endif %}
@@ -115,7 +115,7 @@
                         <i class="pt-1 fas fa-fw fa-tram text-primary"></i>
                         <div class="ms-2">
                             <h5 class="mt-0 lh-1">ÖV</h5>
-                            <div>{{ tourPublicTransportInfo }}</div>
+                            <div>{{ tourPublicTransportInfo|raw }}</div>
                         </div>
                     </div>
                 {% endif %}
