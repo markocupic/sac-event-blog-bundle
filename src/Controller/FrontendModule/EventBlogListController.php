@@ -19,7 +19,9 @@ use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Intl\Locales;
 use Contao\CoreBundle\Routing\ScopeMatcher;
+use Contao\CoreBundle\Util\LocaleUtil;
 use Contao\Environment;
 use Contao\FilesModel;
 use Contao\MemberModel;
@@ -189,7 +191,7 @@ class EventBlogListController extends AbstractFrontendModuleController
         }
 
         $template->blogs = $arrBlogs;
-        $template->language = $this->page->language;
+        $template->language = LocaleUtil::formatAsLanguageTag($request->getLocale());
         $template->isAjaxRequest = $environmentAdapter->get('isAjaxRequest');
 
         return $template->getResponse();

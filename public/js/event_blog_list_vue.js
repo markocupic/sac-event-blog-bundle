@@ -137,8 +137,8 @@ class EventBlogList {
 
                     let self = this;
 
-                    let url = window.location.protocol + '//' + window.location.hostname + '/_mc_cc_api/' + self.options.params.apiKey + '/show?id=' + self.options.params.listModuleId
-                        + '&page_e' + self.options.params.listModuleId + '=' + self.currentPage
+                    let url = window.location.protocol + '//' + window.location.hostname + '/_mc_cc_api/' + self.options.params.apiKey + '/show/' + self.options.params.listModuleId
+                        + '?page_e' + self.options.params.listModuleId + '=' + self.currentPage
                         + '&_locale=' + self.options.params.language
                     ;
 
@@ -217,8 +217,8 @@ class EventBlogList {
                     // Use referer param to generate qrcode in EventBlogReaderController
                     let referer = btoa(window.location.href);
 
-                    let url = '/_mc_cc_api/' + self.options.params.apiKey + '/show?id=' + self.options.params.readerModuleId
-                        + '&items=' + self.currentItemId
+                    let url = '/_mc_cc_api/' + self.options.params.apiKey + '/show/' + self.options.params.readerModuleId
+                        + '?items=' + self.currentItemId
                         + '&referer=' + referer
                         + '&_locale=' + self.options.params.language
                     ;
