@@ -19,7 +19,6 @@ use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\CoreBundle\Intl\Locales;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Util\LocaleUtil;
 use Contao\Environment;
@@ -177,7 +176,7 @@ class EventBlogListController extends AbstractFrontendModuleController
             $limit = min($model->perPage + $offset, $total);
 
             $objPagination = new Pagination($total, $model->perPage, $configAdapter->get('maxPaginationLinks'), $id);
-            $template->pagination = $objPagination->generate("\n  ");
+            $template->pagination = $objPagination->generate(" ");
         }
 
         // Add blogs to the template
