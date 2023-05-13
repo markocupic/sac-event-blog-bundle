@@ -70,8 +70,6 @@ class FileUploadListener
             }
 
             $filePath = $fileModel->path;
-
-            mail('m.cupic@gmx.ch', 'bla', $filePath);
         }
 
         // Validate the image dimensions for the frontend widget
