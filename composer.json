@@ -30,6 +30,7 @@
         "markocupic/phpoffice-bundle": "^1.3",
         "markocupic/sac-event-tool-bundle": "*",
         "markocupic/zip-bundle": "^1.1",
+        "markocupic/contao-twig-assets": "^1.0",
         "terminal42/contao-fineuploader": "^3.4"
     },
     "require-dev": {
