@@ -316,7 +316,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $objFolder = new Folder('system/eventblogqrcodes');
 
         // Symlink
-        SymlinkUtil::symlink($objFolder->path, 'web/'.$objFolder->path, $this->projectDir);
+        SymlinkUtil::symlink($objFolder->path, 'public/'.$objFolder->path, $this->projectDir);
 
         // Generate path
         $filepath = sprintf($objFolder->path.'/'.'eventBlogQRcode_%s.png', md5($url));
