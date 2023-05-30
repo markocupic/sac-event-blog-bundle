@@ -2,8 +2,6 @@ services:
     _defaults:
         autowire: true
         autoconfigure: true
-        bind:
-        #$projectDir: '%kernel.project_dir%'
 
     Markocupic\SacEventBlogBundle\:
         resource: ../src/
@@ -41,6 +39,7 @@ services:
             - '@request_stack'
             - '@Codefog\HasteBundle\UrlParser'
             - '%kernel.project_dir%'
+            - '%contao.web_dir%'
             - '%sacevt.locale%'
         public: true
 

@@ -39,6 +39,7 @@ use Contao\Validator;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
+use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -57,6 +58,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         private readonly RequestStack $requestStack,
         private readonly UrlParser $urlParser,
         private readonly string $projectDir,
+        private readonly string $webDir,
         private readonly string $locale,
     ) {
     }
@@ -241,7 +243,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
                     $arrOrder = array_merge($arrOrder, array_values($images));
                 }
 
-                // Remove empty (unreplaced) entries
+                // Remove empty (not replaced) entries
                 $images = array_values(array_filter($arrOrder));
                 unset($arrOrder);
             }
@@ -315,8 +317,11 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         // Generate QR code folder
         $objFolder = new Folder('system/eventblogqrcodes');
 
-        // Symlink
-        SymlinkUtil::symlink($objFolder->path, 'public/'.$objFolder->path, $this->projectDir);
+        // Get the web directory as relative path --> public (or web)
+        $webDir = Path::makeRelative($this->webDir, $this->projectDir);
+
+        // Symlink (path: 'system/eventblogqrcodes', link: 'public/system/eventblogqrcodes')
+        SymlinkUtil::symlink($objFolder->path, $webDir.'/'.$objFolder->path, $this->projectDir);
 
         // Generate path
         $filepath = sprintf($objFolder->path.'/'.'eventBlogQRcode_%s.png', md5($url));

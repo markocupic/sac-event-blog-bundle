@@ -176,7 +176,7 @@ class EventBlogListController extends AbstractFrontendModuleController
             $limit = min($model->perPage + $offset, $total);
 
             $objPagination = new Pagination($total, $model->perPage, $configAdapter->get('maxPaginationLinks'), $id);
-            $template->pagination = $objPagination->generate(" ");
+            $template->pagination = $objPagination->generate(' ');
         }
 
         // Add blogs to the template
