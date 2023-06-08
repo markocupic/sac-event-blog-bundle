@@ -450,14 +450,14 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         // validate() also checks whether the form has been submitted
         if ($objForm->validate() && $inputAdapter->post('FORM_SUBMIT') === $objForm->getFormId()) {
             $objEventBlogModel->dateAdded = time();
-            $objEventBlogModel->title = html_entity_decode((string) $objForm->getWidget('title')->value);
-            $objEventBlogModel->text = html_entity_decode((string) $objForm->getWidget('text')->value);
+            $objEventBlogModel->title = (string) $objForm->getWidget('title')->value;
+            $objEventBlogModel->text = (string) $objForm->getWidget('text')->value;
             $objEventBlogModel->youTubeId = $objForm->getWidget('youTubeId')->value;
-            $objEventBlogModel->tourWaypoints = html_entity_decode((string) $objForm->getWidget('tourWaypoints')->value);
-            $objEventBlogModel->tourProfile = html_entity_decode((string) $objForm->getWidget('tourProfile')->value);
-            $objEventBlogModel->tourTechDifficulty = html_entity_decode((string) $objForm->getWidget('tourTechDifficulty')->value);
-            $objEventBlogModel->tourHighlights = html_entity_decode((string) $objForm->getWidget('tourHighlights')->value);
-            $objEventBlogModel->tourPublicTransportInfo = html_entity_decode((string) $objForm->getWidget('tourPublicTransportInfo')->value);
+            $objEventBlogModel->tourWaypoints = (string) $objForm->getWidget('tourWaypoints')->value;
+            $objEventBlogModel->tourProfile = (string) $objForm->getWidget('tourProfile')->value;
+            $objEventBlogModel->tourTechDifficulty = (string) $objForm->getWidget('tourTechDifficulty')->value;
+            $objEventBlogModel->tourHighlights = (string) $objForm->getWidget('tourHighlights')->value;
+            $objEventBlogModel->tourPublicTransportInfo = (string) $objForm->getWidget('tourPublicTransportInfo')->value;
 
             $objEventBlogModel->save();
 
