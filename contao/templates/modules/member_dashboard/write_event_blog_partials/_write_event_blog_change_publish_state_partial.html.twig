@@ -68,7 +68,12 @@
                 //
             },
             methods: {
-                publishBlog: function () {
+                publishBlog: async function (event) {
+
+                    // Without event.preventDefault();
+                    // with Firefox will create a NS_BINDING_ABORTED issue
+                    // and redirect before getting the response
+                    event.preventDefault();
 
                     let self = this;
                     this.pendingRequest = true;
@@ -92,10 +97,10 @@
                     formData.append('eventId', urlParams.get('eventId'));
 
                     // Fetch
-                    fetch('ajaxMemberDashboardWriteEventBlog/setPublishState', {
+                    await fetch('ajaxMemberDashboardWriteEventBlog/setPublishState', {
                             method: 'POST',
                             headers: {
-                                'x-requested-with': 'XMLHttpRequest'
+                                'x-requested-with': 'XMLHttpRequest',
                             },
                             body: formData,
                         }
