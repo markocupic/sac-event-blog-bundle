@@ -172,7 +172,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                     $set = [
                         'title' => $objEvent->title,
                         'eventTitle' => $objEvent->title,
-                        'eventSubstitutionText' => EventExecutionState::STATE_ADAPTED === $objEvent->executionState && '' !== $objEvent->eventSubstitutionText ? $objEvent->eventSubstitutionText : '',
+                        'eventSubstitutionText' => EventExecutionState::STATE_ADAPTED === $objEvent->executionState && '' !== $objEvent->eventSubstitutionText ? $stringUtilAdapter->substr($objEvent->eventSubstitutionText, 250) : '',
                         'eventStartDate' => $objEvent->startDate,
                         'eventEndDate' => $objEvent->endDate,
                         'organizers' => $objEvent->organizers,
