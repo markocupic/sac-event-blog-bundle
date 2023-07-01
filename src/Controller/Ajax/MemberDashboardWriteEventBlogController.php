@@ -73,7 +73,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/setPublishState', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_publish_state', defaults: ['_scope' => 'frontend'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/setPublishState', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_publish_state', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
     public function setPublishStateAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -239,7 +239,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/sortGallery', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_sort_gallery', defaults: ['_scope' => 'frontend'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/sortGallery', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_sort_gallery', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
     public function sortGalleryAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -289,7 +289,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/removeImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_remove_image', defaults: ['_scope' => 'frontend'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/removeImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_remove_image', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
     public function removeImageAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -370,7 +370,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/rotateImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_rotate_image', defaults: ['_scope' => 'frontend'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/rotateImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_rotate_image', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
     public function rotateImageAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -399,7 +399,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/getCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_get_caption', defaults: ['_scope' => 'frontend'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/getCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_get_caption', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
     public function getCaptionAction(): JsonResponse
     {
         $this->framework->initialize();
@@ -451,7 +451,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/setCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_caption', defaults: ['_scope' => 'frontend'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/setCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_caption', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
     public function setCaptionAction(): JsonResponse
     {
         $this->framework->initialize();
