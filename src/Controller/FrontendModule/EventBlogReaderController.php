@@ -149,6 +149,9 @@ class EventBlogReaderController extends AbstractFrontendModuleController
                 $url = $this->urlParser->addQueryString('show_event_blog='.$this->blog->id);
             }
 
+            // Remove facebook "fbclid" param
+            $url = $this->urlParser->removeQueryString(['fbclid'], $url);
+
             if ('' !== $url) {
                 if (null !== ($qrCodePath = $this->getQrCodeFromUrl($url))) {
                     $template->qrCodePath = $qrCodePath;
