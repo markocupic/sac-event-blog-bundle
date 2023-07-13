@@ -14,15 +14,14 @@ declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\DataContainer;
 
-use Contao\Backend;
 use Contao\CalendarEventsModel;
-use Contao\CoreBundle\Asset\ContaoContext;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
 use Contao\Environment;
 use Contao\Files;
 use Contao\FilesModel;
 use Contao\Folder;
+use Contao\Image;
 use Contao\MemberModel;
 use Contao\StringUtil;
 use Contao\UserModel;
@@ -46,7 +45,6 @@ class CalendarEventsBlog
         private readonly Connection $connection,
         private readonly RequestStack $requestStack,
         private readonly BinaryFileDownload $binaryFileDownload,
-        private readonly ContaoContext $contaoAssetsContext,
         private readonly string $projectDir,
         private readonly string $tempDir,
         private readonly string $eventBlogDocxExportTemplate,
@@ -149,8 +147,12 @@ class CalendarEventsBlog
             $disabled = true;
         }
 
-        $assetsUrl = $this->contaoAssetsContext->getStaticUrl();
-        $args[0] = sprintf('<div class="list_icon_new" style="background-image:url(\'%ssystem/themes/%s/icons/%s.svg\')" data-icon="%s.svg" data-icon-disabled="%s.svg">&nbsp;</div>', $assetsUrl, Backend::getTheme(), $image, $disabled ? $image : rtrim($image, '_'), rtrim($image, '_').'_');
+        $args[0] = sprintf(
+            '<div class="list_icon_new" style="background-image:url(\'%s\')" data-icon="%s" data-icon-disabled="%s">&nbsp;</div>',
+            Image::getPath($image),
+            Image::getPath($disabled ? $image : rtrim($image, '_')),
+            Image::getPath(rtrim($image, '_').'_')
+        );
 
         return $args;
     }
