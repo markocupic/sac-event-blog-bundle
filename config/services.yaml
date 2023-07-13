@@ -18,6 +18,7 @@ services:
             - '@database_connection'
             - '@request_stack'
             - '@Markocupic\SacEventToolBundle\Download\BinaryFileDownload'
+            - '@contao.assets.files_context'
             - '%kernel.project_dir%'
             - '%sacevt.temp_dir%'
             - '%sac_event_blog.docx_export_template%'
