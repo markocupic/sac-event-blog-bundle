@@ -167,8 +167,8 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'sort'      => true,
             'search'    => true,
             'inputType' => 'text',
-            'eval'      => ['doNotCopy' => true, 'mandatory' => false, 'maxlength' => 255, 'tl_class' => 'clr'],
-            'sql'       => "varchar(255) NOT NULL default ''",
+            'eval'      => ['doNotCopy' => true, 'mandatory' => false, 'maxlength' => 11, 'tl_class' => 'clr'],
+            'sql'       => "varchar(11) NOT NULL default ''",
         ],
         'sacMemberId'             => [
             'filter'    => true,

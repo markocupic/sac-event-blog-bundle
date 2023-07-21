@@ -358,7 +358,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm->addFormField('title', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_title', [], 'contao_default'),
             'inputType' => 'text',
-            'eval' => ['mandatory' => true, 'decodeEntities' => true],
+            'eval' => ['mandatory' => true, 'maxlength' => '250', 'decodeEntities' => true],
             'value' => $this->getTourTitle($objEventBlogModel),
         ]);
 
@@ -433,7 +433,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             [
                 'label' => $this->translator->trans('FORM.md_write_event_blog_youTubeId', [], 'contao_default'),
                 'inputType' => 'text',
-                'eval' => ['placeholder' => 'z.B. G02hYgT3nGw'],
+                'eval' => ['maxlength' => '11', 'placeholder' => 'z.B. G02hYgT3nGw'],
                 'value' => (string) $objEventBlogModel->youTubeId,
             ]
         );
