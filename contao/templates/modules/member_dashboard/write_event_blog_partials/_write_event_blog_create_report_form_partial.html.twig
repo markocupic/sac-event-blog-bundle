@@ -1,4 +1,4 @@
-{% do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.min.js|static') %}
+{% do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.global.prod.js|static') %}
 
 <!-- Modal Box text and YouTube -->
 <div id="ModalWriteTextAndYt" class="modal fade write-event-blog-text-and-yt" tabindex="-1" role="dialog" aria-labelledby="ModalWriteTextAndYt"
@@ -13,7 +13,7 @@
                 <div id="editReportFormBox">
                     {{ objEventBlogTextAndYoutubeForm|raw }}
                     <p id="ctrl_text_strLenRemaining" class="text-success">
-                        Verbleibende Zeichen (Leerzeichen inklusive): ${ ctrl_text.strLenRemaining }
+                        Verbleibende Zeichen (Leerzeichen inklusive): [[ ctrl_text.strLenRemaining ]]
                     </p>
                 </div>
             </div>
@@ -23,23 +23,28 @@
 
 <script>
     // Vue js
-    new Vue({
-        el: '#editReportFormBox',
-        delimiters: ['${', '}'],
-        data: {
-            ctrl_text: {
-                value: null,
-                len: 0,
-                strLenRemaining: 0,
-            },
+    const {createApp} = Vue
+
+    // Instantiate vue.js application
+    const app = createApp({
+        data() {
+            return {
+                ctrl_text: {
+                    value: null,
+                    len: 0,
+                    strLenRemaining: 0,
+                },
+            };
         },
-        created: function () {
+
+        mounted() {
             this.ctrl_text.value = document.getElementById('ctrl_text').value;
             this.ctrl_text.len = document.getElementById('ctrl_text').value.length;
             this.ctrl_text.strLenRemaining = parseInt(document.getElementById('ctrl_text').getAttribute('maxlength')) - this.ctrl_text.len;
             // Cut and append stringRemainig indicator
             this.cutAndAppend(document.getElementById('ctrl_text_strLenRemaining'), document.getElementById('ctrl_text').parentElement);
         },
+
         methods: {
             onKeyUp: function (elemId) {
                 if (elemId === 'ctrl_text') {
@@ -52,7 +57,10 @@
                 parentNode.appendChild(childElem);
             }
         }
-    })
+    });
+
+    app.config.compilerOptions.delimiters = ['[[ ', ' ]]'];
+    app.mount('#editReportFormBox');
 </script>
 
 <script>

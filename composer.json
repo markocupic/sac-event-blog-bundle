@@ -31,6 +31,7 @@
         "markocupic/sac-event-tool-bundle": "*",
         "markocupic/zip-bundle": "^1.1",
         "markocupic/contao-twig-assets": "^1.0",
+        "markocupic/contao-component-vue-js": "^3.3",
         "terminal42/contao-fineuploader": "^3.4"
     },
     "require-dev": {

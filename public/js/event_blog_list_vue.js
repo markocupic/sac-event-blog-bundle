@@ -32,20 +32,23 @@ class EventBlogList {
         // merge options and defaults
         let options = {...defaults, ...opt}
 
+        const {createApp} = Vue
+
         // Instantiate vue.js application
-        new Vue({
-            el: elId,
-            data: {
-                options: options,
-                listContent: '',
-                readerContent: '',
-                itemIds: [],
-                currentPage: null,
-                currentItemIndex: null,
-                currentItemId: null,
+        const app = createApp({
+            data() {
+                return {
+                    options: options,
+                    listContent: '',
+                    readerContent: '',
+                    itemIds: [],
+                    currentPage: null,
+                    currentItemIndex: null,
+                    currentItemId: null,
+                };
             },
 
-            created: async function created() {
+            async mounted() {
                 let self = this;
 
                 self.itemIds = self.options.params.itemIds;
@@ -443,5 +446,6 @@ class EventBlogList {
                 }
             }
         });
+        app.mount(elId);
     }
 }

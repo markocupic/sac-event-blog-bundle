@@ -2,7 +2,7 @@
 
 {% block content %}
 
-    {% do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.min.js|static') %}
+    {% do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.global.prod.js|static') %}
 
     {% if hasInfoMessage %}
         {% for msg in infoMessages %}

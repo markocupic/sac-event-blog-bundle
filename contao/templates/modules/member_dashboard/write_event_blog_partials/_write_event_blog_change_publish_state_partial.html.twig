@@ -1,4 +1,4 @@
-{% do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.min.js|static') %}
+{% do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.global.prod.js|static') %}
 
 {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
     <div class="me-2">
@@ -58,15 +58,17 @@
 
     <script>
         // Vue js
-        new Vue({
-            el: '#changePublishStateForm',
-            data: {
-                publishState: {{ constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') }},
-                pendingRequest: false,
+        const {createApp} = Vue
+
+        // Instantiate vue.js application
+        const app = createApp({
+            data() {
+                return {
+                    publishState: {{ constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') }},
+                    pendingRequest: false,
+                };
             },
-            created: function () {
-                //
-            },
+
             methods: {
                 publishBlog: async function (event) {
 
@@ -121,6 +123,7 @@
                     });
                 }
             }
-        })
+        });
+        app.mount(#changePublishStateForm);
     </script>
 {% endif %}

@@ -1,8 +1,8 @@
 <!-- indexer::stop -->
 {% if not isAjaxRequest %}
 
-    {% do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.min.js|static') %}
-
+    {# do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.global.prod.js|static') #}
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     {# append the version parameter to ensure that clients receive the latest version of the asset, when it changes. #}
     {% set fileMakeTime = getFileMakeTime('vendor/markocupic/sac-event-blog-bundle/public/js/event_blog_list_vue.js') %}
     {% do addJavascriptResource('bundles/markocupicsaceventblog/js/event_blog_list_vue.js|' ~ fileMakeTime) %}
