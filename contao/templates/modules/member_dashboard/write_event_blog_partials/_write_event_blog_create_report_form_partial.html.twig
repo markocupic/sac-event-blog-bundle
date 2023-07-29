@@ -41,7 +41,7 @@
             this.ctrl_text.value = document.getElementById('ctrl_text').value;
             this.ctrl_text.len = document.getElementById('ctrl_text').value.length;
             this.ctrl_text.strLenRemaining = parseInt(document.getElementById('ctrl_text').getAttribute('maxlength')) - this.ctrl_text.len;
-            // Cut and append stringRemainig indicator
+            // Cut and append string length remain indicator
             this.cutAndAppend(document.getElementById('ctrl_text_strLenRemaining'), document.getElementById('ctrl_text').parentElement);
         },
 
@@ -65,12 +65,10 @@
 
 <script>
     // Open modal on error
-    (function ($) {
-        jQuery(document).ready(function () {
-            if ($('#ModalWriteTextAndYt .widget.error').length) {
-                let modal = new bootstrap.Modal(document.getElementById('ModalWriteTextAndYt'));
-                modal.show();
-            }
-        });
-    })(jQuery);
+    window.addEventListener("DOMContentLoaded", (event) => {
+        if (document.querySelectorAll('#ModalWriteTextAndYt .widget.error').length) {
+            let modal = new bootstrap.Modal(document.getElementById('ModalWriteTextAndYt'));
+            modal.show();
+        }
+    });
 </script>
