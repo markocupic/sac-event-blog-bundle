@@ -11,3 +11,9 @@
         </div>
     </div>
 </div>
+<script>
+    // Do not send the form twice
+    document.querySelector('#ModalFotoupload form').addEventListener('submit', (e) => {
+        e.target.querySelector('#ctrl_submitImageUploadFormBtn').disabled = true;
+    });
+</script>

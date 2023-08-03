@@ -27,9 +27,7 @@ use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Dbafs;
 use Contao\Environment;
 use Contao\File;
-use Contao\Files;
 use Contao\FilesModel;
-use Contao\Folder;
 use Contao\FrontendUser;
 use Contao\Input;
 use Contao\Message;
@@ -46,6 +44,8 @@ use Markocupic\SacEventToolBundle\CalendarEventsHelper;
 use Markocupic\SacEventToolBundle\Config\EventExecutionState;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Psr\Log\LogLevel;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -53,7 +53,7 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AsFrontendModule(MemberDashboardEventBlogWriteController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_member_dashboard_write_event_blog')]
+#[AsFrontendModule(MemberDashboardEventBlogWriteController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_member_dashboard_write_event_blog')]
 class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleController
 {
     public const TYPE = 'member_dashboard_write_event_blog';
@@ -342,7 +342,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     private function generateTextAndYoutubeForm(CalendarEventsBlogModel $objEventBlogModel): string
     {
         // Set adapters
-        $environmentAdapter = $this->framework->getAdapter(Environment::class);
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
         $inputAdapter = $this->framework->getAdapter(Input::class);
 
@@ -351,8 +350,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'POST',
         );
 
-        $url = $environmentAdapter->get('uri');
-        $objForm->setAction($url);
+        $uri = $this->requestStack->getCurrentRequest()->getUri();
+        $objForm->setAction($uri);
 
         // Title
         $objForm->addFormField('title', [
@@ -568,14 +567,12 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     private function generatePictureUploadForm(CalendarEventsBlogModel $objEventBlogModel, ModuleModel $moduleModel): string
     {
         // Set adapters
-        /** @var Environment $environmentAdapter */
-        $environmentAdapter = $this->framework->getAdapter(Environment::class);
         /** @var Controller $controllerAdapter */
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
         /** @var Input $inputAdapter */
         $inputAdapter = $this->framework->getAdapter(Input::class);
-        /** @var Files $filesAdapter */
-        $filesAdapter = $this->framework->getAdapter(Files::class);
+        /** @var Message $messageAdapter */
+        $messageAdapter = $this->framework->getAdapter(Message::class);
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
         /** @var FilesModel $filesModelAdapter */
@@ -594,10 +591,23 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             $configAdapter->set('imageHeight', (int) $moduleModel->eventBlogMaxImageHeight);
         }
 
-        $objUploadFolder = new Folder($this->eventBlogAssetDir.'/'.$objEventBlogModel->id);
-        $dbafsAdapter->addResource($objUploadFolder->path);
+        $fs = new Filesystem();
 
-        if (!is_dir($this->projectDir.'/'.$this->eventBlogAssetDir.'/'.$objEventBlogModel->id)) {
+        $tmpUploadDir = sprintf('%s/system/tmp/event_blog/%s', $this->projectDir, $objEventBlogModel->id);
+
+        if (!is_dir($tmpUploadDir)) {
+            $fs->mkdir($tmpUploadDir);
+        }
+
+        $destDir = $this->projectDir.'/'.$this->eventBlogAssetDir.'/'.$objEventBlogModel->id;
+
+        if (!is_dir($destDir)) {
+            $fs->mkdir($destDir);
+        }
+
+        $dbafsAdapter->addResource(Path::makeRelative($destDir, $this->projectDir));
+
+        if (!is_dir($destDir)) {
             throw new \Exception($this->translator->trans('ERR.md_write_event_blog_uploadDirNotFound', [], 'contao_default'));
         }
 
@@ -606,8 +616,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'POST',
         );
 
-        $url = $environmentAdapter->get('uri');
-        $objForm->setAction($url);
+        $uri = $this->requestStack->getCurrentRequest()->getUri();
+        $objForm->setAction($uri);
 
         // Add some fields
         $objForm->addFormField('fileUpload', [
@@ -616,12 +626,12 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'eval' => [
                 'extensions' => 'jpg,jpeg',
                 'storeFile' => true,
-                'addToDbafs' => true,
+                'addToDbafs' => false,
                 'isGallery' => false,
-                'directUpload' => false,
+                'directUpload' => true,
                 'multiple' => true,
                 'useHomeDir' => false,
-                'uploadFolder' => $objUploadFolder->getModel()->uuid,
+                'uploadFolder' => Path::makeRelative($tmpUploadDir, $this->projectDir),
                 'mandatory' => true,
             ],
         ]);
@@ -640,71 +650,90 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         // validate() also checks whether the form has been submitted
         if ($objForm->validate() && $inputAdapter->post('FORM_SUBMIT') === $objForm->getFormId()) {
             if ($inputAdapter->post('fileUpload')) {
-                $arrFiles = explode(',', $inputAdapter->post('fileUpload'));
+                // Make usage of Input::postRaw() because we don't want brackets to be encoded -> &#040;
+                $arrFiles = explode(',', $inputAdapter->postRaw('fileUpload'));
 
                 if (!empty($arrFiles)) {
                     foreach ($arrFiles as $path) {
-                        $objFile = new File($objUploadFolder->path.'/'.basename($path));
+                        if (!is_file($this->projectDir.'/'.$path)) {
+                            $msg = $this->translator->trans('FORM.md_write_event_blog_uploadFileError', ['%s' => basename($path)], 'contao_default');
+                            $messageAdapter->addInfo($msg);
+                            $objWidgetFileUpload->addError($msg);
 
-                        if ($objFile->isImage) {
-                            $dbafsAdapter->addResource($objFile->path);
+                            continue;
+                        }
 
-                            if (null !== ($objModel = $objFile->getModel())) {
-                                // Rename file
-                                $newFilename = sprintf('event-blog-%s-img-%s.%s', $objEventBlogModel->id, $objModel->id, strtolower($objFile->extension));
-                                $newPath = $objUploadFolder->path.'/'.$newFilename;
-                                $filesAdapter->getInstance()->rename($objFile->path, $newPath);
-                                $objModel->path = $newPath;
-                                $objModel->name = basename($newPath);
-                                $objModel->tstamp = time();
-                                $objModel->save();
-                                $dbafsAdapter->updateFolderHashes($objUploadFolder->path);
+                        $objFile = new File($path);
 
-                                if (is_file($this->projectDir.'/'.$newPath)) {
-                                    $oFileModel = $filesModelAdapter->findByPath($newPath);
+                        if (!$objFile->isImage) {
+                            $msg = $this->translator->trans('FORM.md_write_event_blog_uploadedFileNotImage', ['%s' => basename($path)], 'contao_default');
+                            $messageAdapter->addInfo($msg);
+                            $objWidgetFileUpload->addError($msg);
 
-                                    if (null !== $oFileModel) {
-                                        // Add photographer name to meta field
-                                        if (null !== $this->user) {
-                                            $arrMeta = $stringUtilAdapter->deserialize($oFileModel->meta, true);
+                            continue;
+                        }
 
-                                            if (!isset($arrMeta[$this->page->language])) {
-                                                $arrMeta[$this->page->language] = [
-                                                    'title' => '',
-                                                    'alt' => '',
-                                                    'link' => '',
-                                                    'caption' => '',
-                                                    'photographer' => '',
-                                                ];
-                                            }
-                                            $arrMeta[$this->page->language]['photographer'] = $this->user->firstname.' '.$this->user->lastname;
-                                            $oFileModel->meta = serialize($arrMeta);
-                                            $oFileModel->save();
-                                        }
+                        $newID = $this->connection->fetchOne('SELECT MAX(id) AS maxId FROM tl_files') + 1;
 
-                                        // Save gallery data to tl_calendar_events_blog
-                                        $multiSRC = $stringUtilAdapter->deserialize($objEventBlogModel->multiSRC, true);
-                                        $multiSRC[] = $oFileModel->uuid;
-                                        $objEventBlogModel->multiSRC = serialize($multiSRC);
-                                        $orderSRC = $stringUtilAdapter->deserialize($objEventBlogModel->multiSRC, true);
-                                        $orderSRC[] = $oFileModel->uuid;
-                                        $objEventBlogModel->orderSRC = serialize($orderSRC);
-                                        $objEventBlogModel->save();
-                                    }
+                        $newPath = sprintf(
+                            '%s/event-blog-%s-img-%s.%s',
+                            $destDir,
+                            $objEventBlogModel->id,
+                            $newID,
+                            strtolower($objFile->extension),
+                        );
 
-                                    // Log
-                                    $strText = sprintf('User with username %s has uploaded a new picture ("%s").', $this->user->username, $objModel->path);
-                                    $logger = System::getContainer()->get('monolog.logger.contao');
-                                    $logger->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
+                        // Copy image from system/tmp to the destination directory
+                        $fs->copy($this->projectDir.'/'.$path, $newPath);
+
+                        // Add image to DBAFS
+                        $dbafsAdapter->addResource(Path::makeRelative($newPath, $this->projectDir));
+
+                        $objFilesModel = $filesModelAdapter->findByPath(Path::makeRelative($newPath, $this->projectDir));
+
+                        if (null !== $objFilesModel) {
+                            $dbafsAdapter->updateFolderHashes(Path::makeRelative($destDir, $this->projectDir));
+
+                            // Add photographer name to meta field
+                            if (null !== $this->user) {
+                                $arrMeta = $stringUtilAdapter->deserialize($objFilesModel->meta, true);
+
+                                if (!isset($arrMeta[$this->page->language])) {
+                                    $arrMeta[$this->page->language] = [
+                                        'title' => '',
+                                        'alt' => '',
+                                        'link' => '',
+                                        'caption' => '',
+                                        'photographer' => '',
+                                    ];
                                 }
+
+                                $arrMeta[$this->page->language]['photographer'] = $this->user->firstname.' '.$this->user->lastname;
+                                $objFilesModel->meta = serialize($arrMeta);
+                                $objFilesModel->tstamp = time();
+
+                                $objFilesModel->save();
                             }
+
+                            // Save gallery data to tl_calendar_events_blog
+                            $multiSRC = $stringUtilAdapter->deserialize($objEventBlogModel->multiSRC, true);
+                            $multiSRC[] = $objFilesModel->uuid;
+                            $objEventBlogModel->multiSRC = serialize($multiSRC);
+                            $orderSRC = $stringUtilAdapter->deserialize($objEventBlogModel->multiSRC, true);
+                            $orderSRC[] = $objFilesModel->uuid;
+                            $objEventBlogModel->orderSRC = serialize($orderSRC);
+                            $objEventBlogModel->save();
+
+                            // Log
+                            $strText = sprintf('User with username %s has uploaded a new picture ("%s").', $this->user->username, $objFilesModel->path);
+                            $logger = System::getContainer()->get('monolog.logger.contao');
+                            $logger->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
                         }
                     }
                 }
             }
 
             if (!$objWidgetFileUpload->hasErrors()) {
-                // Reload page
                 $controllerAdapter->reload();
             }
         }

@@ -33,6 +33,8 @@ $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_tourHighlights'] = 'Highlights/
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_tourPublicTransportInfo'] = 'Mögliche ÖV-Verbindung';
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_youTubeId'] = 'YouTube Film-Id';
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_submit'] = 'Änderungen speichern';
+$GLOBALS['TL_LANG']['FORM']['md_write_event_blog_uploadedFileNotImage'] = 'Die von dir hochgeladenen Datei "%s" scheint nicht ein Bild zu sein.';
+$GLOBALS['TL_LANG']['FORM']['md_write_event_blog_uploadFileError'] = 'Die Datei "%s" konnte nicht hochgeladen werden.';
 
 // Frontend member dashboard write event blog frontend module - image upload
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_imageUpload'] = 'Bildupload';
