@@ -26,8 +26,8 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
                         </div>
 
-                        <div class="modal-body">
-                            <div class="d-flex justify-content-end">
+                        <div class="modal-body px-3 px-sm-4 px-lg-5">
+                            <div class="d-flex justify-content-between justify-content-md-end">
                                 <button type="button" v-if="hasPrevItem()" v-on:click="goToPrevItem()" class="btn btn-primary ms-0"><i class="fas fa-arrow-left"></i> Vorheriger Bericht</button>
                                 <button type="button" v-if="hasNextItem()" v-on:click="goToNextItem()" class="btn btn-primary ms-2">Nächster Bericht <i class="fas fa-arrow-right"></i></button>
                             </div>
