@@ -68,7 +68,7 @@
     <div class="grid-card equal-height block">
         {% for blog in blogs %}
             <div itemscope itemtype="http://schema.org/Article">
-                <div class="card event-item">
+                <div class="card event-item" data-aos="fade-down" data-aos-duration="600" data-aos-once="true" data-aos-anchor-placement="top-bottom">
 
                     <div class="p-2 d-flex align-items-center">
                         {% if  blog.author.model is defined %}
