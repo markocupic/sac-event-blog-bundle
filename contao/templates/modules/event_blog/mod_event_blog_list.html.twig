@@ -79,7 +79,7 @@
 
                     {% if blog.singleSRC %}
                         <div class="image-zoom-in">
-                            <a href="{{ blog.href }}" class="item-reader-link">
+                            <a href="{{ blog.href }}" class="item-reader-link" aria-label="{{ blog.title|escape('html_attr') }}">
                                 {{ '{{image::' ~ blog.singleSRC.uuid ~ '?width=450&height=300&mode=crop&class=card-img-top}}' }}
                             </a>
                         </div>
