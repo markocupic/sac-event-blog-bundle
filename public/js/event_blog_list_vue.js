@@ -253,10 +253,8 @@ class EventBlogList {
                  */
                 hasNextItem: function hasNextItem() {
                     let self = this;
-                    if (typeof self.itemIds[self.currentItemIndex + 1] !== 'undefined') {
-                        return true;
-                    }
-                    return false;
+                    return typeof self.itemIds[self.currentItemIndex + 1] !== 'undefined';
+
                 },
 
                 /**
@@ -274,10 +272,8 @@ class EventBlogList {
                  */
                 hasPrevItem: function hasPrevItem() {
                     let self = this;
-                    if (typeof self.itemIds[self.currentItemIndex - 1] !== 'undefined') {
-                        return true;
-                    }
-                    return false;
+                    return typeof self.itemIds[self.currentItemIndex - 1] !== 'undefined';
+
                 },
 
                 getCurrentItemIndex: function getCurrentItemIndex() {
@@ -439,10 +435,8 @@ class EventBlogList {
                  * @returns {boolean}
                  */
                 isModalOpen: function isModalOpen() {
-                    if (document.querySelector(elId + ' .modal.show')) {
-                        return true;
-                    }
-                    return false;
+                    return !!document.querySelector(elId + ' .modal.show');
+
                 }
             }
         });
