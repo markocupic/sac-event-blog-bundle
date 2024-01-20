@@ -297,8 +297,7 @@ class CalendarEventsBlog
             time()
         );
 
-        // Generate docx and save it in system/tmp/...
-        $objPhpWord->sendToBrowser(false)
+        $objPhpWord
             ->generateUncached(true)
             ->generate()
         ;
