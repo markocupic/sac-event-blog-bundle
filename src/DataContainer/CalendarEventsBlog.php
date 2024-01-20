@@ -36,6 +36,7 @@ use Markocupic\SacEventToolBundle\Download\BinaryFileDownload;
 use Markocupic\ZipBundle\Zip\Zip;
 use PhpOffice\PhpWord\Exception\CopyFileException;
 use PhpOffice\PhpWord\Exception\CreateTemporaryFileException;
+use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Security;
@@ -171,7 +172,9 @@ class CalendarEventsBlog
             throw new \Exception('Event not found.');
         }
 
-        if (!is_file($this->projectDir.'/'.$this->eventBlogDocxExportTemplate)) {
+        $docxTemplateSrc = Path::makeAbsolute($this->eventBlogDocxExportTemplate, $this->projectDir);
+
+        if (!is_file($docxTemplateSrc)) {
             throw new \Exception('Template file not found.');
         }
 
@@ -183,7 +186,8 @@ class CalendarEventsBlog
         new Folder($imageDir);
 
         $targetFile = sprintf('%s/event_blog_%s.docx', $targetDir, $objBlog->id);
-        $objPhpWord = new MsWordTemplateProcessor($this->eventBlogDocxExportTemplate, $targetFile);
+        $targetFile = Path::makeAbsolute($targetFile, $this->projectDir);
+        $objPhpWord = new MsWordTemplateProcessor($docxTemplateSrc, $targetFile);
 
         // Organizers
         $arrOrganizers = CalendarEventsHelper::getEventOrganizersAsArray($objEvent);
@@ -289,6 +293,8 @@ class CalendarEventsBlog
             }
         }
 
+        $objPhpWord->generate();
+
         $zipSrc = sprintf(
             '%s/%s/blog_%s_%s.zip',
             $this->projectDir,
@@ -297,12 +303,7 @@ class CalendarEventsBlog
             time()
         );
 
-        $objPhpWord
-            ->generateUncached(true)
-            ->generate()
-        ;
-
-        // Zip archive
+        // Create zip archive
         (new Zip())
             ->ignoreDotFiles(false)
             ->stripSourcePath($this->projectDir.'/'.$targetDir)
