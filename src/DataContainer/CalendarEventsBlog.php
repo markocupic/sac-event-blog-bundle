@@ -16,6 +16,7 @@ namespace Markocupic\SacEventBlogBundle\DataContainer;
 
 use Contao\CalendarEventsModel;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
+use Contao\CoreBundle\Exception\ResponseException;
 use Contao\DataContainer;
 use Contao\Environment;
 use Contao\Files;
@@ -35,6 +36,7 @@ use Markocupic\SacEventToolBundle\Download\BinaryFileDownload;
 use Markocupic\ZipBundle\Zip\Zip;
 use PhpOffice\PhpWord\Exception\CopyFileException;
 use PhpOffice\PhpWord\Exception\CreateTemporaryFileException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Security\Core\Security;
 
@@ -64,7 +66,7 @@ class CalendarEventsBlog
 
         if ($id && 'exportBlog' === $request->query->get('action')) {
             if (null !== ($objBlog = CalendarEventsBlogModel::findByPk($id))) {
-                $this->exportBlog($objBlog);
+                throw new ResponseException($this->exportBlog($objBlog));
             }
         }
     }
@@ -161,7 +163,7 @@ class CalendarEventsBlog
      * @throws CopyFileException
      * @throws CreateTemporaryFileException
      */
-    private function exportBlog(CalendarEventsBlogModel $objBlog): void
+    private function exportBlog(CalendarEventsBlogModel $objBlog): BinaryFileResponse
     {
         $objEvent = CalendarEventsModel::findByPk($objBlog->eventId);
 
@@ -309,7 +311,7 @@ class CalendarEventsBlog
             ->run($zipSrc)
         ;
 
-        $this->binaryFileDownload->sendFileToBrowser($zipSrc, basename($zipSrc));
+        return $this->binaryFileDownload->sendFileToBrowser($zipSrc, basename($zipSrc));
     }
 
     private function getMeta(FilesModel $objFile, string $lang = 'en'): array

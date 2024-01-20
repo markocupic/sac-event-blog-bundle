@@ -72,7 +72,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'exportBlog' => [
                 'label' => &$GLOBALS['TL_LANG']['tl_calendar_events_blog']['exportBlog'],
                 'href'  => 'action=exportBlog',
-                'icon'  => 'bundles/markocupicsaceventtool/icons/docx.png',
+                'icon'  => 'bundles/markocupicsaceventblog/icons/file-word-regular.svg',
             ],
         ],
     ],
