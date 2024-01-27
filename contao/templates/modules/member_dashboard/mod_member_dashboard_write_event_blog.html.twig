@@ -25,7 +25,7 @@
         <p class="mt-0 mb-0">Dein Bericht für:<p>
         <h4 class="mt-1"><span class="text-primary">{{ eventName }}</span></h4>
 
-        {% if executionState is constant('\\Markocupic\\SacEventToolBundle\\Config\\EventExecutionState::STATE_ADAPTED') and not eventSubstitutionText is empty %}
+        {% if executionState is constant('\\Markocupic\\SacEventToolBundle\\Config\\EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED') and not eventSubstitutionText is empty %}
             <h4 class="mt-2" style="color: red">Ausweichtour: {{ eventSubstitutionText }}</h4>
         {% endif %}
 
