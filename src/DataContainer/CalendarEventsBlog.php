@@ -118,7 +118,7 @@ class CalendarEventsBlog
 
             if (null !== $objEvent) {
                 $objBlogModel->eventTitle = $objEvent->title;
-                $objBlogModel->substitutionEvent = EventExecutionState::STATE_ADAPTED === $objEvent->executionState && '' !== $objEvent->eventSubstitutionText ? $objEvent->eventSubstitutionText : '';
+                $objBlogModel->substitutionEvent = EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED === $objEvent->executionState && '' !== $objEvent->eventSubstitutionText ? $objEvent->eventSubstitutionText : '';
                 $objBlogModel->eventStartDate = $objEvent->startDate;
                 $objBlogModel->eventEndDate = $objEvent->endDate;
                 $objBlogModel->organizers = $objEvent->organizers;
