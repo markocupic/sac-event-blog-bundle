@@ -3,7 +3,7 @@
 <img src="docs/images/sac_logo.png" height="100">
 </div>
 
-# SAC Event Blog Bundle/Tourenberichte-Tool
+# [SAC](https://www.sac-cas.ch) Event Blog Bundle/Tourenberichte-Tool
 
 ![Listenansicht](docs/images/sac_event_blog_bundle.gif)
 
