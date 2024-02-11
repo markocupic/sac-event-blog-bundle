@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -73,16 +73,16 @@ class CalendarEventsBlog
     }
 
     #[AsCallback(table: 'tl_calendar_events_blog', target: 'config.onload')]
-    public function setPalettes(): void
+    public function adjustDcaFields(): void
     {
-        $user = $this->security->getUser();
-
         // Overwrite readonly attribute for admins
-        if ($user->admin) {
-            $fields = ['sacMemberId', 'eventId', 'authorName'];
+        if ($this->security->isGranted('ROLE_ADMIN')) {
+            $fields = $GLOBALS['TL_DCA']['tl_calendar_events_blog']['fields'];
 
-            foreach ($fields as $field) {
-                $GLOBALS['TL_DCA']['tl_calendar_events_blog']['fields'][$field]['eval']['readonly'] = false;
+            foreach ($fields as $strFieldName => $arrField) {
+                if (isset($arrField['eval']['readonly']) && $arrField['eval']['readonly']) {
+                    $GLOBALS['TL_DCA']['tl_calendar_events_blog']['fields'][$strFieldName]['eval']['readonly'] = false;
+                }
             }
         }
     }
@@ -91,7 +91,7 @@ class CalendarEventsBlog
      * @throws \Exception
      */
     #[AsCallback(table: 'tl_calendar_events_blog', target: 'config.onload')]
-    public function deleteUnfinishedAndOldEntries(): void
+    public function keepBlogUpToDate(): void
     {
         // Delete old and unpublished blogs
         $limit = time() - 60 * 60 * 24 * 30;
@@ -109,30 +109,33 @@ class CalendarEventsBlog
             [$limit, '', '', null]
         );
 
-        // Keep blogs up to date, if events are renamed f.ex.
+        // Keep blogs up to date, if e.g. events have been renamed
         $stmt = $this->connection->executeQuery('SELECT * FROM tl_calendar_events_blog', []);
 
         while (false !== ($arrBlog = $stmt->fetchAssociative())) {
-            $objBlogModel = CalendarEventsBlogModel::findByPk($arrBlog['id']);
-            $objEvent = $objBlogModel->getRelated('eventId');
+            $blog = CalendarEventsBlogModel::findByPk($arrBlog['id']);
+            $event = $blog->getRelated('eventId');
 
-            if (null !== $objEvent) {
-                $objBlogModel->eventTitle = $objEvent->title;
-                $objBlogModel->substitutionEvent = EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED === $objEvent->executionState && '' !== $objEvent->eventSubstitutionText ? $objEvent->eventSubstitutionText : '';
-                $objBlogModel->eventStartDate = $objEvent->startDate;
-                $objBlogModel->eventEndDate = $objEvent->endDate;
-                $objBlogModel->organizers = $objEvent->organizers;
-
-                $aDates = [];
-                $arrDates = StringUtil::deserialize($objEvent->eventDates, true);
-
-                foreach ($arrDates as $arrDate) {
-                    $aDates[] = $arrDate['new_repeat'];
-                }
-
-                $objBlogModel->eventDates = serialize($aDates);
-                $objBlogModel->save();
+            if (null === $event) {
+                continue;
             }
+
+            $blog->eventTitle = $event->title;
+            $blog->substitutionEvent = EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED === $event->executionState ? $event->eventSubstitutionText : '';
+            $blog->eventSubstitutionText = EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED === $event->executionState ? $event->eventSubstitutionText : '';
+            $blog->eventStartDate = $event->startDate;
+            $blog->eventEndDate = $event->endDate;
+            $blog->organizers = $event->organizers;
+
+            $aDates = [];
+            $arrDates = StringUtil::deserialize($event->eventDates, true);
+
+            foreach ($arrDates as $arrDate) {
+                $aDates[] = $arrDate['new_repeat'];
+            }
+
+            $blog->eventDates = serialize($aDates);
+            $blog->save();
         }
     }
 
@@ -250,6 +253,7 @@ class CalendarEventsBlog
         $objPhpWord->replace('dateAdded', date('Y-m-d', (int) $objBlog->dateAdded), $options);
         $objPhpWord->replace('tourTypes', implode(', ', $arrTourTypes), $options);
         $objPhpWord->replace('organizers', $strOrganizers, $options);
+        $objPhpWord->replace('eventSubstitutionText', $objBlog->eventSubstitutionText ?: 'nein', $options);
         $objPhpWord->replace('mainInstructorName', $mainInstructorName, $options);
         $objPhpWord->replace('mainInstructorEmail', $mainInstructorEmail, $options);
         $objPhpWord->replace('eventDates', $strEventDates, $options);
@@ -264,33 +268,38 @@ class CalendarEventsBlog
         $objPhpWord->replace('urlBackend', htmlentities($strUrlBackend));
 
         // Images
-        if (!empty($objBlog->multiSRC)) {
-            $arrImages = StringUtil::deserialize($objBlog->multiSRC, true);
+        $arrImages = StringUtil::deserialize($objBlog->multiSRC, true);
 
-            if (!empty($arrImages)) {
-                $objFiles = FilesModel::findMultipleByUuids($arrImages);
-                $i = 0;
+        $i = 0;
 
-                while ($objFiles->next()) {
-                    if (!is_file($this->projectDir.'/'.$objFiles->path)) {
-                        continue;
-                    }
+        if (!empty($arrImages)) {
+            $objPhpWord->cloneBlock('BLOCK_IMAGES');
 
-                    ++$i;
+            $objFiles = FilesModel::findMultipleByUuids($arrImages);
 
-                    Files::getInstance()->copy($objFiles->path, $imageDir.'/'.$objFiles->name);
-
-                    $options = ['multiline' => false];
-
-                    $objPhpWord->createClone('i');
-                    $objPhpWord->addToClone('i', 'i', $i, $options);
-                    $objPhpWord->addToClone('i', 'fileName', $objFiles->name, $options);
-
-                    $arrMeta = $this->getMeta($objFiles->current(), $this->locale);
-                    $objPhpWord->addToClone('i', 'photographerName', $arrMeta['photographer'], $options);
-                    $objPhpWord->addToClone('i', 'imageCaption', $arrMeta['caption'], $options);
+            while ($objFiles->next()) {
+                if (!is_file($this->projectDir.'/'.$objFiles->path)) {
+                    continue;
                 }
+
+                ++$i;
+
+                Files::getInstance()->copy($objFiles->path, $imageDir.'/'.$objFiles->name);
+
+                $options = ['multiline' => false];
+
+                $objPhpWord->createClone('i');
+                $objPhpWord->addToClone('i', 'i', $i, $options);
+                $objPhpWord->addToClone('i', 'fileName', $objFiles->name, $options);
+
+                $arrMeta = $this->getMeta($objFiles->current(), $this->locale);
+                $objPhpWord->addToClone('i', 'photographerName', $arrMeta['photographer'], $options);
+                $objPhpWord->addToClone('i', 'imageCaption', $arrMeta['caption'], $options);
             }
+        }
+
+        if (!$i) {
+            $objPhpWord->deleteBlock('BLOCK_IMAGES');
         }
 
         $objPhpWord->generate();
