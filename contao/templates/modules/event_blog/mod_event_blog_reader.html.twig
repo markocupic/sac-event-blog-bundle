@@ -30,7 +30,7 @@
                         {% for image in images %}
                             <figure class="col-12 col-sm-6 col-md-4 image_container thumbnail responsive">
                                 <a href="{{ image.path }}" data-lightbox="lbEventGal" class="cboxElement" title="{{ image.linkTitle }}">
-                                    {{ '{{image::' ~ binToUuid.invoke(image.uuid) ~ '?width=400&height=400&mode=crop&alt=' ~ image.alt ~ '}}' }}
+                                    {{ insert_tag('image::' ~ binToUuid.invoke(image.uuid) ~ '?width=400&height=400&mode=crop&alt=' ~ image.alt)|raw }}
                                 </a>
                                 <figcaption class="figure-caption">{{ image.strFigureCaption }}</figcaption>
                             </figure>
@@ -120,7 +120,7 @@
                 <div class="event-info-box mt-3 d-flex">
                     <i class="pt-1 fas fa-fw fa-info text-primary"></i>
                     <div class="ms-2 lh-1">
-                        <a href="{{ '{{event_url::' ~ eventId ~ '}}' }}" target="_blank">Zur Tour-/Kurs-Ausschreibung</a>
+                        <a href="{{ insert_tag('event_url::' ~ eventId) }}" target="_blank">Zur Tour-/Kurs-Ausschreibung</a>
                     </div>
                 </div>
             </div>

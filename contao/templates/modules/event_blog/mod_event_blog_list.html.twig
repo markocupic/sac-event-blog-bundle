@@ -72,7 +72,7 @@
 
                     <div class="p-2 d-flex align-items-center">
                         {% if  blog.author.model is defined %}
-                            {{ '{{image::' ~ getAvatarResourcePath(blog.author.model) ~ '?width=32&height=32&mode=crop&class=rounded-circle}}' }}
+                            {{ insert_tag('image::' ~ getAvatarResourcePath(blog.author.model) ~ '?width=32&height=32&mode=crop&class=rounded-circle')|raw }}
                             <p class="card-text fw-bold small m-0 ms-2">von {{ blog.author.name }}</p>
                         {% endif %}
                     </div>
@@ -80,7 +80,7 @@
                     {% if blog.singleSRC %}
                         <div class="image-zoom-in">
                             <a href="{{ blog.href }}" class="item-reader-link" aria-label="{{ blog.title|escape('html_attr') }}">
-                                {{ '{{image::' ~ blog.singleSRC.uuid ~ '?width=450&height=300&mode=crop&class=card-img-top}}' }}
+                                {{ insert_tag('image::' ~ blog.singleSRC.uuid ~ '?width=450&height=300&mode=crop&class=card-img-top')|raw }}
                             </a>
                         </div>
                     {% endif %}

@@ -11,7 +11,7 @@
             {% set counter = ( counter | default(-1) ) + 1 %}
 
             <div class="col-12 col-sm-6 col-lg-3 thumbnail {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}sortable-item {% endif %}responsive" data-item="{{ counter }}" data-path="{{ arrFile.path }}" data-file-id="{{ arrFile.id }}" data-file-uuid="{{ binToUuid.invoke(arrFile.uuid) }}" title="Sortierung mit Drag-and-Drop ändern">
-                {{ '{{image::' ~ binToUuid.invoke(arrFile.uuid) ~ '?width=400&height=400&mode=crop&class=w-100 img-fluid}}' }}
+                {{ insert_tag('image::' ~ binToUuid.invoke(arrFile.uuid) ~ '?width=400&height=400&mode=crop&class=w-100 img-fluid')|raw }}
 
                 <div class="d-none">{{ arrFile.caption }}</div>
                 {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
@@ -46,7 +46,7 @@
 
                         // Get caption text by xhr request
                         $.post('ajaxMemberDashboardWriteEventBlog/getCaption', {
-                            'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                            'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
                             'fileUuid': fileUuid
                         }).done(function (json) {
                             if (json.status !== 'success') {
@@ -75,7 +75,7 @@
                         $(modal).modal('hide');
 
                         $.post('ajaxMemberDashboardWriteEventBlog/setCaption', {
-                            'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                            'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
                             'fileUuid': fileUuid,
                             'caption': caption,
                             'photographer': photographer
@@ -109,7 +109,7 @@
                             let uuid = $(elImage).data('file-uuid');
                             if (typeof uuid !== 'undefined') {
                                 $.post('ajaxMemberDashboardWriteEventBlog/removeImage', {
-                                    'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                                    'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
                                     'eventId': '{{ eventId }}',
                                     'uuid': uuid
                                 }).done(function (json) {
@@ -132,7 +132,7 @@
                             let fileId = $(elImage).data('file-id');
                             if (typeof fileId !== 'undefined') {
                                 $.post('ajaxMemberDashboardWriteEventBlog/rotateImage', {
-                                    'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                                    'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
                                     'fileId': fileId
                                 }).done(function (json) {
                                     if (json.status !== 'success') {
@@ -162,7 +162,7 @@
                                 arrUuid.push($(this).data('fileUuid'));
                             });
                             $.post('ajaxMemberDashboardWriteEventBlog/sortGallery', {
-                                'REQUEST_TOKEN': '{{ '{{request_token}}' }}',
+                                'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
                                 'eventId': '{{ eventId }}',
                                 'uuids': JSON.stringify(arrUuid)
                             }).done(function (json) {
