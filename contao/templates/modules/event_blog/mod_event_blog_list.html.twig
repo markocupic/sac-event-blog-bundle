@@ -4,46 +4,44 @@
     {% set fileMakeTime = getFileMakeTime('vendor/markocupic/sac-event-blog-bundle/public/js/event_blog_list_vue.js') %}
     {% do addJavascriptResource('bundles/markocupicsaceventblog/js/event_blog_list_vue.js|' ~ fileMakeTime) %}
 
-    {% do addHtmlToBody('<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>') %}
+    {% do addHtmlToBody('<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>') %}
 
     <div class="{{ class }} block" {{ cssID }}{% if style is defined %} style="{{ style }}"{% endif %}>
 
         <!-- headline start -->
         {% if headline|default and headline is not empty %}<{{ hl }}>{{ headline }}</{{ hl }}>{% endif %}
-        <!-- headline end -->
+    <!-- headline end -->
 
-        <div id="eventBlogList{{ id }}">
+    <div id="eventBlogList{{ id }}">
 
-            <div class=" list-container" v-html="listContent"></div>
+        <div class=" list-container" v-html="listContent"></div>
 
-            <!-- start modal -->
-            <div class="modal" class="event-blog-reader-modal" tabindex="-1" role="dialog" aria-labelledby="eventBlogReaderModalTitle{{ id }}" aria-hidden="true">
-                <div class="modal-dialog modal-xl modal-fullscreen-xl-down" role="document">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="eventBlogReaderModalTitle{{ id }}">Tourenberichte</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+        <!-- start modal -->
+        <div class="modal" class="event-blog-reader-modal" tabindex="-1" role="dialog" aria-labelledby="eventBlogReaderModalTitle{{ id }}" aria-hidden="true">
+            <div class="modal-dialog modal-xl modal-fullscreen-xl-down" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="eventBlogReaderModalTitle{{ id }}">Tourenberichte</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+                    </div>
+
+                    <div class="modal-body px-3 px-sm-4 px-lg-5">
+                        <div class="d-flex justify-content-between justify-content-md-end">
+                            <button type="button" v-if="hasPrevItem()" v-on:click="goToPrevItem()" class="btn btn-primary ms-0"><i class="fas fa-arrow-left"></i> Vorheriger Bericht</button>
+                            <button type="button" v-if="hasNextItem()" v-on:click="goToNextItem()" class="btn btn-primary ms-2">Nächster Bericht <i class="fas fa-arrow-right"></i></button>
                         </div>
 
-                        <div class="modal-body px-3 px-sm-4 px-lg-5">
-                            <div class="d-flex justify-content-between justify-content-md-end">
-                                <button type="button" v-if="hasPrevItem()" v-on:click="goToPrevItem()" class="btn btn-primary ms-0"><i class="fas fa-arrow-left"></i> Vorheriger Bericht</button>
-                                <button type="button" v-if="hasNextItem()" v-on:click="goToNextItem()" class="btn btn-primary ms-2">Nächster Bericht <i class="fas fa-arrow-right"></i></button>
-                            </div>
+                        <div v-html="readerContent"></div>
+                    </div>
 
-                            <div v-html="readerContent">
-                                <div v-html="readerContent"></div>
-                            </div>
-                        </div>
-
-                        <div class="modal-footer d-none d-sm-block">{# Do not show the footer on mobile phones #}
-                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Schliessen</button>
-                        </div>
+                    <div class="modal-footer d-none d-sm-block">{# Do not show the footer on mobile phones #}
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Schliessen</button>
                     </div>
                 </div>
             </div>
-            <!-- end modal -->
         </div>
+        <!-- end modal -->
+    </div>
     </div>
 
     <script>
