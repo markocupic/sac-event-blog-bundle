@@ -12,13 +12,15 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
+use Contao\DC_Table;
+use Contao\DataContainer;
 use Contao\Input;
 use Contao\System;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 
 $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
     'config'   => [
-        'dataContainer'    => 'Table',
+        'dataContainer'    => DC_Table::class,
         'enableVersioning' => true,
         'notCopyable'      => true,
         'closed'           => true,
@@ -31,7 +33,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
     ],
     'list'     => [
         'sorting'           => [
-            'mode'        => 2,
+            'mode'        => DataContainer::MODE_SORTABLE,
             'fields'      => ['eventStartDate DESC'],
             'panelLayout' => 'filter;sort,search,limit',
         ],
@@ -141,7 +143,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
         ],
         'eventStartDate'          => [
             'sorting' => true,
-            'flag'    => 6,
+            'flag'    => DataContainer::SORT_DAY_DESC,
             'sql'     => "int(10) unsigned NOT NULL default '0'",
         ],
         'eventEndDate'            => [
@@ -213,7 +215,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
         ],
         'dateAdded'               => [
             'default'   => time(),
-            'flag'      => 8,
+            'flag'      => DataContainer::SORT_MONTH_DESC,
             'sorting'   => true,
             'inputType' => 'text',
             'eval'      => ['rgxp' => 'date', 'mandatory' => true, 'doNotCopy' => false, 'datepicker' => true, 'tl_class' => 'w50 wizard'],
