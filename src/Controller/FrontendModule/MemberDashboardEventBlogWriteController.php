@@ -99,7 +99,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     /**
      * @throws \Exception
      */
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response|null
+    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
         // Do not allow for not authorized users
         if (null === $this->user) {

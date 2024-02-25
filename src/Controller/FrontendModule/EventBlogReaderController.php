@@ -106,7 +106,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     /**
      * @throws \Exception
      */
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response|null
+    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
         // Adapters
         $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);
