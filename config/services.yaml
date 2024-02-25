@@ -39,7 +39,6 @@ services:
             - '@request_stack'
             - '@Codefog\HasteBundle\UrlParser'
             - '%kernel.project_dir%'
-            - '%contao.web_dir%'
             - '%sacevt.locale%'
         public: true
 

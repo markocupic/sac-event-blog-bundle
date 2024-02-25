@@ -58,7 +58,6 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         private readonly RequestStack $requestStack,
         private readonly UrlParser $urlParser,
         private readonly string $projectDir,
-        private readonly string $webDir,
         private readonly string $locale,
     ) {
     }
@@ -321,7 +320,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $objFolder = new Folder('system/eventblogqrcodes');
 
         // Get the web directory as relative path --> public (or web)
-        $webDir = Path::makeRelative($this->webDir, $this->projectDir);
+        $webDir = Path::join($this->projectDir, 'public');
 
         // Symlink (path: 'system/eventblogqrcodes', link: 'public/system/eventblogqrcodes')
         SymlinkUtil::symlink($objFolder->path, $webDir.'/'.$objFolder->path, $this->projectDir);
