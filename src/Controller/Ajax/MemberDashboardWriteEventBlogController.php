@@ -29,20 +29,22 @@ use Contao\UserModel;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Types\Types;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
+use Markocupic\SacEventBlogBundle\NotificationType\OnNewEventBlogType;
 use Markocupic\SacEventToolBundle\Image\RotateImage;
 use Markocupic\SacEventToolBundle\Model\EventOrganizerModel;
-use NotificationCenter\Model\Notification;
+use Terminal42\NotificationCenterBundle\NotificationCenter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 
 class MemberDashboardWriteEventBlogController extends AbstractController
 {
@@ -64,6 +66,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         private readonly TranslatorInterface $translator,
         private readonly RotateImage $rotateImage,
         private readonly UrlParser $urlParser,
+        private readonly NotificationCenter $notificationCenter,
         private readonly string $projectDir,
         private readonly string $tokenName,
         private readonly string $locale,
@@ -89,7 +92,6 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
         $userModelAdapter = $this->framework->getAdapter(UserModel::class);
-        $notificationAdapter = $this->framework->getAdapter(Notification::class);
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
@@ -142,14 +144,16 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         }
 
         // Notify back office via terminal42/notification_center if there is a new blog entry.
-        if ('2' === $request->request->get('publishState') && $objBlog->publishState < 2 && $request->request->get('moduleId')) {
+        if (PublishState::APPROVED_FOR_REVIEW === (int) $request->request->get('publishState') && $objBlog->publishState < PublishState::APPROVED_FOR_REVIEW  && $request->request->get('moduleId')) {
             $objModule = $moduleModelAdapter->findByPk($request->request->get('moduleId'));
 
+            $notificationId = false;
+
             if (null !== $objModule) {
-                $objNotification = $notificationAdapter->findByPk($objModule->eventBlogOnPublishNotification);
+                $notificationId = $this->connection->fetchOne('SELECT id FROM tl_nc_notification WHERE type = :type', ['type' => OnNewEventBlogType::NAME], ['type' => Types::STRING]);
             }
 
-            if (isset($objNotification) && $objNotification && $request->request->get('eventId') > 0) {
+            if (false !== $notificationId && $request->request->get('eventId') > 0) {
                 $objEvent = $calendarEventsModelAdapter->findByPk($request->request->get('eventId'));
                 $objInstructor = $userModelAdapter->findByPk($objEvent->mainInstructor);
                 $instructorName = '';
@@ -219,8 +223,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                     ]);
                 }
 
-                // Send notification
-                $objNotification->send($arrTokens, $this->locale);
+                $this->notificationCenter->sendNotification($notificationId, $arrTokens, $this->locale);
             }
         }
 

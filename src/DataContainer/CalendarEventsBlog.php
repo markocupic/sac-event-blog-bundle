@@ -39,7 +39,7 @@ use PhpOffice\PhpWord\Exception\CreateTemporaryFileException;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Security\Core\Security;
+use use Symfony\Bundle\SecurityBundle\Security;
 
 class CalendarEventsBlog
 {
