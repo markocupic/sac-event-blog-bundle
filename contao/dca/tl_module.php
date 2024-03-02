@@ -67,6 +67,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogMaxImageHeight'] = [
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogTimeSpanForCreatingNew'] = [
+    'exclude'   => true,
     'inputType' => 'select',
     'options'   => range(5, 365),
     'eval'      => ['mandatory' => true, 'includeBlankOption' => false, 'tl_class' => 'clr', 'rgxp' => 'natural'],
