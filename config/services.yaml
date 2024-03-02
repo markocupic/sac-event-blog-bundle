@@ -78,6 +78,7 @@ services:
             - '@translator'
             - '@Markocupic\SacEventToolBundle\Image\RotateImage'
             - '@Codefog\HasteBundle\UrlParser'
+            - '@Terminal42\NotificationCenterBundle\NotificationCenter'
             - '%kernel.project_dir%'
             - '%contao.csrf_token_name%'
             - '%sacevt.locale%'
