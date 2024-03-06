@@ -47,30 +47,12 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'showColumns' => true,
         ],
         'global_operations' => [
-            'all' => [
-                'label'      => &$GLOBALS['TL_LANG']['MSC']['all'],
-                'href'       => 'act=select',
-                'class'      => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
-            ],
+            'all',
         ],
         'operations'        => [
-            'edit'       => [
-                'label' => &$GLOBALS['TL_LANG']['tl_calendar_events_blog']['edit'],
-                'href'  => 'act=edit',
-                'icon'  => 'edit.svg',
-            ],
-            'delete'     => [
-                'label'      => &$GLOBALS['TL_LANG']['tl_calendar_events_blog']['delete'],
-                'href'       => 'act=delete',
-                'icon'       => 'delete.svg',
-                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
-            ],
-            'show'       => [
-                'label' => &$GLOBALS['TL_LANG']['tl_calendar_events_blog']['show'],
-                'href'  => 'act=show',
-                'icon'  => 'show.svg',
-            ],
+            'edit',
+            'delete',
+            'show',
             'exportBlog' => [
                 'label' => &$GLOBALS['TL_LANG']['tl_calendar_events_blog']['exportBlog'],
                 'href'  => 'action=exportBlog',
