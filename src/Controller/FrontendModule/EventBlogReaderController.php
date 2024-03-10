@@ -18,7 +18,6 @@ use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
-use Contao\Config;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\PageNotFoundException;
@@ -67,16 +66,13 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             // Adapters
             $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
-            $configAdapter = $this->framework->getAdapter(Config::class);
             $environmentAdapter = $this->framework->getAdapter(Environment::class);
             $inputAdapter = $this->framework->getAdapter(Input::class);
 
             // Set the item from the auto_item parameter
-            if (!isset($_GET['items']) && $configAdapter->get('useAutoItem') && isset($_GET['auto_item'])) {
-                $inputAdapter->setGet('items', $inputAdapter->get('auto_item'));
-            }
+            $inputAdapter->setGet('items', $inputAdapter->get('auto_item'));
 
-            // Do not index or cache the page if no event has been specified
+            // Do not index or cache the page if no blog item has been specified
             if ($page && empty($inputAdapter->get('items'))) {
                 $page->noSearch = 1;
                 $page->cache = 0;

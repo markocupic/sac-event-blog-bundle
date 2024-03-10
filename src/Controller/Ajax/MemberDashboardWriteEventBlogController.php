@@ -35,8 +35,8 @@ use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventBlogBundle\NotificationType\OnNewEventBlogType;
 use Markocupic\SacEventToolBundle\Image\RotateImage;
 use Markocupic\SacEventToolBundle\Model\EventOrganizerModel;
-use Terminal42\NotificationCenterBundle\NotificationCenter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -44,7 +44,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
-use Symfony\Bundle\SecurityBundle\Security;
+use Terminal42\NotificationCenterBundle\NotificationCenter;
 
 class MemberDashboardWriteEventBlogController extends AbstractController
 {
@@ -144,7 +144,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         }
 
         // Notify back office via terminal42/notification_center if there is a new blog entry.
-        if (PublishState::APPROVED_FOR_REVIEW === (int) $request->request->get('publishState') && $objBlog->publishState < PublishState::APPROVED_FOR_REVIEW  && $request->request->get('moduleId')) {
+        if (PublishState::APPROVED_FOR_REVIEW === (int) $request->request->get('publishState') && $objBlog->publishState < PublishState::APPROVED_FOR_REVIEW && $request->request->get('moduleId')) {
             $objModule = $moduleModelAdapter->findByPk($request->request->get('moduleId'));
 
             $notificationId = false;
@@ -171,8 +171,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                     $objTarget = $pageModelAdapter->findByPk($objModule->eventBlogReaderPage);
 
                     if (null !== $objTarget) {
-                        $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl(Config::get('useAutoItem') ? '/%s' : '/items/%s'));
-                        $previewLink = sprintf($previewLink, $objBlog->id);
+                        $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl('/'.$objBlog->id));
                         $previewLink = $environmentAdapter->get('url').'/'.$this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
                     }
                 }

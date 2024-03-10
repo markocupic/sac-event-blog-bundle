@@ -117,7 +117,7 @@ class EventBlogListController extends AbstractFrontendModuleController
             $arrBlog['author'] = $objMember->row();
             $arrBlog['author']['model'] = $objMember;
             $arrBlog['author']['name'] = null !== $objMember ? $objMember->firstname.' '.$objMember->lastname : $this->blogs->authorname;
-            $arrBlog['href'] = null !== $objPageModel ? $stringUtilAdapter->ampersand($objPageModel->getFrontendUrl(($configAdapter->get('useAutoItem') ? '/' : '/items/').$this->blogs->id)) : null;
+            $arrBlog['href'] = null !== $objPageModel ? $stringUtilAdapter->ampersand($objPageModel->getFrontendUrl('/' .$this->blogs->id)) : null;
 
             $multiSRC = $stringUtilAdapter->deserialize($arrBlog['multiSRC'], true);
 

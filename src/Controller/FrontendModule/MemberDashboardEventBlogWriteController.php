@@ -746,9 +746,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         /** @var PageModel $pageModelAdapter */
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
 
-        /** @var Config $configAdapter */
-        $configAdapter = $this->framework->getAdapter(Config::class);
-
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
@@ -762,8 +759,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             $objTarget = $pageModelAdapter->findByPk($objModule->eventBlogReaderPage);
 
             if (null !== $objTarget) {
-                $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl($configAdapter->get('useAutoItem') ? '/%s' : '/items/%s'));
-                $previewLink = sprintf($previewLink, $objBlog->id);
+                $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl('/'.$objBlog->id));
                 $previewLink = $environmentAdapter->get('url').'/'.$this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
             }
         }
