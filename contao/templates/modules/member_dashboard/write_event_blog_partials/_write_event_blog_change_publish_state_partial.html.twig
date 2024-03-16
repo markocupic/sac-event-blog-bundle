@@ -80,7 +80,7 @@
                     let self = this;
                     this.pendingRequest = true;
 
-                    const rt = '{{ insert_tag('request_token') }}';
+                    const rt = '{{ request_token }}';
                     const moduleId = '{{ id }}';
                     const urlParams = new URLSearchParams(window.location.search);
 

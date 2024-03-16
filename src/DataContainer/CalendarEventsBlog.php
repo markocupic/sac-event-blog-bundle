@@ -36,10 +36,12 @@ use Markocupic\SacEventToolBundle\Download\BinaryFileDownload;
 use Markocupic\ZipBundle\Zip\Zip;
 use PhpOffice\PhpWord\Exception\CopyFileException;
 use PhpOffice\PhpWord\Exception\CreateTemporaryFileException;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 
 class CalendarEventsBlog
 {
@@ -48,6 +50,7 @@ class CalendarEventsBlog
         private readonly Connection $connection,
         private readonly RequestStack $requestStack,
         private readonly BinaryFileDownload $binaryFileDownload,
+        private readonly RouterInterface $router,
         private readonly string $projectDir,
         private readonly string $tempDir,
         private readonly string $eventBlogDocxExportTemplate,
@@ -223,10 +226,14 @@ class CalendarEventsBlog
         $strCheckedByInstructor = $objBlog->checkedByInstructor ? 'Ja' : 'Nein';
 
         // Backend url
-        $strUrlBackend = sprintf(
-            '%s/contao?do=sac_calendar_events_blog_tool&act=edit&id=%s',
-            Environment::get('url'),
-            $objBlog->id
+        $strUrlBackend = $this->router->generate(
+            'contao_backend',
+            [
+            'do' => 'sac_calendar_events_blog_tool',
+            'act' => 'edit',
+            'id' =>  $objBlog->id,
+        ],
+            UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
         // Key data

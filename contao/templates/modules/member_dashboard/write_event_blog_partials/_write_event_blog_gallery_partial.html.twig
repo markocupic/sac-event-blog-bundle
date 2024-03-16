@@ -46,7 +46,7 @@
 
                         // Get caption text by xhr request
                         $.post('ajaxMemberDashboardWriteEventBlog/getCaption', {
-                            'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
+                            'REQUEST_TOKEN': '{{ request_token }}',
                             'fileUuid': fileUuid
                         }).done(function (json) {
                             if (json.status !== 'success') {
@@ -75,7 +75,7 @@
                         $(modal).modal('hide');
 
                         $.post('ajaxMemberDashboardWriteEventBlog/setCaption', {
-                            'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
+                            'REQUEST_TOKEN': '{{ request_token }}',
                             'fileUuid': fileUuid,
                             'caption': caption,
                             'photographer': photographer
@@ -109,7 +109,7 @@
                             let uuid = $(elImage).data('file-uuid');
                             if (typeof uuid !== 'undefined') {
                                 $.post('ajaxMemberDashboardWriteEventBlog/removeImage', {
-                                    'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
+                                    'REQUEST_TOKEN': '{{ request_token }}',
                                     'eventId': '{{ eventId }}',
                                     'uuid': uuid
                                 }).done(function (json) {
@@ -132,7 +132,7 @@
                             let fileId = $(elImage).data('file-id');
                             if (typeof fileId !== 'undefined') {
                                 $.post('ajaxMemberDashboardWriteEventBlog/rotateImage', {
-                                    'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
+                                    'REQUEST_TOKEN': '{{ request_token }}',
                                     'fileId': fileId
                                 }).done(function (json) {
                                     if (json.status !== 'success') {
@@ -162,7 +162,7 @@
                                 arrUuid.push($(this).data('fileUuid'));
                             });
                             $.post('ajaxMemberDashboardWriteEventBlog/sortGallery', {
-                                'REQUEST_TOKEN': '{{ insert_tag('request_token') }}',
+                                'REQUEST_TOKEN': '{{ request_token }}',
                                 'eventId': '{{ eventId }}',
                                 'uuids': JSON.stringify(arrUuid)
                             }).done(function (json) {

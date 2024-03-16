@@ -16,7 +16,6 @@ namespace Markocupic\SacEventBlogBundle\Controller\Ajax;
 
 use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
-use Contao\Config;
 use Contao\CoreBundle\Exception\InvalidRequestTokenException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
@@ -41,6 +40,8 @@ use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -63,6 +64,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         private readonly CsrfTokenManagerInterface $tokenManager,
         private readonly RequestStack $requestStack,
         private readonly Security $security,
+        private readonly RouterInterface $router,
         private readonly TranslatorInterface $translator,
         private readonly RotateImage $rotateImage,
         private readonly UrlParser $urlParser,
@@ -171,8 +173,8 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                     $objTarget = $pageModelAdapter->findByPk($objModule->eventBlogReaderPage);
 
                     if (null !== $objTarget) {
-                        $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl('/'.$objBlog->id));
-                        $previewLink = $environmentAdapter->get('url').'/'.$this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
+                        $previewLink = $stringUtilAdapter->ampersand($objTarget->getAbsoluteUrl('/'.$objBlog->id));
+                        $previewLink = $this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
                     }
                 }
 
@@ -215,7 +217,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                         'author_email' => $objUser->email,
                         'author_sac_member_id' => $objUser->sacMemberId,
                         'hostname' => $environmentAdapter->get('host'),
-                        'blog_link_backend' => $environmentAdapter->get('url').'/contao?do=sac_calendar_events_blog_tool&act=edit&id='.$objBlog->id,
+                        'blog_link_backend' => $this->router->generate('contao_backend', ['do' => 'sac_calendar_events_blog_tool', 'act' => 'edit', 'id' => $objBlog->id], UrlGeneratorInterface::ABSOLUTE_URL),
                         'blog_link_frontend' => $previewLink,
                         'blog_title' => $objBlog->title,
                         'blog_text' => $objBlog->text,

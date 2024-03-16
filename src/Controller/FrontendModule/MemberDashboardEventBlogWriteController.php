@@ -20,6 +20,7 @@ use Contao\CalendarEventsModel;
 use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
@@ -44,13 +45,13 @@ use Markocupic\SacEventToolBundle\CalendarEventsHelper;
 use Markocupic\SacEventToolBundle\Config\EventExecutionState;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Psr\Log\LogLevel;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AsFrontendModule(MemberDashboardEventBlogWriteController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_member_dashboard_write_event_blog')]
@@ -69,6 +70,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         private readonly TranslatorInterface $translator,
         private readonly UrlParser $urlParser,
         private readonly Security $security,
+        private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
         private readonly string $projectDir,
         private readonly string $eventBlogAssetDir,
         private readonly string $locale,
@@ -202,6 +204,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 if (!isset($objReportModel)) {
                     throw new \Exception('Event report model not found.');
                 }
+
+                $template->request_token = $this->contaoCsrfTokenManager->getDefaultTokenValue();
                 $template->event = $objEvent->row;
                 $template->eventId = $objEvent->id;
                 $template->eventName = $objEvent->title;
@@ -266,11 +270,12 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
      */
     private function getGalleryImages(CalendarEventsBlogModel $objBlog): array
     {
-        // Set adapters
         /** @var Validator $validatorAdapter */
         $validatorAdapter = $this->framework->getAdapter(Validator::class);
+
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+
         /** @var FilesModel $filesModelAdapter */
         $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
 
@@ -341,8 +346,10 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
     private function generateTextAndYoutubeForm(CalendarEventsBlogModel $objEventBlogModel): string
     {
-        // Set adapters
+        /** @var Controller $controllerAdapter */
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
+
+        /** @var Input $inputAdapter */
         $inputAdapter = $this->framework->getAdapter(Input::class);
 
         $objForm = new Form(
@@ -566,19 +573,24 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
      */
     private function generatePictureUploadForm(CalendarEventsBlogModel $objEventBlogModel, ModuleModel $moduleModel): string
     {
-        // Set adapters
         /** @var Controller $controllerAdapter */
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
+
         /** @var Input $inputAdapter */
         $inputAdapter = $this->framework->getAdapter(Input::class);
+
         /** @var Message $messageAdapter */
         $messageAdapter = $this->framework->getAdapter(Message::class);
+
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+
         /** @var FilesModel $filesModelAdapter */
         $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
+
         /** @var Dbafs $dbafsAdapter */
         $dbafsAdapter = $this->framework->getAdapter(Dbafs::class);
+
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
 
@@ -749,9 +761,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
-        /** @var Environment $environmentAdapterAdapter */
-        $environmentAdapter = $this->framework->getAdapter(Environment::class);
-
         // Generate frontend preview link
         $previewLink = '';
 
@@ -759,8 +768,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             $objTarget = $pageModelAdapter->findByPk($objModule->eventBlogReaderPage);
 
             if (null !== $objTarget) {
-                $previewLink = $stringUtilAdapter->ampersand($objTarget->getFrontendUrl('/'.$objBlog->id));
-                $previewLink = $environmentAdapter->get('url').'/'.$this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
+                $previewLink = $stringUtilAdapter->ampersand($objTarget->getAbsoluteUrl('/'.$objBlog->id));
+                $previewLink = $this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
             }
         }
 
