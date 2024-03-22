@@ -37,8 +37,8 @@ services:
         arguments:
             - '@contao.framework'
             - '@contao.routing.scope_matcher'
-            - '@request_stack'
             - '@Codefog\HasteBundle\UrlParser'
+            - '@contao.filesystem.virtual.files'
             - '%kernel.project_dir%'
             - '%sacevt.locale%'
         public: true

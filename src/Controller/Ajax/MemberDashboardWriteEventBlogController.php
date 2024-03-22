@@ -284,7 +284,8 @@ class MemberDashboardWriteEventBlogController extends AbstractController
             $arrSorting
         );
 
-        $objBlog->orderSRC = serialize($arrSorting);
+        $objBlog->multiSRC = serialize($arrSorting);
+
         $objBlog->save();
 
         return new JsonResponse(['status' => 'success']);
@@ -331,7 +332,6 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         $objBlog = $calendarEventsBlogModelAdapter->findByPk($id);
 
         $multiSrc = $stringUtilAdapter->deserialize($objBlog->multiSRC, true);
-        $orderSrc = $stringUtilAdapter->deserialize($objBlog->orderSRC, true);
 
         $uuid = $stringUtilAdapter->uuidToBin($request->request->get('uuid'));
 
@@ -345,14 +345,6 @@ class MemberDashboardWriteEventBlogController extends AbstractController
             unset($multiSrc[$key]);
             $multiSrc = array_values($multiSrc);
             $objBlog->multiSRC = serialize($multiSrc);
-        }
-
-        $key = array_search($uuid, $orderSrc, true);
-
-        if (false !== $key) {
-            unset($orderSrc[$key]);
-            $orderSrc = array_values($multiSrc);
-            $objBlog->orderSRC = serialize($orderSrc);
         }
 
         // Save model
