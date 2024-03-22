@@ -26,7 +26,6 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Dbafs;
-use Contao\Environment;
 use Contao\File;
 use Contao\FilesModel;
 use Contao\FrontendUser;
@@ -292,7 +291,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
                         if ($objFile->isImage) {
                             $arrMeta = $stringUtilAdapter->deserialize($objFiles->meta, true);
-                            $images[$objFiles->path] = [
+                            $images[] = [
                                 'id' => $objFiles->id,
                                 'path' => $objFiles->path,
                                 'uuid' => $objFiles->uuid,
@@ -307,37 +306,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                         }
                     }
                 }
-            }
-        }
-
-        // Custom image sorting
-        if ('' !== $objBlog->orderSRC) {
-            $tmp = $stringUtilAdapter->deserialize($objBlog->orderSRC);
-
-            if (!empty($tmp) && \is_array($tmp)) {
-                // Remove all values
-                $arrOrder = array_map(
-                    static function (): void {
-                    },
-                    array_flip($tmp)
-                );
-
-                // Move the matching elements to their position in $arrOrder
-                foreach ($images as $k => $v) {
-                    if (\array_key_exists($v['uuid'], $arrOrder)) {
-                        $arrOrder[$v['uuid']] = $v;
-                        unset($images[$k]);
-                    }
-                }
-
-                // Append the left-over images at the end
-                if (!empty($images)) {
-                    $arrOrder = array_merge($arrOrder, array_values($images));
-                }
-
-                // Remove empty (unreplaced) entries
-                $images = array_values(array_filter($arrOrder));
-                unset($arrOrder);
             }
         }
 
@@ -731,9 +699,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                             $multiSRC = $stringUtilAdapter->deserialize($objEventBlogModel->multiSRC, true);
                             $multiSRC[] = $objFilesModel->uuid;
                             $objEventBlogModel->multiSRC = serialize($multiSRC);
-                            $orderSRC = $stringUtilAdapter->deserialize($objEventBlogModel->multiSRC, true);
-                            $orderSRC[] = $objFilesModel->uuid;
-                            $objEventBlogModel->orderSRC = serialize($orderSRC);
                             $objEventBlogModel->save();
 
                             // Log

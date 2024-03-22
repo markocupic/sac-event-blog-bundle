@@ -180,16 +180,11 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
                 'extensions' => 'jpg,jpeg',
                 'multiple'   => true,
                 'fieldType'  => 'checkbox',
-                'orderField' => 'orderSRC',
                 'files'      => true,
                 'mandatory'  => false,
                 'tl_class'   => 'clr',
             ],
             'sql'       => 'blob NULL',
-        ],
-        'orderSRC'                => [
-            'eval' => ['doNotCopy' => true],
-            'sql'  => 'blob NULL',
         ],
         'organizers'              => [
             'search'     => true,

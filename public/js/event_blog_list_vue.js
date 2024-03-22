@@ -155,20 +155,20 @@ class EventBlogList {
                     ).then(function (res) {
                         return res.json();
                     }).then(function (json) {
-                        $(elId + ' .list-container').css('opacity', 0);
+                        jQuery(elId + ' .list-container').css('opacity', 0);
                         self.listContent = json.compiledHTML;
-                        $(elId + ' .list-container').fadeTo('slow', 1);
+                        jQuery(elId + ' .list-container').fadeTo('slow', 1);
                     }).then(function () {
                         // trigger same height for item boxes
                         // see: vendor\markocupic\contao-theme-sac-pilatus\src\Resources\contao\files\theme-sac-pilatus\js\theme.js
-                        $(window).trigger('vueupdate');
+                        jQuery(window).trigger('vueupdate');
 
                         let cssSelectorStr = elId + ' .pagination .link, ' + elId + ' .pagination .first, ' + elId + ' .pagination .last, ' + elId + ' .pagination .previous, ' + elId + ' .pagination .next';
-                        $(cssSelectorStr).off("click");
-                        $(cssSelectorStr).click(function (e) {
+                        jQuery(cssSelectorStr).off("click");
+                        jQuery(cssSelectorStr).click(function (e) {
                             e.stopPropagation();
                             e.preventDefault();
-                            let href = $(this).prop('href');
+                            let href = jQuery(this).prop('href');
                             let regexp = new RegExp("page_e" + self.options.params.listModuleId + "=([\\d]+)");
                             let match = regexp.exec(href);
                             let page = match ? match[1] : 1;
@@ -177,8 +177,8 @@ class EventBlogList {
                         });
                     }).then(function () {
                         let cssSelectorStr = elId + ' a.item-reader-link';
-                        $(cssSelectorStr).off("click");
-                        $(cssSelectorStr).click(function (e) {
+                        jQuery(cssSelectorStr).off("click");
+                        jQuery(cssSelectorStr).click(function (e) {
                             e.stopPropagation();
                             e.preventDefault();
 
@@ -317,11 +317,11 @@ class EventBlogList {
                     } else {
                         // Colorbox support
                         jQuery(function ($) {
-                            $('a[data-lightbox]').map(function () {
-                                $(this).colorbox({
+                            jQuery('a[data-lightbox]').map(function () {
+                                jQuery(this).colorbox({
                                     // Put custom options here
                                     loop: false,
-                                    rel: $(this).attr('data-lightbox'),
+                                    rel: jQuery(this).attr('data-lightbox'),
                                     maxWidth: '95%',
                                     maxHeight: '95%'
                                 });

@@ -32,63 +32,59 @@
 
     {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
         <script>
-            (function ($) {
-                jQuery(document).ready(function () {
+            document.addEventListener("DOMContentLoaded", (event) => {
+                // Open modal for caption edit
+                jQuery('button.add-caption').click(function () {
+                    let path = jQuery(this).closest('.thumbnail').attr('data-path');
+                    let item = jQuery(this).closest('.thumbnail').attr('data-item');
+                    let fileUuid = jQuery(this).closest('.thumbnail').attr('data-file-uuid');
+                    let modal = jQuery('.modal.write-event-blog-image-caption').first();
+                    jQuery(modal).find('.image-full-res').attr('src', path);
+                    jQuery(modal).attr('data-item', item);
 
-                    // Open modal for caption edit
-                    $('button.add-caption').click(function () {
-                        let path = $(this).closest('.thumbnail').attr('data-path');
-                        let item = $(this).closest('.thumbnail').attr('data-item');
-                        let fileUuid = $(this).closest('.thumbnail').attr('data-file-uuid');
-                        let modal = $('.modal.write-event-blog-image-caption').first();
-                        $(modal).find('.image-full-res').attr('src', path);
-                        $(modal).attr('data-item', item);
-
-                        // Get caption text by xhr request
-                        $.post('ajaxMemberDashboardWriteEventBlog/getCaption', {
-                            'REQUEST_TOKEN': '{{ request_token }}',
-                            'fileUuid': fileUuid
-                        }).done(function (json) {
-                            if (json.status !== 'success') {
-                                console.log(json);
-                            } else {
-                                $(modal).modal('toggle');
-                                $(modal).find('#imageCaptionInput').val(json.caption);
-                                $(modal).find('#imagePhotographerInput').val(json.photographer);
-                            }
-                        }).always(function () {
-                            //window.location.reload();
-                        });
-                    });
-
-
-                    // Save caption to the server
-                    $('.modal.write-event-blog-image-caption button#saveCaptionButton').click(function () {
-                        $('.write-event-blog-image-caption').modal('hide');
-                        let caption = $('.modal.write-event-blog-image-caption #imageCaptionInput').val();
-                        let photographer = $('.modal.write-event-blog-image-caption #imagePhotographerInput').val();
-                        let modal = $(this).closest('.modal');
-                        let item = $(modal).attr('data-item');
-                        let thumbnail = $('#dashboardEventBlogGallery').find('.thumbnail[data-item="' + item + '"]');
-                        thumbnail.attr('data-caption', caption);
-                        let fileUuid = $(thumbnail).attr('data-file-uuid');
-                        $(modal).modal('hide');
-
-                        $.post('ajaxMemberDashboardWriteEventBlog/setCaption', {
-                            'REQUEST_TOKEN': '{{ request_token }}',
-                            'fileUuid': fileUuid,
-                            'caption': caption,
-                            'photographer': photographer
-                        }).done(function (json) {
-                            if (json.status !== 'success') {
-                                console.log(json);
-                            }
-                        }).always(function () {
-                            window.location.reload();
-                        });
+                    // Get caption text by xhr request
+                    $.post('ajaxMemberDashboardWriteEventBlog/getCaption', {
+                        'REQUEST_TOKEN': '{{ request_token }}',
+                        'fileUuid': fileUuid
+                    }).done(function (json) {
+                        if (json.status !== 'success') {
+                            console.log(json);
+                        } else {
+                            jQuery(modal).modal('toggle');
+                            jQuery(modal).find('#imageCaptionInput').val(json.caption);
+                            jQuery(modal).find('#imagePhotographerInput').val(json.photographer);
+                        }
+                    }).always(function () {
+                        //window.location.reload();
                     });
                 });
-            })(jQuery);
+
+                // Save caption to the server
+                jQuery('.modal.write-event-blog-image-caption button#saveCaptionButton').click(function () {
+                    jQuery('.write-event-blog-image-caption').modal('hide');
+                    let caption = jQuery('.modal.write-event-blog-image-caption #imageCaptionInput').val();
+                    let photographer = jQuery('.modal.write-event-blog-image-caption #imagePhotographerInput').val();
+                    let modal = jQuery(this).closest('.modal');
+                    let item = jQuery(modal).attr('data-item');
+                    let thumbnail = jQuery('#dashboardEventBlogGallery').find('.thumbnail[data-item="' + item + '"]');
+                    thumbnail.attr('data-caption', caption);
+                    let fileUuid = jQuery(thumbnail).attr('data-file-uuid');
+                    jQuery(modal).modal('hide');
+
+                    $.post('ajaxMemberDashboardWriteEventBlog/setCaption', {
+                        'REQUEST_TOKEN': '{{ request_token }}',
+                        'fileUuid': fileUuid,
+                        'caption': caption,
+                        'photographer': photographer
+                    }).done(function (json) {
+                        if (json.status !== 'success') {
+                            console.log(json);
+                        }
+                    }).always(function () {
+                        window.location.reload();
+                    });
+                });
+            });
         </script>
     {% endif %}
 
@@ -96,84 +92,84 @@
     {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
 
         <script>
-            /**
-             * Remove image from collection
-             */
-            (function ($) {
-                $(document).ready(function () {
-                    "use strict";
-                    $('.remove-image').on('click touchmove', function (e) {
-                        e.preventDefault();
-                        let elImage = $(this).closest('[data-file-uuid]');
-                        if (elImage.length) {
-                            let uuid = $(elImage).data('file-uuid');
-                            if (typeof uuid !== 'undefined') {
-                                $.post('ajaxMemberDashboardWriteEventBlog/removeImage', {
-                                    'REQUEST_TOKEN': '{{ request_token }}',
-                                    'eventId': '{{ eventId }}',
-                                    'uuid': uuid
-                                }).done(function (json) {
-                                    if (json.status !== 'success') {
-                                        console.log(json);
-                                    }
-                                    elImage.fadeOut(400, function () {
-                                        $(this).remove();
-                                    });
-                                });
-                            }
-                        }
-                    });
+            "use strict";
 
-                    // Rotate image
-                    $('.rotate-image').on('click touchmove', function (e) {
-                        e.preventDefault();
-                        let elImage = $(this).closest('[data-file-id]');
-                        if (elImage.length) {
-                            let fileId = $(elImage).data('file-id');
-                            if (typeof fileId !== 'undefined') {
-                                $.post('ajaxMemberDashboardWriteEventBlog/rotateImage', {
-                                    'REQUEST_TOKEN': '{{ request_token }}',
-                                    'fileId': fileId
-                                }).done(function (json) {
-                                    if (json.status !== 'success') {
-                                        console.log(json);
-                                    } else {
-                                        window.location = document.URL;
-                                    }
-                                });
-                            }
-                        }
-                    });
+            document.addEventListener("DOMContentLoaded", (event) => {
 
-                    /**
-                     * Image drag and drop sorting
-                     * @type {Element|*}
-                     */
-                    let container = document.getElementById("dashboardEventBlogGallery");
-                    Sortable.create(container, {
-                        animation: 50, // ms, animation speed moving items when sorting, `0` — without animation
-                        //handle: ".sortable-item", // Restricts sort start click/touch to the specified element
-                        draggable: ".sortable-item", // Specifies which items inside the element should be sortable
-                        onUpdate: function (event) {
-                            let item = event.item; // the current dragged HTMLElement
-                            let arrUuid = [];
-                            let collection = $(item).closest('.sortable-thumbnail-container').find('.sortable-item');
-                            $(collection).each(function () {
-                                arrUuid.push($(this).data('fileUuid'));
-                            });
-                            $.post('ajaxMemberDashboardWriteEventBlog/sortGallery', {
+                /**
+                 * Remove image from collection
+                 */
+                jQuery('.remove-image').on('click touchmove', function (e) {
+                    e.preventDefault();
+                    let elImage = jQuery(this).closest('[data-file-uuid]');
+                    if (elImage.length) {
+                        let uuid = jQuery(elImage).data('file-uuid');
+                        if (typeof uuid !== 'undefined') {
+                            $.post('ajaxMemberDashboardWriteEventBlog/removeImage', {
                                 'REQUEST_TOKEN': '{{ request_token }}',
                                 'eventId': '{{ eventId }}',
-                                'uuids': JSON.stringify(arrUuid)
+                                'uuid': uuid
                             }).done(function (json) {
                                 if (json.status !== 'success') {
                                     console.log(json);
                                 }
+                                elImage.fadeOut(400, function () {
+                                    jQuery(this).remove();
+                                });
                             });
                         }
-                    });
+                    }
                 });
-            })(jQuery);
+
+                // Rotate image
+                jQuery('.rotate-image').on('click touchmove', function (e) {
+                    e.preventDefault();
+                    let elImage = jQuery(this).closest('[data-file-id]');
+                    if (elImage.length) {
+                        let fileId = jQuery(elImage).data('file-id');
+                        if (typeof fileId !== 'undefined') {
+                            $.post('ajaxMemberDashboardWriteEventBlog/rotateImage', {
+                                'REQUEST_TOKEN': '{{ request_token }}',
+                                'fileId': fileId
+                            }).done(function (json) {
+                                if (json.status !== 'success') {
+                                    console.log(json);
+                                } else {
+                                    window.location = document.URL;
+                                }
+                            });
+                        }
+                    }
+                });
+
+                /**
+                 * Image drag and drop sorting
+                 * @type {Element|*}
+                 */
+                let container = document.getElementById("dashboardEventBlogGallery");
+                Sortable.create(container, {
+                    animation: 50, // ms, animation speed moving items when sorting, `0` — without animation
+                    //handle: ".sortable-item", // Restricts sort start click/touch to the specified element
+                    draggable: ".sortable-item", // Specifies which items inside the element should be sortable
+                    onUpdate: function (event) {
+                        let item = event.item; // the current dragged HTMLElement
+                        let arrUuid = [];
+                        let collection = jQuery(item).closest('.sortable-thumbnail-container').find('.sortable-item');
+                        jQuery(collection).each(function () {
+                            arrUuid.push(jQuery(this).data('fileUuid'));
+                        });
+                        $.post('ajaxMemberDashboardWriteEventBlog/sortGallery', {
+                            'REQUEST_TOKEN': '{{ request_token }}',
+                            'eventId': '{{ eventId }}',
+                            'uuids': JSON.stringify(arrUuid)
+                        }).done(function (json) {
+                            if (json.status !== 'success') {
+                                console.log(json);
+                            }
+                        });
+                    }
+                });
+            });
         </script>
     {% endif %}
 {% endif %}

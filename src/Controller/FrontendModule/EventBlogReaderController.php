@@ -21,11 +21,15 @@ use Contao\CalendarEventsModel;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\PageNotFoundException;
+use Contao\CoreBundle\Filesystem\FilesystemItem;
+use Contao\CoreBundle\Filesystem\FilesystemUtil;
+use Contao\CoreBundle\Filesystem\VirtualFilesystem;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Image\Studio\Studio;
 use Contao\CoreBundle\Routing\ScopeMatcher;
+use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\CoreBundle\Util\SymlinkUtil;
 use Contao\Environment;
-use Contao\File;
 use Contao\FilesModel;
 use Contao\Folder;
 use Contao\Input;
@@ -33,17 +37,15 @@ use Contao\MemberModel;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\StringUtil;
-use Contao\Template;
 use Contao\Validator;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
-#[AsFrontendModule(EventBlogReaderController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_event_blog_reader')]
+#[AsFrontendModule(EventBlogReaderController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_event_blog_reader')]
 class EventBlogReaderController extends AbstractFrontendModuleController
 {
     public const TYPE = 'event_blog_reader';
@@ -54,8 +56,8 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     public function __construct(
         private readonly ContaoFramework $framework,
         private readonly ScopeMatcher $scopeMatcher,
-        private readonly RequestStack $requestStack,
         private readonly UrlParser $urlParser,
+        private readonly VirtualFilesystem $filesStorage,
         private readonly string $projectDir,
         private readonly string $locale,
     ) {
@@ -70,7 +72,9 @@ class EventBlogReaderController extends AbstractFrontendModuleController
             $inputAdapter = $this->framework->getAdapter(Input::class);
 
             // Set the item from the auto_item parameter
-            $inputAdapter->setGet('items', $inputAdapter->get('auto_item'));
+            if (empty($inputAdapter->get('items'))) {
+                $inputAdapter->setGet('items', $inputAdapter->get('auto_item'));
+            }
 
             // Do not index or cache the page if no blog item has been specified
             if ($page && empty($inputAdapter->get('items'))) {
@@ -102,39 +106,33 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     /**
      * @throws \Exception
      */
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
         // Adapters
         $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
-        $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
         $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
 
         // Set data
         $template->setData($this->blog->row());
 
-        $template->class = $template->class ?? '';
-        $template->cssID = $template->cssID ?? '';
+        $template->set('class', $template->has('class') ? $template->get('class') : '');
+        $template->set('cssID', $template->has('cssID') ? $template->get('cssID') : '');
 
         // Set title as headline
-        $template->headline = $this->blog->title;
+        $template->set('headline', $this->blog->title);
 
         // Twig callable
-        $template->binToUuid = static fn (string $uuid): string => StringUtil::binToUuid($uuid);
+        $template->set('binToUuid', static fn (string $uuid): string => StringUtil::binToUuid($uuid));
 
         // Fallback if author is no more findable in tl_member
         $objAuthor = $memberModelModelAdapter->findOneBySacMemberId($this->blog->sacMemberId);
-        $template->authorName = null !== $objAuthor ? $objAuthor->firstname.' '.$objAuthor->lastname : $this->blog->authorName;
+        $template->set('authorName', null !== $objAuthor ? $objAuthor->firstname.' '.$objAuthor->lastname : $this->blog->authorName);
 
         // !!! $objEvent can be NULL, if the related event no more exists
         $objEvent = $calendarEventsModelAdapter->findByPk($this->blog->eventId);
-        $template->event = $objEvent->row();
-        $template->blog = $this->blog->row();
-
-        // Add qr code, if it is not preview mode
-        $request = $this->requestStack->getCurrentRequest();
+        $template->set('event', $objEvent->row());
+        $template->set('blog', $this->blog->row());
 
         if (!$this->isPreviewMode) {
             if ($request->query->has('referer')) {
@@ -147,7 +145,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
             // Remove facebook "fbclid" param
             $url = $this->urlParser->removeQueryString(['fbclid'], $url);
 
-            if ('' !== $url) {
+            if (!empty($url)) {
                 if (null !== ($qrCodePath = $this->getQrCodeFromUrl($url))) {
                     $template->qrCodePath = $qrCodePath;
                     $template->directLink = $url;
@@ -155,156 +153,82 @@ class EventBlogReaderController extends AbstractFrontendModuleController
             }
         }
 
-        // Add gallery
-        $images = [];
-        $arrMultiSRC = $stringUtilAdapter->deserialize($this->blog->multiSRC, true);
+        // Add the gallery
 
-        foreach ($arrMultiSRC as $uuid) {
-            if ($validatorAdapter->isUuid($uuid)) {
-                $objFiles = $filesModelAdapter->findByUuid($uuid);
+        // Find all images
+        $filesystemItems = FilesystemUtil::listContentsFromSerialized($this->filesStorage, $this->blog->multiSRC)
+            ->filter(static fn ($item) => \in_array($item->getExtension(true), ['jpg', 'JPG', 'png', 'PNG'], true))
+        ;
 
-                if (null !== $objFiles) {
-                    if (is_file($this->projectDir.'/'.$objFiles->path)) {
-                        $objFile = new File($objFiles->path);
+        // We do not have to sort the gallery,
+        // because we us custom sorting.
 
-                        if ($objFile->isImage) {
-                            $arrMeta = $stringUtilAdapter->deserialize($objFiles->meta, true);
-                            $title = '';
-                            $alt = '';
-                            $caption = '';
-                            $photographer = '';
+        $imageList = [];
 
-                            if (isset($arrMeta[$this->locale])) {
-                                $title = $arrMeta[$this->locale]['title'];
-                                $alt = $arrMeta[$this->locale]['alt'];
-                                $caption = $arrMeta[$this->locale]['caption'];
-                                $photographer = $arrMeta[$this->locale]['photographer'];
-                            }
+        /** @var FilesystemItem $filesystemItem */
+        foreach (iterator_to_array($filesystemItems) as $filesystemItem) {
+            $file = FilesModel::findByUuid(StringUtil::uuidToBin($filesystemItem->getUuid()));
 
-                            $arrFigureCaption = [];
-
-                            if ('' !== $caption) {
-                                $arrFigureCaption[] = $caption;
-                            }
-
-                            if ('' !== $photographer) {
-                                $arrFigureCaption[] = '(Foto: '.$photographer.')';
-                            }
-                            $strFigureCaption = implode(', ', $arrFigureCaption);
-
-                            $linkTitle = '';
-                            $linkTitle .= '' !== $caption ? $caption : '';
-                            $linkTitle .= '' !== $photographer ? ' (Foto: '.$photographer.')' : '';
-
-                            $images[$objFiles->path] = [
-                                'id' => $objFiles->id,
-                                'path' => $objFiles->path,
-                                'uuid' => $objFiles->uuid,
-                                'name' => $objFile->basename,
-                                'singleSRC' => $objFiles->path,
-                                'filesModel' => $objFiles->current(),
-                                'caption' => $stringUtilAdapter->specialchars($caption),
-                                'alt' => $stringUtilAdapter->specialchars($alt),
-                                'title' => $stringUtilAdapter->specialchars($title),
-                                'photographer' => $stringUtilAdapter->specialchars($photographer),
-                                'strFigureCaption' => $stringUtilAdapter->specialchars($strFigureCaption),
-                                'linkTitle' => $stringUtilAdapter->specialchars($linkTitle),
-                            ];
-                        }
-                    }
-                }
+            if ($file && is_file(Path::makeAbsolute($file->path, $this->projectDir))) {
+                $imageList[] = [
+                    'uuid' => $filesystemItem->getUuid(),
+                    'href' => $file->path,
+                    'meta' => ($filesystemItem->getExtraMetadata()['metadata'])->get($this->locale),
+                ];
             }
         }
 
-        // Custom image sorting
-        if ('' !== $this->blog->orderSRC) {
-            $tmp = $stringUtilAdapter->deserialize($this->blog->orderSRC);
-
-            if (!empty($tmp) && \is_array($tmp)) {
-                // Remove all values
-                $arrOrder = array_map(
-                    static function (): void {
-                    },
-                    array_flip($tmp)
-                );
-
-                // Move the matching elements to their position in $arrOrder
-                foreach ($images as $k => $v) {
-                    if (\array_key_exists($v['uuid'], $arrOrder)) {
-                        $arrOrder[$v['uuid']] = $v;
-                        unset($images[$k]);
-                    }
-                }
-
-                // Append the left-over images at the end
-                if (!empty($images)) {
-                    $arrOrder = array_merge($arrOrder, array_values($images));
-                }
-
-                // Remove empty (not replaced) entries
-                $images = array_values(array_filter($arrOrder));
-                unset($arrOrder);
-            }
-        }
-        $images = array_values($images);
-
-        $template->images = \count($images) ? $images : null;
+        $template->set('imageList', $imageList);
 
         // Add YouTube movie
-        $template->youTubeId = '' !== $this->blog->youTubeId ? $this->blog->youTubeId : null;
+        $template->set('youTubeId', !empty($this->blog->youTubeId) ? $this->blog->youTubeId : null);
 
-        // tour guides
-        $template->tourInstructors = null;
+        // tour instructors
         $arrTourInstructors = $calendarEventsHelperAdapter->getInstructorNamesAsArray($objEvent);
 
         if (!empty($arrTourInstructors)) {
-            $template->tourInstructors = implode(', ', $arrTourInstructors);
+            $template->set('tourInstructors', implode(', ', $arrTourInstructors));
         }
 
         // tour types
         $arrTourTypes = CalendarEventsHelper::getTourTypesAsArray($objEvent, 'title');
 
         if (!empty($arrTourTypes)) {
-            $template->tourTypes = implode(', ', $arrTourTypes);
+            $template->set('tourTypes', implode(', ', $arrTourTypes));
         }
 
         // event dates
-        $template->eventDates = CalendarEventsHelper::getEventPeriod($objEvent, 'd.m.Y', false);
+        $template->set('eventDates', CalendarEventsHelper::getEventPeriod($objEvent, 'd.m.Y', false));
 
         // tour tech. difficulty
-        $template->tourTechDifficulty = $this->blog->tourTechDifficulty ?? null;
+        $template->set('tourTechDifficulty', $this->blog->tourTechDifficulty ?? null);
 
-        if (empty($template->tourTechDifficulty) && !empty($objEvent->tourTechDifficulty)) {
+        if (empty($template->get('tourTechDifficulty')) && !empty($objEvent->tourTechDifficulty)) {
             $arrTourTechDiff = $calendarEventsHelperAdapter->getTourTechDifficultiesAsArray($objEvent);
-            $template->tourTechDifficulty = !empty($arrTourTechDiff) ? implode(', ', $arrTourTechDiff) : null;
+            $template->set('tourTechDifficulty', !empty($arrTourTechDiff) ? implode(', ', $arrTourTechDiff) : null);
         }
 
         // event organizers
-        $template->eventOrganizers = null;
         $arrEventOrganizers = $calendarEventsHelperAdapter->getEventOrganizersAsArray($objEvent);
 
         if (!empty($arrEventOrganizers)) {
-            $template->eventOrganizers = implode(', ', $arrEventOrganizers);
+            $template->set('eventOrganizers', implode(', ', $arrEventOrganizers));
         }
 
-        $template->tourProfile = null;
-        $template->tourWaypoints = null;
-        $template->tourHighlights = null;
-
-        if ('' !== $this->blog->tourWaypoints) {
-            $template->tourWaypoints = nl2br((string) $this->blog->tourWaypoints);
+        if (!empty($this->blog->tourWaypoints)) {
+            $template->set('tourWaypoints', nl2br((string) $this->blog->tourWaypoints));
         }
 
-        if ('' !== $this->blog->tourProfile) {
-            $template->tourProfile = nl2br((string) $this->blog->tourProfile);
+        if (!empty($this->blog->tourProfile)) {
+            $template->set('tourProfile', nl2br((string) $this->blog->tourProfile));
         }
 
-        if ('' !== $this->blog->tourHighlights) {
-            $template->tourHighlights = nl2br((string) $this->blog->tourHighlights);
+        if (!empty($this->blog->tourHighlights)) {
+            $template->set('tourHighlights', nl2br((string) $this->blog->tourHighlights));
         }
 
-        if ('' !== $this->blog->tourPublicTransportInfo) {
-            $template->tourPublicTransportInfo = nl2br((string) $this->blog->tourPublicTransportInfo);
+        if (!empty($this->blog->tourPublicTransportInfo)) {
+            $template->set('tourPublicTransportInfo', nl2br((string) $this->blog->tourPublicTransportInfo));
         }
 
         return $template->getResponse();
