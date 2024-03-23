@@ -3,7 +3,7 @@
 {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
     <div class="me-2">
         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#ModalChangePublishState">
-            <i class="fas fa-eye"></i> Veröffentlichen
+            <i class="fa-solid fa-eye"></i> Veröffentlichen
         </button>
     </div>
 
@@ -16,7 +16,7 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-dark">
-                        <i class="fas fa-check-circle fa-w-16"></i>
+                        <i class="fa-solid fa-check-circle fa-w-16"></i>
                         <div>
                             Hier kannst du deinen Bericht zur Überprüfung durch den/die Tourenleiter/in und die Redaktion freigeben.
                             <br>
@@ -37,14 +37,14 @@
                         <form id="changePublishStateForm">
                             <div v-if="publishState < 2" class="d-grid gap-2">
                                 <button id="publishEventBlogBtn" class="btn btn-lg btn-danger btn-block" v-if="!pendingRequest" @click="publishBlog">
-                                    <i class="fas fa-eye" aria-hidden="true"></i> Bericht zur Veröffentlichung freigeben
+                                    <i class="fa-solid fa-eye" aria-hidden="true"></i> Bericht zur Veröffentlichung freigeben
                                 </button>
                                 <button id="publishEventBlogBtnPending" class="btn btn-lg btn-danger btn-block" v-if="pendingRequest" disabled>
-                                    <i class="fas fa-spinner fa-pulse" aria-hidden="true"></i> Bitte warten
+                                    <i class="fa-solid fa-spinner fa-pulse" aria-hidden="true"></i> Bitte warten
                                 </button>
                             </div>
                             <div v-if="publishState === 2" class="alert alert-primary">
-                                <i class="fas fa-grin fa-w-16" aria-hidden="true"></i>
+                                <i class="fa-solid fa-grin fa-w-16" aria-hidden="true"></i>
                                 <div>
                                     Dein Bericht wurde erfolgreich zur Überprüfung freigegeben. Die Seite wird jetzt neu geladen.
                                 </div>

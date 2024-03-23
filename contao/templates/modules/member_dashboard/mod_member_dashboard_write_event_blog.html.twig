@@ -7,7 +7,7 @@
     {% if hasInfoMessage %}
         {% for msg in infoMessages %}
             <div class="alert alert-info" role="alert">
-                <i class="fas fa-exclamation-circle fa-w-16"></i>
+                <i class="fa-solid fa-exclamation-circle fa-w-16"></i>
                 {{ msg }}
             </div>
         {% endfor %}
@@ -40,16 +40,16 @@
         <div class="event-blog-form-buttons d-flex flex-row align-items-center">
             {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
                 <div class="me-2">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ModalWriteTextAndYt"><i class="fa fa-pencil"></i> Bericht bearbeiten</button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ModalWriteTextAndYt"><i class="fa-regular fa-pencil"></i> Bericht bearbeiten</button>
                 </div>
 
                 <div class="me-2">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ModalFotoupload"><i class="fa fa-images"></i> Foto-Upload</button>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ModalFotoupload"><i class="fa-regular fa-images"></i> Foto-Upload</button>
                 </div>
             {% endif %}
 
             <div class="me-2">
-                <a class="btn btn-primary" target="_blank" href="{{ previewLink }}"><i class="fas fa-desktop"></i> Vorschau</a>
+                <a class="btn btn-primary" target="_blank" href="{{ previewLink }}"><i class="fa-solid fa-desktop"></i> Vorschau</a>
             </div>
 
             {% if not text is empty and publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}

@@ -3,7 +3,7 @@
     <hr>
 
     {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-        <p><i class="fas fa-info-circle"></i> Bildreihenfolge kann durch Drag-and-Drop verändert werden.</p>
+        <p><i class="fa-solid fa-info-circle"></i> Bildreihenfolge kann durch Drag-and-Drop verändert werden.</p>
     {% endif %}
 
     <div id="dashboardEventBlogGallery" class="{% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}sortable-thumbnail-container {% endif %} dashboard-event-blog-gallery row gx-2 gy-1">
@@ -17,11 +17,11 @@
                 {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
                     <div class="dashboard-event-blog-thumb-buttons-container d-flex">
                         {% if arrFile.caption is empty or arrFile.photographer is empty %}
-                            <button class="btn blinking missing-caption-or-photographer-name add-caption" title="Fehlende Bildlegende oder Name des Fotografen fehlt"><i class="fal fa-exclamation-circle"></i></button>
+                            <button class="btn blinking missing-caption-or-photographer-name add-caption" title="Fehlende Bildlegende oder Name des Fotografen fehlt"><i class="fa-light fa-exclamation-circle"></i></button>
                         {% endif %}
-                        <button class="btn btn-danger rotate-image" title="Bild im GUZ 90° drehen"><i class="fal fa-history"></i></button>
-                        <button class="btn btn-danger remove-image" title="Bild löschen"><i class="fal fa-trash"></i></button>
-                        <button class="btn btn-danger add-caption" title="Bildunterschrift und Fotografen-Name hinzufügen"><i class="fal fa-pencil"></i></button>
+                        <button class="btn btn-danger rotate-image" title="Bild im GUZ 90° drehen"><i class="fa-light fa-history"></i></button>
+                        <button class="btn btn-danger remove-image" title="Bild löschen"><i class="fa-light fa-trash"></i></button>
+                        <button class="btn btn-danger add-caption" title="Bildunterschrift und Fotografen-Name hinzufügen"><i class="fa-light fa-pencil"></i></button>
                     </div>
                 {% endif %}
             </div>
