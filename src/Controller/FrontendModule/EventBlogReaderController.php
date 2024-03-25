@@ -25,7 +25,6 @@ use Contao\CoreBundle\Filesystem\FilesystemItem;
 use Contao\CoreBundle\Filesystem\FilesystemUtil;
 use Contao\CoreBundle\Filesystem\VirtualFilesystem;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\CoreBundle\Image\Studio\Studio;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\CoreBundle\Util\SymlinkUtil;
@@ -37,7 +36,6 @@ use Contao\MemberModel;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\StringUtil;
-use Contao\Validator;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
@@ -156,7 +154,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         // Add the gallery
 
         // Find all images
-        $filesystemItems = FilesystemUtil::listContentsFromSerialized($this->filesStorage, $this->blog->multiSRC)
+        $filesystemItems = FilesystemUtil::listContentsFromSerialized($this->filesStorage, $this->blog->multiSRC ?? [])
             ->filter(static fn ($item) => \in_array($item->getExtension(true), ['jpg', 'JPG', 'png', 'PNG'], true))
         ;
 
@@ -201,7 +199,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $template->set('eventDates', CalendarEventsHelper::getEventPeriod($objEvent, 'd.m.Y', false));
 
         // tour tech. difficulty
-        $template->set('tourTechDifficulty', $this->blog->tourTechDifficulty ?? null);
+        $template->set('tourTechDifficulty', $this->blog->tourTechDifficulty ?? '');
 
         if (empty($template->get('tourTechDifficulty')) && !empty($objEvent->tourTechDifficulty)) {
             $arrTourTechDiff = $calendarEventsHelperAdapter->getTourTechDifficultiesAsArray($objEvent);
