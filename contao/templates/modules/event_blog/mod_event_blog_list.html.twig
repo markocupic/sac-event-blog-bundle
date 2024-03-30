@@ -69,10 +69,10 @@
                 <div class="card event-item" data-aos="fade-down" data-aos-duration="600" data-aos-once="true" data-aos-anchor-placement="top-bottom">
 
                     <div class="p-2 d-flex align-items-center">
-                        {% if  blog.author.model is defined %}
-                            {{ insert_tag('image::' ~ getAvatarResourcePath(blog.author.model) ~ '?width=32&height=32&mode=crop&class=rounded-circle')|raw }}
-                            <p class="card-text fw-bold small m-0 ms-2">von {{ blog.author.name }}</p>
-                        {% endif %}
+                        {{ insert_tag('image::' ~ getAvatarResourcePath(blog.author.model ?? null) ~ '?width=32&height=32&mode=crop&class=rounded-circle')|raw }}
+                        {# Respect privacy and do not show the author name, if an author (frontend user) has deleted his account #}
+                        {% set author_name = blog.author.name ?? 'Unbekannt' %}
+                        <p class="card-text fw-bold small m-0 ms-2">von {{ author_name }}</p>
                     </div>
 
                     {% if blog.singleSRC %}

@@ -113,11 +113,12 @@ class EventBlogListController extends AbstractFrontendModuleController
         while ($this->blogs->next()) {
             $arrBlog = $this->blogs->row();
             $arrBlogIds[] = $arrBlog['id'];
+            // If the profile has been deleted, $objMember will be null!
             $objMember = $memberModelModelAdapter->findOneBySacMemberId($arrBlog['sacMemberId']);
-            $arrBlog['author'] = $objMember->row();
+            $arrBlog['author'] = null !== $objMember ? $objMember?->row() : [];
             $arrBlog['author']['model'] = $objMember;
             $arrBlog['author']['name'] = null !== $objMember ? $objMember->firstname.' '.$objMember->lastname : $this->blogs->authorname;
-            $arrBlog['href'] = null !== $objPageModel ? $stringUtilAdapter->ampersand($objPageModel->getFrontendUrl('/' .$this->blogs->id)) : null;
+            $arrBlog['href'] = null !== $objPageModel ? $stringUtilAdapter->ampersand($objPageModel->getFrontendUrl('/'.$this->blogs->id)) : null;
 
             $multiSRC = $stringUtilAdapter->deserialize($arrBlog['multiSRC'], true);
 

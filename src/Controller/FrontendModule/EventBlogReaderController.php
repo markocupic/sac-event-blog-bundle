@@ -125,7 +125,9 @@ class EventBlogReaderController extends AbstractFrontendModuleController
 
         // Fallback if author is no more findable in tl_member
         $objAuthor = $memberModelModelAdapter->findOneBySacMemberId($this->blog->sacMemberId);
-        $template->set('authorName', null !== $objAuthor ? $objAuthor->firstname.' '.$objAuthor->lastname : $this->blog->authorName);
+
+        // Respect privacy and do not show the author name, if an author (frontend user) has deleted his account
+        $template->set('authorName', null !== $objAuthor ? $objAuthor->firstname.' '.$objAuthor->lastname : 'Unbekannt');
 
         // !!! $objEvent can be NULL, if the related event no more exists
         $objEvent = $calendarEventsModelAdapter->findByPk($this->blog->eventId);
