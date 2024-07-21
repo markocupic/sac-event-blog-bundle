@@ -25,7 +25,7 @@
     "require": {
         "php": "^8.1",
         "contao/core-bundle": "^5.3",
-        "chillerlan/php-qrcode": "^4.0",
+        "chillerlan/php-qrcode": "^5.0",
         "codefog/contao-haste": "^5.0",
         "markocupic/contao-component-vue-js": "^3.3",
         "markocupic/contao-twig-assets": "^1.0",
