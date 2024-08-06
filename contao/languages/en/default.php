@@ -26,7 +26,7 @@ $GLOBALS['TL_LANG']['ERR']['md_write_event_blog_emailAddressNotFound'] = 'Leider
 // Frontend member dashboard write event blog frontend module - form text and YouTube
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_title'] = 'Geben Sie den Titel ein. Falls der Titel von der Eventbezeichnung abweicht, wird beides angezeigt, Titel und Eventbezeichnung.';
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_text'] = 'Touren-/Lager-/Kursbericht (max. %d Zeichen, inkl. Leerzeichen)';
-$GLOBALS['TL_LANG']['FORM']['md_write_event_blog_tourWaypoints'] = 'Tourenstationen mit Höhenangaben (nur stichwortartig)';
+$GLOBALS['TL_LANG']['FORM']['md_write_event_blog_tourWaypoints'] = 'Tourenstationen mit Höhenangaben (nur stichwortartig) (max. 300 Zeichen, inkl. Leerzeichen)';
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_tourProfile'] = 'Höhenmeter und Zeitangabe pro Tag';
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_tourTechDifficulty'] = 'Technische Schwierigkeiten';
 $GLOBALS['TL_LANG']['FORM']['md_write_event_blog_tourHighlights'] = 'Highlights/Bemerkungen (max. 3 Sätze)';
