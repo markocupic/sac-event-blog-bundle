@@ -31,7 +31,7 @@
 
 
     {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-        <script>
+        <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
             document.addEventListener("DOMContentLoaded", (event) => {
                 // Open modal for caption edit
                 jQuery('button.add-caption').click(function () {
@@ -91,7 +91,7 @@
 
     {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
 
-        <script>
+        <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
             "use strict";
 
             document.addEventListener("DOMContentLoaded", (event) => {

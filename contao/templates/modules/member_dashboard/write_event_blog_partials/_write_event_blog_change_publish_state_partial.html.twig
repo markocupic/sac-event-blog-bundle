@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <script>
+    <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
         // Vue js
         const {createApp} = Vue
 

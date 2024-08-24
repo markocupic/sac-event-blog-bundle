@@ -21,7 +21,7 @@
     </div>
 </div>
 
-<script>
+<script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
     document.addEventListener('DOMContentLoaded', () => {
         // protected scope
         const {createApp} = Vue
@@ -64,7 +64,7 @@
     });
 </script>
 
-<script>
+<script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
     // Open modal on error
     window.addEventListener("DOMContentLoaded", () => {
         if (document.querySelectorAll('#ModalWriteTextAndYt .widget.error').length) {

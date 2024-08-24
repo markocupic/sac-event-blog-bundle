@@ -44,7 +44,7 @@
     </div>
     </div>
 
-    <script>
+    <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
         document.addEventListener('DOMContentLoaded', function () {
             // Instantiate ItemWatcher class
             new EventBlogList('#eventBlogList{{ id }}', {

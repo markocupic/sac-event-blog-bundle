@@ -11,7 +11,7 @@
         </div>
     </div>
 </div>
-<script>
+<script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
     // Do not send the form twice
     document.querySelector('#ModalFotoupload form').addEventListener('submit', (e) => {
         e.target.querySelector('#ctrl_submitImageUploadFormBtn').disabled = true;
