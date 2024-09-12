@@ -611,9 +611,9 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
             'inputType' => 'fineUploader',
             'eval' => [
-                'maxWidth' => max([$objEventBlogModel->eventBlogMaxImageWidth, $objEventBlogModel->eventBlogMaxImageHeight]),
-                'maxHeight' => max([$objEventBlogModel->eventBlogMaxImageWidth, $objEventBlogModel->eventBlogMaxImageHeight]),
-                'maxlength' => $objEventBlogModel->eventBlogMaxImageFileSize,
+                'maxWidth' => max([$moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight]),
+                'maxHeight' => max([$moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight]),
+                'maxlength' => $moduleModel->eventBlogMaxImageFileSize,
                 'extensions' => 'jpg,jpeg',
                 'storeFile' => true,
                 'addToDbafs' => false,
@@ -623,6 +623,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 'useHomeDir' => false,
                 'uploadFolder' => Path::makeRelative($tmpUploadDir, $this->projectDir),
                 'mandatory' => true,
+                'imageSize' => [100, 100, 'center_center'], // Thumbnail image size that is generated upon image upload
+                'isGallery' => true, // Show the uploaded images as a gallery
             ],
         ]);
 
