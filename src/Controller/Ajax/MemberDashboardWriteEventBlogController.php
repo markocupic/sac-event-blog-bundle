@@ -104,7 +104,12 @@ class MemberDashboardWriteEventBlogController extends AbstractController
             return new JsonResponse(['status' => 'error']);
         }
 
+        /** @var FrontendUser|null $objUser */
         $objUser = $this->security->getUser();
+
+        if (null === $objUser) {
+            throw new \RuntimeException('No logged in frontend user found!');
+        }
 
         $id = $this->connection->fetchOne(
             'SELECT id FROM tl_calendar_events_blog WHERE sacMemberId = ? AND eventId = ? AND publishState < ?',
@@ -262,7 +267,12 @@ class MemberDashboardWriteEventBlogController extends AbstractController
             return new JsonResponse(['status' => 'error']);
         }
 
+        /** @var FrontendUser|null $objUser */
         $objUser = $this->security->getUser();
+
+        if (null === $objUser) {
+            throw new \RuntimeException('No logged in frontend user found!');
+        }
 
         $id = $this->connection->fetchOne(
             'SELECT id FROM tl_calendar_events_blog WHERE sacMemberId = ? AND eventId = ?',
@@ -314,7 +324,12 @@ class MemberDashboardWriteEventBlogController extends AbstractController
             return new JsonResponse(['status' => 'error']);
         }
 
+        /** @var FrontendUser|null $objUser */
         $objUser = $this->security->getUser();
+
+        if (null === $objUser) {
+            throw new \RuntimeException('No logged in frontend user found!');
+        }
 
         $id = $this->connection->fetchOne(
             'SELECT * FROM tl_calendar_events_blog WHERE sacMemberId = ? && eventId = ? && publishState < ?',
@@ -383,7 +398,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         // Get the image rotate service
         $objFiles = $filesModelAdapter->findOneById($fileId);
 
-        if ($this->rotateImage->rotate($objFiles)) {
+        if ($this->rotateImage->rotate($objFiles, 270)) {
             $json = ['status' => 'success'];
         } else {
             $json = ['status' => 'error'];

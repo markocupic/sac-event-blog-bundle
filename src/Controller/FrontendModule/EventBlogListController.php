@@ -42,7 +42,6 @@ class EventBlogListController extends AbstractFrontendModuleController
     public const TYPE = 'event_blog_list';
 
     private Collection|null $blogs;
-    private PageModel|null $page;
 
     public function __construct(
         private readonly ContaoFramework $framework,
@@ -57,8 +56,6 @@ class EventBlogListController extends AbstractFrontendModuleController
             // Adapters
             $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
             $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
-            $this->page = $page;
 
             $arrIds = [];
             $arrOptions = ['order' => 'dateAdded DESC'];

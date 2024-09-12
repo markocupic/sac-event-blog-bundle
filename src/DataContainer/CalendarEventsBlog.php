@@ -18,7 +18,6 @@ use Contao\CalendarEventsModel;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\CoreBundle\Exception\ResponseException;
 use Contao\DataContainer;
-use Contao\Environment;
 use Contao\Files;
 use Contao\FilesModel;
 use Contao\Folder;
@@ -229,10 +228,10 @@ class CalendarEventsBlog
         $strUrlBackend = $this->router->generate(
             'contao_backend',
             [
-            'do' => 'sac_calendar_events_blog_tool',
-            'act' => 'edit',
-            'id' =>  $objBlog->id,
-        ],
+                'do' => 'sac_calendar_events_blog_tool',
+                'act' => 'edit',
+                'id' => $objBlog->id,
+            ],
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 

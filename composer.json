@@ -23,7 +23,7 @@
         "source": "https://github.com/markocupic/sac-event-blog-bundle"
     },
     "require": {
-        "php": "^8.1",
+        "php": "^8.2",
         "contao/core-bundle": "^5.3",
         "chillerlan/php-qrcode": "^5.0",
         "codefog/contao-haste": "^5.0",

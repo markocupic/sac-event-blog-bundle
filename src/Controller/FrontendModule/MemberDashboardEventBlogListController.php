@@ -36,10 +36,10 @@ use Contao\Template;
 use Contao\Validator;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 #[AsFrontendModule(MemberDashboardEventBlogListController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_member_dashboard_event_blog_list')]

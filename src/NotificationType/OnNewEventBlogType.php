@@ -56,7 +56,7 @@ class OnNewEventBlogType implements NotificationTypeInterface
                 'instructor_email',
                 'webmaster_email',
             ],
-            'text_token' =>  [
+            'text_token' => [
                 'hostname',
                 'blog_title',
                 'blog_text',
@@ -70,7 +70,7 @@ class OnNewEventBlogType implements NotificationTypeInterface
                 'instructor_name',
                 'instructor_email',
                 'webmaster_email',
-                ],
+            ],
         ];
     }
 }

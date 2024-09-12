@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\ContaoBackendMaintenance;
 
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Folder;
 use Contao\Message;
@@ -26,14 +25,13 @@ use Psr\Log\LogLevel;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
 
-class MaintainModuleEventBlog
+readonly class MaintainModuleEventBlog
 {
     public function __construct(
-        private readonly ContaoFramework $framework,
-        private readonly Connection $connection,
-        private readonly string $projectDir,
-        private readonly string $eventBlogAssetDir,
-        private readonly LoggerInterface|null $logger,
+        private Connection $connection,
+        private string $projectDir,
+        private string $eventBlogAssetDir,
+        private LoggerInterface|null $logger,
     ) {
     }
 

@@ -25,14 +25,8 @@ use Terminal42\FineUploaderBundle\Widget\FrontendWidget;
 
 class FileUploadListener
 {
-    /**
-     * @var Uploader
-     */
-    private $uploader;
+    private Uploader $uploader;
 
-    /**
-     * FileUploadListener constructor.
-     */
     public function __construct(Uploader $uploader)
     {
         $this->uploader = $uploader;
