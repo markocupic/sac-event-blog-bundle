@@ -243,6 +243,11 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 $template->objEventBlogTextAndYoutubeForm = $this->generateTextAndYoutubeForm($objReportModel);
                 $template->objEventBlogImageUploadForm = $this->generatePictureUploadForm($objReportModel, $model);
 
+                // Image dimension and max upload file size restrictions
+                $template->maxImageWidth = $model->eventBlogMaxImageWidth;
+                $template->maxImageHeight = $model->eventBlogMaxImageHeight;
+                $template->maxImageFileSize = $model->eventBlogMaxImageFileSize;
+
                 // Get the preview link
                 $template->previewLink = $this->getPreviewLink($objReportModel, $model);
 
@@ -496,6 +501,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         if (!empty($objEventBlogModel->tourProfile)) {
             return $objEventBlogModel->tourProfile;
         }
+
         $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
@@ -515,6 +521,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         if (!empty($objEventBlogModel->tourTechDifficulty)) {
             return $objEventBlogModel->tourTechDifficulty;
         }
+
         $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
@@ -604,6 +611,9 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
             'inputType' => 'fineUploader',
             'eval' => [
+                'maxWidth' => max([$objEventBlogModel->eventBlogMaxImageWidth, $objEventBlogModel->eventBlogMaxImageHeight]),
+                'maxHeight' => max([$objEventBlogModel->eventBlogMaxImageWidth, $objEventBlogModel->eventBlogMaxImageHeight]),
+                'maxlength' => $objEventBlogModel->eventBlogMaxImageFileSize,
                 'extensions' => 'jpg,jpeg',
                 'storeFile' => true,
                 'addToDbafs' => false,

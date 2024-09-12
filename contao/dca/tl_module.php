@@ -21,7 +21,7 @@ use Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEvent
 $GLOBALS['TL_DCA']['tl_module']['palettes'][EventBlogListController::TYPE] = '{title_legend},name,headline,type;{config_legend},eventBlogOrganizers,jumpTo,numberOfItems,skipFirst,perPage;{template_legend:hide},eventBlogListTemplate;{image_legend:hide},imgSize;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 $GLOBALS['TL_DCA']['tl_module']['palettes'][EventBlogReaderController::TYPE] = '{title_legend},name,headline,type;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 $GLOBALS['TL_DCA']['tl_module']['palettes'][MemberDashboardEventBlogListController::TYPE] = '{title_legend},name,headline,type;{events_blog_legend},eventBlogTimeSpanForCreatingNew,eventBlogFormJumpTo;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
-$GLOBALS['TL_DCA']['tl_module']['palettes'][MemberDashboardEventBlogWriteController::TYPE] = '{title_legend},name,headline,type;{events_blog_legend},eventBlogReaderPage,eventBlogMaxImageWidth,eventBlogMaxImageHeight,eventBlogTimeSpanForCreatingNew,eventBlogOnPublishNotification;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
+$GLOBALS['TL_DCA']['tl_module']['palettes'][MemberDashboardEventBlogWriteController::TYPE] = '{title_legend},name,headline,type;{events_blog_legend},eventBlogReaderPage,eventBlogMaxImageWidth,eventBlogMaxImageHeight,eventBlogMaxImageFileSize,eventBlogTimeSpanForCreatingNew,eventBlogOnPublishNotification;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 
 // Add fields to tl_module
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogOnPublishNotification'] = [
@@ -54,16 +54,26 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogReaderPage'] = [
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogMaxImageWidth'] = [
     'exclude'   => true,
-    'inputType' => 'text',
-    'eval'      => ['rgxp' => 'natural', 'tl_class' => 'w50'],
-    'sql'       => "smallint(5) unsigned NOT NULL default '0'",
+    'inputType' => 'select',
+    'options'   => range(100, 4000, 100),
+    'eval'      => ['rgxp' => 'natural', 'tl_class' => 'w33'],
+    'sql'       => "smallint(5) unsigned NOT NULL default 1500",
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogMaxImageHeight'] = [
     'exclude'   => true,
-    'inputType' => 'text',
-    'eval'      => ['rgxp' => 'natural', 'tl_class' => 'w50'],
-    'sql'       => "smallint(5) unsigned NOT NULL default '0'",
+    'inputType' => 'select',
+    'options'   => range(100, 4000, 100),
+    'eval'      => ['rgxp' => 'natural', 'tl_class' => 'w33'],
+    'sql'       => "smallint(5) unsigned NOT NULL default 1500",
+];
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogMaxImageFileSize'] = [
+    'exclude'   => true,
+    'inputType' => 'select',
+    'options'   => range(1000000, 10000000, 100000),
+    'eval'      => ['rgxp' => 'natural', 'tl_class' => 'w33'],
+    'sql'       => "int(10) unsigned NOT NULL default 20000000",
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogTimeSpanForCreatingNew'] = [
@@ -71,7 +81,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogTimeSpanForCreatingNew'] = [
     'inputType' => 'select',
     'options'   => range(5, 365),
     'eval'      => ['mandatory' => true, 'includeBlankOption' => false, 'tl_class' => 'clr', 'rgxp' => 'natural'],
-    'sql'       => "int(10) unsigned NOT NULL default '0'",
+    'sql'       => "int(10) unsigned NOT NULL default 0",
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogLimit'] = [

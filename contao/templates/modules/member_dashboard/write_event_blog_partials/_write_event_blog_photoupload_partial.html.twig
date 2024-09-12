@@ -6,6 +6,15 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
             </div>
             <div class="modal-body">
+                <div>
+                    <p class="mt-0 small"><strong>Bitte beachte ...</strong>
+                        <br>
+                        - die maximal mögliche Dateigrösse für Bilduploads von <strong>{{ (maxImageFileSize/1000)|round(1, 'floor') }} KB</strong>.
+                        <br>
+                        - und die maximale Bildauflösung von <strong>{{ maxImageWidth }}x{{ maxImageWidth }} Pixeln</strong>.
+                    </p>
+                    <p class="small">Du kannst die Auflösung/Kompression deine Bilder mit der App deiner Wahl verkleinern oder einen kostenlosen Online-Dienst nutzen wie z.B. <a href="https://imageresizer.com/bulk-resize" target="_blank">Image Resizer</a>.</p>
+                </div>
                 {{ objEventBlogImageUploadForm|raw }}
             </div>
         </div>

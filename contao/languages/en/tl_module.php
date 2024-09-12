@@ -23,4 +23,5 @@ $GLOBALS['TL_LANG']['tl_module']['eventBlogReaderPage'] = ['Event-Bericht Reader
 $GLOBALS['TL_LANG']['tl_module']['eventBlogFormJumpTo'] = ['Seite mit Tourenbericht Erfassungsformular', 'Bitte geben Sie hier die Seite mit dem Tourenbericht-Erfassungs-Modul an.'];
 $GLOBALS['TL_LANG']['tl_module']['eventBlogMaxImageWidth'] = ['Maximale Bildbreite in Pixeln', 'Legen Sie die maximale Bildbreite fest. Grössere Bilder werden beim Upload automatisch verkleinert.'];
 $GLOBALS['TL_LANG']['tl_module']['eventBlogMaxImageHeight'] = ['Maximale Bildhöhe in Pixeln', 'Legen Sie die maximale Bildhöhe fest. Grössere Bilder werden beim Upload automatisch verkleinert.'];
+$GLOBALS['TL_LANG']['tl_module']['eventBlogMaxImageFileSize'] = ['Maximale Bildgrösse in Bytes', 'Legen Sie die maximale Bildgrösse in Bytes fest.'];
 $GLOBALS['TL_LANG']['tl_module']['eventBlogOnPublishNotification'] = ['Benachrichtigung bei neu erstelltem Event-Bericht', ''];
