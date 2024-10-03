@@ -17,6 +17,7 @@ namespace Markocupic\SacEventBlogBundle\DataContainer;
 use Contao\CalendarEventsModel;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\CoreBundle\Exception\ResponseException;
+use Contao\CoreBundle\Security\ContaoCorePermissions;
 use Contao\DataContainer;
 use Contao\Files;
 use Contao\FilesModel;
@@ -44,6 +45,8 @@ use Symfony\Component\Routing\RouterInterface;
 
 class CalendarEventsBlog
 {
+    private const TABLE_NAME = 'tl_calendar_events_blog';
+
     public function __construct(
         private readonly Security $security,
         private readonly Connection $connection,
@@ -57,10 +60,38 @@ class CalendarEventsBlog
     ) {
     }
 
+    #[AsCallback(table: self::TABLE_NAME, target: 'config.onload', priority: 100)]
+    public function checkPermission(DataContainer $dc): void
+    {
+        if ($this->security->isGranted('ROLE_ADMIN')) {
+            return;
+        }
+
+        // Adding new records is not allowed to non admins.
+        $GLOBALS['TL_DCA'][self::TABLE_NAME]['config']['closed'] = true;
+        $GLOBALS['TL_DCA'][self::TABLE_NAME]['config']['notCopyable'] = true;
+
+        // Deleting records is not allowed to non admins.
+        $GLOBALS['TL_DCA'][self::TABLE_NAME]['config']['notDeletable'] = true;
+        unset($GLOBALS['TL_DCA'][self::TABLE_NAME]['list']['operations']['delete']);
+
+        // Do not show fields without write permission.
+        $arrFieldNames = array_keys($GLOBALS['TL_DCA'][self::TABLE_NAME]['fields']);
+
+        foreach ($arrFieldNames as $fieldName) {
+            if (!$this->security->isGranted(ContaoCorePermissions::USER_CAN_EDIT_FIELD_OF_TABLE, self::TABLE_NAME.'::'.$fieldName)) {
+                $GLOBALS['TL_DCA'][self::TABLE_NAME]['fields'][$fieldName]['eval']['doNotShow'] = true;
+                $GLOBALS['TL_DCA'][self::TABLE_NAME]['fields'][$fieldName]['sorting'] = false;
+                $GLOBALS['TL_DCA'][self::TABLE_NAME]['fields'][$fieldName]['filter'] = false;
+                $GLOBALS['TL_DCA'][self::TABLE_NAME]['fields'][$fieldName]['search'] = false;
+            }
+        }
+    }
+
     /**
      * @throws \Exception
      */
-    #[AsCallback(table: 'tl_calendar_events_blog', target: 'config.onload')]
+    #[AsCallback(table: self::TABLE_NAME, target: 'config.onload')]
     public function route(): void
     {
         $request = $this->requestStack->getCurrentRequest();
@@ -74,16 +105,16 @@ class CalendarEventsBlog
         }
     }
 
-    #[AsCallback(table: 'tl_calendar_events_blog', target: 'config.onload')]
+    #[AsCallback(table: self::TABLE_NAME, target: 'config.onload')]
     public function adjustDcaFields(): void
     {
         // Overwrite readonly attribute for admins
         if ($this->security->isGranted('ROLE_ADMIN')) {
-            $fields = $GLOBALS['TL_DCA']['tl_calendar_events_blog']['fields'];
+            $fields = $GLOBALS['TL_DCA'][self::TABLE_NAME]['fields'];
 
             foreach ($fields as $strFieldName => $arrField) {
                 if (isset($arrField['eval']['readonly']) && $arrField['eval']['readonly']) {
-                    $GLOBALS['TL_DCA']['tl_calendar_events_blog']['fields'][$strFieldName]['eval']['readonly'] = false;
+                    $GLOBALS['TL_DCA'][self::TABLE_NAME]['fields'][$strFieldName]['eval']['readonly'] = false;
                 }
             }
         }
@@ -92,7 +123,7 @@ class CalendarEventsBlog
     /**
      * @throws \Exception
      */
-    #[AsCallback(table: 'tl_calendar_events_blog', target: 'config.onload')]
+    #[AsCallback(table: self::TABLE_NAME, target: 'config.onload')]
     public function keepBlogUpToDate(): void
     {
         // Delete old and unpublished blogs
@@ -144,7 +175,7 @@ class CalendarEventsBlog
     /**
      * Add an image to each record.
      */
-    #[AsCallback(table: 'tl_calendar_events_blog', target: 'list.label.label')]
+    #[AsCallback(table: self::TABLE_NAME, target: 'list.label.label')]
     public function addIcon(array $row, string $label, DataContainer $dc, array $args): array
     {
         $image = 'member';
