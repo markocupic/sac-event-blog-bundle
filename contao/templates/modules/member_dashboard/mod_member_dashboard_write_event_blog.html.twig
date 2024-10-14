@@ -21,24 +21,26 @@
         {% endfor %}
     {% endif %}
 
-    {% if not hasErrorMessage %}
+    {% if showDashboard %}
         <p class="mt-0 mb-0">Dein Bericht für:<p>
-        <h4 class="mt-1"><span class="text-primary">{{ eventName }}</span></h4>
+        <h4 class="mt-1"><span class="text-primary">{{ eventName|default('') }}</span></h4>
 
-        {% if executionState is constant('\\Markocupic\\SacEventToolBundle\\Config\\EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED') and not eventSubstitutionText is empty %}
+        {% if executionState|default() is constant('\\Markocupic\\SacEventToolBundle\\Config\\EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED') and not eventSubstitutionText is empty %}
             <h4 class="mt-2" style="color: red">Ausweichtour: {{ eventSubstitutionText }}</h4>
         {% endif %}
 
-        <time class="small">Datum: {{ eventPeriod|raw }}</time>
+        {% if eventPeriod|default() %}
+            <time class="small">Datum: {{ eventPeriod|raw }}</time>
+        {% endif %}
 
         <br>
         <hr>
         <br>
 
-        <p><strong>Veröffentlichungs-Level:</strong> {{ publishState }} - {{ ('tl_calendar_events_blog.publishStateRef.'~publishState)|trans({}, 'contao_default') }}</p>
+        <p><strong>Veröffentlichungs-Level:</strong> {{ publishState|default('') }} - {{ ('tl_calendar_events_blog.publishStateRef.'~publishState|default(''))|trans({}, 'contao_default') }}</p>
 
         <div class="event-blog-form-buttons d-flex flex-row align-items-center">
-            {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+            {% if publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
                 <div class="me-2">
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ModalWriteTextAndYt"><i class="fa-regular fa-pencil"></i> Bericht bearbeiten</button>
                 </div>
@@ -48,16 +50,18 @@
                 </div>
             {% endif %}
 
-            <div class="me-2">
-                <a class="btn btn-primary" target="_blank" href="{{ previewLink }}"><i class="fa-solid fa-desktop"></i> Vorschau</a>
-            </div>
+            {% if previewLink|default() %}
+                <div class="me-2">
+                    <a class="btn btn-primary" target="_blank" href="{{ previewLink }}"><i class="fa-solid fa-desktop"></i> Vorschau</a>
+                </div>
+            {% endif %}
 
-            {% if not text is empty and publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+            {% if not text|default() is empty and publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
                 {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_change_publish_state_partial.html.twig') %}
             {% endif %}
         </div>
 
-        {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+        {% if publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
             <!-- Modal box tour report form -->
             {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_create_report_form_partial.html.twig') %}
 
@@ -136,7 +140,6 @@
                 <iframe src="//www.youtube.com/embed/{{ youTubeId }}?rel=0" allowfullscreen=""></iframe>
             </div>
         {% endif %}
-
-    {% endif %}{# end if not hasErrorMessage #}
+    {% endif %}
 
 {% endblock %}

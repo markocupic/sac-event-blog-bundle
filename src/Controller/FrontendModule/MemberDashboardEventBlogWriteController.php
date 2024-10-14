@@ -17,7 +17,6 @@ namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
 use Codefog\HasteBundle\Form\Form;
 use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
-use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
@@ -38,8 +37,12 @@ use Contao\System;
 use Contao\Template;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
+use Markocupic\ContaoFilepondUploader\Widget\FrontendWidget;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
+use Markocupic\SacEventBlogBundle\Upload\Exception\ImageUploadException;
+use Markocupic\SacEventBlogBundle\Upload\ImageUploadHandler;
+use Markocupic\SacEventBlogBundle\Validator\ImageUploadValidator;
 use Markocupic\SacEventToolBundle\CalendarEventsHelper;
 use Markocupic\SacEventToolBundle\Config\EventExecutionState;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
@@ -47,6 +50,7 @@ use Psr\Log\LogLevel;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
+use Symfony\Component\Finder\Finder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -70,7 +74,10 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         private readonly UrlParser $urlParser,
         private readonly Security $security,
         private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
+        private readonly ImageUploadValidator $imageUploadValidator,
+        private readonly ImageUploadHandler $imageUploadHandler,
         private readonly string $projectDir,
+        private readonly string $tmpPath,
         private readonly string $eventBlogAssetDir,
         private readonly string $locale,
     ) {
@@ -102,6 +109,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
      */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
+        $template->showDashboard = true;
+
         // Do not allow for not authorized users
         if (null === $this->user) {
             throw new UnauthorizedHttpException('Not authorized. Please log in as frontend user.');
@@ -123,142 +132,152 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
         // Handle messages
         if (empty($this->user->email) || !$validatorAdapter->isEmail($this->user->email)) {
+            $template->showDashboard = false;
             $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_blog_emailAddressNotFound', [], 'contao_default'));
+            $this->addMessagesToTemplate($template);
+
+            return $template->getResponse();
         }
 
         $objEvent = $calendarEventsModelAdapter->findByPk($inputAdapter->get('eventId'));
 
         if (null === $objEvent) {
+            $template->showDashboard = false;
             $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_eventNotFound', [$inputAdapter->get('eventId')], 'contao_default'));
+            $this->addMessagesToTemplate($template);
+
+            return $template->getResponse();
         }
 
-        if (!$messageAdapter->hasError()) {
-            // Check if report already exists
-            $objReportModel = CalendarEventsBlogModel::findOneBySacMemberIdAndEventId($this->user->sacMemberId, $objEvent->id);
+        // Check if blog already exists
+        $objBlog = CalendarEventsBlogModel::findOneBySacMemberIdAndEventId($this->user->sacMemberId, $objEvent->id);
 
-            if (null === $objReportModel) {
-                if ($objEvent->endDate + $model->eventBlogTimeSpanForCreatingNew * 24 * 60 * 60 < time()) {
-                    // Do not allow blogging for old events
-                    $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_createBlogDeadlineExpired', [], 'contao_default'));
-                }
+        if (null === $objBlog) {
+            if ($objEvent->endDate + $model->eventBlogTimeSpanForCreatingNew * 24 * 60 * 60 < time()) {
+                // Do not allow blogging for old events
+                $template->showDashboard = false;
+                $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_createBlogDeadlineExpired', [], 'contao_default'));
+                $this->addMessagesToTemplate($template);
 
-                if (!$messageAdapter->hasError()) {
-                    $blnAllow = false;
-                    $intStartDateMin = $model->eventBlogTimeSpanForCreatingNew > 0 ? time() - $model->eventBlogTimeSpanForCreatingNew * 24 * 3600 : time();
-                    $arrAllowedEvents = $calendarEventsMemberModelAdapter->findEventsByMemberId($this->user->id, [], $intStartDateMin, time(), true);
-
-                    foreach ($arrAllowedEvents as $allowedEvent) {
-                        if ((int) $allowedEvent['id'] === (int) $inputAdapter->get('eventId')) {
-                            $blnAllow = true;
-                        }
-                    }
-
-                    // User has not participated on the event neither as guide nor as participant and is not allowed to write a report
-                    if (!$blnAllow) {
-                        $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_writingPermissionDenied', [], 'contao_default'));
-                    }
-                }
+                return $template->getResponse();
             }
 
             if (!$messageAdapter->hasError()) {
-                if (null === $objReportModel) {
-                    // Create new
-                    $aDates = [];
-                    $arrDates = $stringUtilAdapter->deserialize($objEvent->eventDates, true);
+                $blnAllow = false;
+                $intStartDateMin = $model->eventBlogTimeSpanForCreatingNew > 0 ? time() - $model->eventBlogTimeSpanForCreatingNew * 24 * 3600 : time();
+                $arrAllowedEvents = $calendarEventsMemberModelAdapter->findEventsByMemberId($this->user->id, [], $intStartDateMin, time(), true);
 
-                    foreach ($arrDates as $arrDate) {
-                        $aDates[] = $arrDate['new_repeat'];
-                    }
-
-                    $set = [
-                        'title' => $objEvent->title,
-                        'eventTitle' => $objEvent->title,
-                        'eventSubstitutionText' => EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED === $objEvent->executionState && '' !== $objEvent->eventSubstitutionText ? $stringUtilAdapter->substr($objEvent->eventSubstitutionText, 250) : '',
-                        'eventStartDate' => $objEvent->startDate,
-                        'eventEndDate' => $objEvent->endDate,
-                        'organizers' => $objEvent->organizers,
-                        'eventDates' => serialize($aDates),
-                        'authorName' => $this->user->firstname.' '.$this->user->lastname,
-                        'sacMemberId' => $this->user->sacMemberId,
-                        'eventId' => $inputAdapter->get('eventId'),
-                        'tstamp' => time(),
-                        'dateAdded' => time(),
-                    ];
-
-                    $affected = $this->connection->insert('tl_calendar_events_blog', $set);
-
-                    // Set security token for frontend preview
-                    if ($affected) {
-                        $insertId = $this->connection->lastInsertId();
-                        $set = [
-                            'securityToken' => md5((string) random_int(100000000, 999999999)).$insertId,
-                        ];
-
-                        $this->connection->update('tl_calendar_events_blog', $set, ['id' => $insertId]);
-
-                        $objReportModel = $calendarEventsBlogModelAdapter->findByPk($insertId);
+                foreach ($arrAllowedEvents as $allowedEvent) {
+                    if ((int) $allowedEvent['id'] === (int) $inputAdapter->get('eventId')) {
+                        $blnAllow = true;
                     }
                 }
 
-                if (!isset($objReportModel)) {
-                    throw new \Exception('Event report model not found.');
+                // User has not participated on the event neither as guide nor as participant and is not allowed to write a report
+                if (!$blnAllow) {
+                    $template->showDashboard = false;
+                    $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_writingPermissionDenied', [], 'contao_default'));
+                    $this->addMessagesToTemplate($template);
+
+                    return $template->getResponse();
                 }
+            }
 
-                $template->request_token = $this->contaoCsrfTokenManager->getDefaultTokenValue();
-                $template->event = $objEvent->row;
-                $template->eventId = $objEvent->id;
-                $template->eventName = $objEvent->title;
-                $template->executionState = $objEvent->executionState;
-                $template->eventSubstitutionText = $objEvent->eventSubstitutionText;
-                $template->youTubeId = $objReportModel->youTubeId;
-                $template->text = $objReportModel->text;
-                $template->title = $objReportModel->title;
-                $template->publishState = (int) $objReportModel->publishState;
-                $template->eventPeriod = $calendarEventsHelperAdapter->getEventPeriod($objEvent);
+            // Create new
+            $aDates = [];
+            $arrDates = $stringUtilAdapter->deserialize($objEvent->eventDates, true);
 
-                // Get the gallery
-                $template->images = $this->getGalleryImages($objReportModel);
+            foreach ($arrDates as $arrDate) {
+                $aDates[] = $arrDate['new_repeat'];
+            }
 
-                if ('' !== $objReportModel->tourWaypoints) {
-                    $template->tourWaypoints = nl2br((string) $objReportModel->tourWaypoints);
-                }
+            $set = [
+                'title' => $objEvent->title,
+                'eventTitle' => $objEvent->title,
+                'eventSubstitutionText' => EventExecutionState::STATE_NOT_EXECUTED_LIKE_PREDICTED === $objEvent->executionState && '' !== $objEvent->eventSubstitutionText ? $stringUtilAdapter->substr($objEvent->eventSubstitutionText, 250) : '',
+                'eventStartDate' => $objEvent->startDate,
+                'eventEndDate' => $objEvent->endDate,
+                'organizers' => $objEvent->organizers,
+                'eventDates' => serialize($aDates),
+                'authorName' => $this->user->firstname.' '.$this->user->lastname,
+                'sacMemberId' => $this->user->sacMemberId,
+                'eventId' => $inputAdapter->get('eventId'),
+                'tstamp' => time(),
+                'dateAdded' => time(),
+            ];
 
-                if ('' !== $objReportModel->tourProfile) {
-                    $template->tourProfile = nl2br((string) $objReportModel->tourProfile);
-                }
+            $affected = $this->connection->insert('tl_calendar_events_blog', $set);
 
-                if ('' !== $objReportModel->tourTechDifficulty) {
-                    $template->tourTechDifficulty = nl2br((string) $objReportModel->tourTechDifficulty);
-                }
+            // Set security token for the frontend preview.
+            if ($affected) {
+                $insertId = $this->connection->lastInsertId();
+                $set = [
+                    'securityToken' => md5((string) random_int(100000000, 999999999)).$insertId,
+                ];
 
-                if ('' !== $objReportModel->tourHighlights) {
-                    $template->tourHighlights = nl2br((string) $objReportModel->tourHighlights);
-                }
+                $this->connection->update('tl_calendar_events_blog', $set, ['id' => $insertId]);
 
-                if ('' !== $objReportModel->tourPublicTransportInfo) {
-                    $template->tourPublicTransportInfo = nl2br((string) $objReportModel->tourPublicTransportInfo);
-                }
-
-                // Generate forms
-                $template->objEventBlogTextAndYoutubeForm = $this->generateTextAndYoutubeForm($objReportModel);
-                $template->objEventBlogImageUploadForm = $this->generatePictureUploadForm($objReportModel, $model);
-
-                // Image dimension and max upload file size restrictions
-                $template->maxImageWidth = $model->eventBlogMaxImageWidth;
-                $template->maxImageHeight = $model->eventBlogMaxImageHeight;
-                $template->maxImageFileSize = $model->eventBlogMaxImageFileSize;
-
-                // Get the preview link
-                $template->previewLink = $this->getPreviewLink($objReportModel, $model);
-
-                // Twig callable
-                $template->binToUuid = static fn (string $uuid): string => StringUtil::binToUuid($uuid);
+                $objBlog = $calendarEventsBlogModelAdapter->findByPk($insertId);
             }
         }
 
+        if (empty($objBlog)) {
+            throw new \Exception('Blog model not found.');
+        }
+
+        $template->request_token = $this->contaoCsrfTokenManager->getDefaultTokenValue();
+        $template->event = $objEvent->row;
+        $template->eventId = $objEvent->id;
+        $template->eventName = $objEvent->title;
+        $template->executionState = $objEvent->executionState;
+        $template->eventSubstitutionText = $objEvent->eventSubstitutionText;
+        $template->youTubeId = $objBlog->youTubeId;
+        $template->text = $objBlog->text;
+        $template->title = $objBlog->title;
+        $template->publishState = (int) $objBlog->publishState;
+        $template->eventPeriod = $calendarEventsHelperAdapter->getEventPeriod($objEvent);
+
+        // Get the gallery
+        $template->images = $this->getGalleryImages($objBlog);
+
+        if ('' !== $objBlog->tourWaypoints) {
+            $template->tourWaypoints = nl2br((string) $objBlog->tourWaypoints);
+        }
+
+        if ('' !== $objBlog->tourProfile) {
+            $template->tourProfile = nl2br((string) $objBlog->tourProfile);
+        }
+
+        if ('' !== $objBlog->tourTechDifficulty) {
+            $template->tourTechDifficulty = nl2br((string) $objBlog->tourTechDifficulty);
+        }
+
+        if ('' !== $objBlog->tourHighlights) {
+            $template->tourHighlights = nl2br((string) $objBlog->tourHighlights);
+        }
+
+        if ('' !== $objBlog->tourPublicTransportInfo) {
+            $template->tourPublicTransportInfo = nl2br((string) $objBlog->tourPublicTransportInfo);
+        }
+
+        // Generate forms
+        $template->objEventBlogTextAndYoutubeForm = $this->generateTextAndYoutubeForm($objBlog);
+        $template->objEventBlogImageUploadForm = $this->generatePictureUploadForm($objBlog, $model);
+
+        // Image dimension and max upload file size restrictions
+        $template->maxImageWidth = $model->eventBlogMaxImageWidth;
+        $template->maxImageHeight = $model->eventBlogMaxImageHeight;
+        $template->maxImageFileSize = $model->eventBlogMaxImageFileSize;
+
+        // Get the preview link
+        $template->previewLink = $this->getPreviewLink($objBlog, $model);
+
+        // Twig callable
+        $template->binToUuid = static fn (string $uuid): string => StringUtil::binToUuid($uuid);
+
         // Check if all images are labeled with a legend and a photographer name
-        if (isset($objReportModel) && PublishState::STILL_IN_PROGRESS === (int) $objReportModel->publishState) {
-            if (!$this->validateImageUploads($objReportModel)) {
+        if (PublishState::STILL_IN_PROGRESS === (int) $objBlog->publishState) {
+            if (!$this->validateImageUploads($objBlog)) {
                 $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_blog_missingImageLegend', [], 'contao_default'));
             }
         }
@@ -557,36 +576,14 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         /** @var Message $messageAdapter */
         $messageAdapter = $this->framework->getAdapter(Message::class);
 
-        /** @var StringUtil $stringUtilAdapter */
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
-        /** @var FilesModel $filesModelAdapter */
-        $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
-
         /** @var Dbafs $dbafsAdapter */
         $dbafsAdapter = $this->framework->getAdapter(Dbafs::class);
 
-        /** @var Config $configAdapter */
-        $configAdapter = $this->framework->getAdapter(Config::class);
-
-        // Set max image width and height
-        if ((int) $moduleModel->eventBlogMaxImageWidth > 0) {
-            $configAdapter->set('imageWidth', (int) $moduleModel->eventBlogMaxImageWidth);
-        }
-
-        if ((int) $moduleModel->eventBlogMaxImageHeight > 0) {
-            $configAdapter->set('imageHeight', (int) $moduleModel->eventBlogMaxImageHeight);
-        }
+        $logger = System::getContainer()->get('monolog.logger.contao');
 
         $fs = new Filesystem();
 
-        $tmpUploadDir = sprintf('%s/system/tmp/event_blog/%s', $this->projectDir, $objEventBlogModel->id);
-
-        if (!is_dir($tmpUploadDir)) {
-            $fs->mkdir($tmpUploadDir);
-        }
-
-        $destDir = $this->projectDir.'/'.$this->eventBlogAssetDir.'/'.$objEventBlogModel->id;
+        $destDir = Path::join($this->projectDir, $this->eventBlogAssetDir, (string) $objEventBlogModel->id);
 
         if (!is_dir($destDir)) {
             $fs->mkdir($destDir);
@@ -606,125 +603,101 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $uri = $this->requestStack->getCurrentRequest()->getUri();
         $objForm->setAction($uri);
 
-        // Add some fields
+        $allowedExtensions = ['jpg', 'JPG', 'jpeg', 'JPEG'];
+
+        // Add the Filepond uploader to the form
         $objForm->addFormField('fileUpload', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
-            'inputType' => 'fineUploader',
+            'inputType' => FrontendWidget::TYPE,
             'eval' => [
-                'maxWidth' => max([$moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight]),
-                'maxHeight' => max([$moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight]),
                 'maxlength' => $moduleModel->eventBlogMaxImageFileSize,
-                'extensions' => 'jpg,jpeg',
+                'extensions' => implode(',', $allowedExtensions),
                 'storeFile' => true,
-                'addToDbafs' => false,
-                'isGallery' => false,
-                'directUpload' => true,
                 'multiple' => true,
-                'useHomeDir' => false,
-                'uploadFolder' => Path::makeRelative($tmpUploadDir, $this->projectDir),
-                'mandatory' => true,
-                'imageSize' => [100, 100, 'center_center'], // Thumbnail image size that is generated upon image upload
-                'isGallery' => true, // Show the uploaded images as a gallery
+                'mSize' => 0, // infinite
+                // Enable client side image resizing
+                'allowImageResize' => true,
+                'imageResizeTargetWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
+                'imageResizeTargetHeight' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
+                'imageResizeMode' => 'contain',
+                'imageResizeUpscale' => false,
             ],
         ]);
 
-        // Let's add  a submit button
+        // Add the submit button to the form
         $objForm->addFormField('submitImageUploadFormBtn', [
-            'label' => $this->translator->trans('FORM.md_write_event_blog_startImageUpload', [], 'contao_default'),
+            'label' => $this->translator->trans('FORM.md_write_event_blog_addImagesToBlog', [], 'contao_default'),
             'inputType' => 'submit',
         ]);
 
-        // Add attributes
-        $objWidgetFileUpload = $objForm->getWidget('fileUpload');
-        $objWidgetFileUpload->addAttribute('accept', '.jpg, .jpeg');
-        $objWidgetFileUpload->storeFile = true;
-
         // validate() also checks whether the form has been submitted
-        if ($objForm->validate() && $inputAdapter->post('FORM_SUBMIT') === $objForm->getFormId()) {
-            if ($inputAdapter->post('fileUpload')) {
-                // Make usage of Input::postRaw() because we don't want brackets to be encoded -> &#040;
-                $arrFiles = explode(',', $inputAdapter->postRaw('fileUpload'));
+        if ($objForm->validate() && $inputAdapter->post('FORM_SUBMIT') === $objForm->getFormId() && $inputAdapter->post('fileUpload')) {
+            // $_POST['fileUpload'] will contain the transfer keys
+            $arrTransferKeys = (array) $inputAdapter->post('fileUpload');
 
-                if (!empty($arrFiles)) {
-                    foreach ($arrFiles as $path) {
-                        if (!is_file($this->projectDir.'/'.$path)) {
-                            $msg = $this->translator->trans('FORM.md_write_event_blog_uploadFileError', ['%s' => basename($path)], 'contao_default');
-                            $messageAdapter->addInfo($msg);
-                            $objWidgetFileUpload->addError($msg);
+            // Filter empty/invalid values
+            $arrTransferKeys = array_filter($arrTransferKeys, static fn ($v) => !empty($v) && \is_string($v) && 0 === strrpos($v, 'filepond_'));
 
-                            continue;
-                        }
+            $arrPaths = array_map(fn ($dir) => Path::join($this->projectDir, $this->tmpPath, $dir), $arrTransferKeys);
 
-                        $objFile = new File($path);
+            if (empty($arrPaths)) {
+                $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_noValidImagesSelectedForUpload', [], 'contao_default'));
 
-                        if (!$objFile->isImage) {
-                            $msg = $this->translator->trans('FORM.md_write_event_blog_uploadedFileNotImage', ['%s' => basename($path)], 'contao_default');
-                            $messageAdapter->addInfo($msg);
-                            $objWidgetFileUpload->addError($msg);
-
-                            continue;
-                        }
-
-                        $newID = $this->connection->fetchOne('SELECT MAX(id) AS maxId FROM tl_files') + 1;
-
-                        $newPath = sprintf(
-                            '%s/event-blog-%s-img-%s.%s',
-                            $destDir,
-                            $objEventBlogModel->id,
-                            $newID,
-                            strtolower($objFile->extension),
-                        );
-
-                        // Copy image from system/tmp to the destination directory
-                        $fs->copy($this->projectDir.'/'.$path, $newPath);
-
-                        // Add image to DBAFS
-                        $dbafsAdapter->addResource(Path::makeRelative($newPath, $this->projectDir));
-
-                        $objFilesModel = $filesModelAdapter->findByPath(Path::makeRelative($newPath, $this->projectDir));
-
-                        if (null !== $objFilesModel) {
-                            $dbafsAdapter->updateFolderHashes(Path::makeRelative($destDir, $this->projectDir));
-
-                            // Add photographer name to meta field
-                            if (null !== $this->user) {
-                                $arrMeta = $stringUtilAdapter->deserialize($objFilesModel->meta, true);
-
-                                if (!isset($arrMeta[$this->page->language])) {
-                                    $arrMeta[$this->page->language] = [
-                                        'title' => '',
-                                        'alt' => '',
-                                        'link' => '',
-                                        'caption' => '',
-                                        'photographer' => '',
-                                    ];
-                                }
-
-                                $arrMeta[$this->page->language]['photographer'] = $this->user->firstname.' '.$this->user->lastname;
-                                $objFilesModel->meta = serialize($arrMeta);
-                                $objFilesModel->tstamp = time();
-
-                                $objFilesModel->save();
-                            }
-
-                            // Save gallery data to tl_calendar_events_blog
-                            $multiSRC = $stringUtilAdapter->deserialize($objEventBlogModel->multiSRC, true);
-                            $multiSRC[] = $objFilesModel->uuid;
-                            $objEventBlogModel->multiSRC = serialize($multiSRC);
-                            $objEventBlogModel->save();
-
-                            // Log
-                            $strText = sprintf('User with username %s has uploaded a new picture ("%s").', $this->user->username, $objFilesModel->path);
-                            $logger = System::getContainer()->get('monolog.logger.contao');
-                            $logger->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
-                        }
-                    }
-                }
-            }
-
-            if (!$objWidgetFileUpload->hasErrors()) {
                 $controllerAdapter->reload();
             }
+
+            $finder = new Finder();
+            $files = $finder
+                ->in($arrPaths)
+                ->files()
+                ->ignoreDotFiles(true)
+                // allow *.jpg, *.JPG, *.jpeg, *.JPEG
+                ->name(array_map(static fn ($v) => '*.'.$v, $allowedExtensions))
+            ;
+
+            if (!$files->hasResults()) {
+                $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_noValidImagesSelectedForUpload', [], 'contao_default'));
+
+                $controllerAdapter->reload();
+            }
+
+            foreach ($files as $file) {
+                $this->connection->beginTransaction();
+
+                try {
+                    // Validate upload
+                    $this->imageUploadValidator->validateFileExists($file);
+                    $this->imageUploadValidator->validateImageDimensions($file, $moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight);
+                    $this->imageUploadValidator->validateSize($file, $moduleModel->eventBlogMaxImageFileSize);
+
+                    // Move file to the target directory, add meta information to the image and append the image to the event blog gallery.
+                    $objFilesModel = $this->imageUploadHandler->moveToTarget($file, $objEventBlogModel, $destDir);
+                    $this->imageUploadHandler->addMetaData($objFilesModel, $this->user, $this->page);
+                    $this->imageUploadHandler->addUploadedImageToGallery($objFilesModel, $objEventBlogModel);
+
+                    $messageAdapter->addInfo($this->translator->trans('FORM.md_write_event_confirmImageUploadSuccessful', [$file->getFilename()], 'contao_default'));
+                } catch (ImageUploadException $e) {
+                    $logger?->log(LogLevel::ERROR, $e->getMessage(), ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
+                    $messageAdapter->addError($e->getTranslatableText());
+
+                    $this->connection->rollBack();
+                    continue;
+                } catch (\Exception $e) {
+                    $logger?->log(LogLevel::ERROR, $e->getMessage(), ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
+                    $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_generalUploadError', [], 'contao_default'));
+
+                    $this->connection->rollBack();
+                    continue;
+                }
+
+                $this->connection->commit();
+
+                // Log
+                $strText = sprintf('User with username %s has uploaded a new picture ("%s").', $this->user->username, $objFilesModel->path);
+                $logger?->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
+            }
+
+            $controllerAdapter->reload();
         }
 
         return $objForm->generate();
@@ -753,7 +726,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         return $previewLink;
     }
 
-    private function validateImageUploads(CalendarEventsBlogModel $objReportModel): bool
+    private function validateImageUploads(CalendarEventsBlogModel $objBlog): bool
     {
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -761,9 +734,9 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         /** @var FilesModel $filesModelAdapter */
         $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
 
-        // Check for a valid photographer name an exiting image legends
-        if (!empty($objReportModel->multiSRC) && !empty($stringUtilAdapter->deserialize($objReportModel->multiSRC, true))) {
-            $arrUuids = $stringUtilAdapter->deserialize($objReportModel->multiSRC, true);
+        // Check for a valid photographer name an existing image legends
+        if (!empty($objBlog->multiSRC) && !empty($stringUtilAdapter->deserialize($objBlog->multiSRC, true))) {
+            $arrUuids = $stringUtilAdapter->deserialize($objBlog->multiSRC, true);
             $objFiles = $filesModelAdapter->findMultipleByUuids($arrUuids);
 
             if (null !== $objFiles) {

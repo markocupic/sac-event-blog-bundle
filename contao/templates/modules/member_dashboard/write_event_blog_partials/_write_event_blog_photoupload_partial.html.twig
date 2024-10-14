@@ -1,5 +1,5 @@
 <div class="modal fade" id="ModalFotoupload" tabindex="-1" role="dialog" aria-labelledby="ModalUploadFoto" aria-hidden="true">
-    <div class="modal-dialog modal-fullscreen-xl-down modal-lg" role="document">
+    <div class="modal-dialog modal-fullscreen-xl-down modal-xl" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="exampleModalLabel">Fotoupload</h5>
@@ -11,9 +11,8 @@
                         <br>
                         - die maximal mögliche Dateigrösse für Bilduploads von <strong>{{ (maxImageFileSize/1000000)|round(1, 'floor') }} MB</strong>.
                         <br>
-                        - und die maximale Bildauflösung von <strong>{{ maxImageWidth }}x{{ maxImageWidth }} Pixeln</strong>.
+                        - Falls deine Bilder die maximale Auflösung von <strong>{{ maxImageWidth }}x{{ maxImageWidth }} Pixeln</strong> überschreiten, werden diese automatisch verkleinert.
                     </p>
-                    <p class="small">Du kannst die Auflösung/Kompression deine Bilder mit der App deiner Wahl verkleinern oder einen kostenlosen Online-Dienst nutzen wie z.B. <a href="https://imageresizer.com/bulk-resize" target="_blank">Image Resizer</a>.</p>
                 </div>
                 {{ objEventBlogImageUploadForm|raw }}
             </div>

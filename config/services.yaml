@@ -7,11 +7,6 @@ services:
         resource: ../src/
         exclude: ../src/{DependencyInjection,Model,Resources}
 
-    Markocupic\SacEventBlogBundle\EventListener\FileUploadListener:
-        arguments:
-            - "@terminal42_fineuploader.uploader"
-
-
     Markocupic\SacEventBlogBundle\DataContainer\CalendarEventsBlog:
         arguments:
             - '@security.helper'
@@ -64,7 +59,10 @@ services:
             - '@Codefog\HasteBundle\UrlParser'
             - '@security.helper'
             - '@contao.csrf.token_manager'
+            - '@Markocupic\SacEventBlogBundle\Validator\ImageUploadValidator'
+            - '@Markocupic\SacEventBlogBundle\Upload\ImageUploadHandler'
             - '%kernel.project_dir%'
+            - '%markocupic_contao_filepond_uploader.tmp_path%'
             - '%sac_event_blog.asset_dir%'
             - '%sacevt.locale%'
         public: true
