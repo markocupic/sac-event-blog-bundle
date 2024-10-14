@@ -57,7 +57,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogMaxImageWidth'] = [
     'inputType' => 'select',
     'options'   => range(100, 4000, 100),
     'eval'      => ['rgxp' => 'natural', 'tl_class' => 'w33'],
-    'sql'       => "smallint(5) unsigned NOT NULL default 1500",
+    'sql'       => "smallint(5) unsigned NOT NULL default 2500",
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogMaxImageHeight'] = [
@@ -71,9 +71,9 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogMaxImageHeight'] = [
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogMaxImageFileSize'] = [
     'exclude'   => true,
     'inputType' => 'select',
-    'options'   => range(1000000, 10000000, 100000),
+    'options'   => range(1000000, 30000000, 1000000),
     'eval'      => ['rgxp' => 'natural', 'tl_class' => 'w33'],
-    'sql'       => "int(10) unsigned NOT NULL default 20000000",
+    'sql'       => "int(10) unsigned NOT NULL default 12000000",
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogTimeSpanForCreatingNew'] = [
