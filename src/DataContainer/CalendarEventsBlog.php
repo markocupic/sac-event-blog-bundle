@@ -30,7 +30,7 @@ use Doctrine\DBAL\Connection;
 use Markocupic\PhpOffice\PhpWord\MsWordTemplateProcessor;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
-use Markocupic\SacEventToolBundle\CalendarEventsHelper;
+use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Markocupic\SacEventToolBundle\Config\EventExecutionState;
 use Markocupic\SacEventToolBundle\Download\BinaryFileDownload;
 use Markocupic\ZipBundle\Zip\Zip;
@@ -226,11 +226,11 @@ class CalendarEventsBlog
         $objPhpWord = new MsWordTemplateProcessor($docxTemplateSrc, $targetFile);
 
         // Organizers
-        $arrOrganizers = CalendarEventsHelper::getEventOrganizersAsArray($objEvent);
+        $arrOrganizers = CalendarEventsUtil::getEventOrganizersAsArray($objEvent);
         $strOrganizers = implode(', ', $arrOrganizers);
 
         // Instructors
-        $mainInstructorName = CalendarEventsHelper::getMainInstructorName($objEvent);
+        $mainInstructorName = CalendarEventsUtil::getMainInstructorName($objEvent);
         $mainInstructorEmail = '';
 
         if (null !== ($objInstructor = UserModel::findByPk($objEvent->mainInstructor))) {
@@ -245,7 +245,7 @@ class CalendarEventsBlog
         }
 
         // Event dates
-        $arrEventDates = CalendarEventsHelper::getEventTimestamps($objEvent);
+        $arrEventDates = CalendarEventsUtil::getEventTimestamps($objEvent);
         $arrEventDates = array_map(
             static fn ($tstamp) => date('Y-m-d', (int) $tstamp),
             $arrEventDates
@@ -278,7 +278,7 @@ class CalendarEventsBlog
         }
 
         // tourTypes
-        $arrTourTypes = CalendarEventsHelper::getTourTypesAsArray($objEvent, 'title');
+        $arrTourTypes = CalendarEventsUtil::getTourTypesAsArray($objEvent, 'title');
 
         $options = ['multiline' => true];
         $objPhpWord->replace('checkedByInstructor', $strCheckedByInstructor, $options);

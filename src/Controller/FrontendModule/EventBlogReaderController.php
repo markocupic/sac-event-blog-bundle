@@ -38,7 +38,7 @@ use Contao\PageModel;
 use Contao\StringUtil;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
-use Markocupic\SacEventToolBundle\CalendarEventsHelper;
+use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -109,7 +109,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         // Adapters
         $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
-        $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
+        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
 
         // Set data
         $template->setData($this->blog->row());
@@ -184,32 +184,32 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $template->set('youTubeId', !empty($this->blog->youTubeId) ? $this->blog->youTubeId : null);
 
         // tour instructors
-        $arrTourInstructors = $calendarEventsHelperAdapter->getInstructorNamesAsArray($objEvent);
+        $arrTourInstructors = $calendarEventsUtilAdapter->getInstructorNamesAsArray($objEvent);
 
         if (!empty($arrTourInstructors)) {
             $template->set('tourInstructors', implode(', ', $arrTourInstructors));
         }
 
         // tour types
-        $arrTourTypes = CalendarEventsHelper::getTourTypesAsArray($objEvent, 'title');
+        $arrTourTypes = CalendarEventsUtil::getTourTypesAsArray($objEvent, 'title');
 
         if (!empty($arrTourTypes)) {
             $template->set('tourTypes', implode(', ', $arrTourTypes));
         }
 
         // event dates
-        $template->set('eventDates', CalendarEventsHelper::getEventPeriod($objEvent, 'd.m.Y', false));
+        $template->set('eventDates', CalendarEventsUtil::getEventPeriod($objEvent, 'd.m.Y', false));
 
         // tour tech. difficulty
         $template->set('tourTechDifficulty', $this->blog->tourTechDifficulty ?? '');
 
         if (empty($template->get('tourTechDifficulty')) && !empty($objEvent->tourTechDifficulty)) {
-            $arrTourTechDiff = $calendarEventsHelperAdapter->getTourTechDifficultiesAsArray($objEvent);
+            $arrTourTechDiff = $calendarEventsUtilAdapter->getTourTechDifficultiesAsArray($objEvent);
             $template->set('tourTechDifficulty', !empty($arrTourTechDiff) ? implode(', ', $arrTourTechDiff) : null);
         }
 
         // event organizers
-        $arrEventOrganizers = $calendarEventsHelperAdapter->getEventOrganizersAsArray($objEvent);
+        $arrEventOrganizers = $calendarEventsUtilAdapter->getEventOrganizersAsArray($objEvent);
 
         if (!empty($arrEventOrganizers)) {
             $template->set('eventOrganizers', implode(', ', $arrEventOrganizers));

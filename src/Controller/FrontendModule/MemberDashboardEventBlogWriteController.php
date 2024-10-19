@@ -43,7 +43,7 @@ use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventBlogBundle\Upload\Exception\ImageUploadException;
 use Markocupic\SacEventBlogBundle\Upload\ImageUploadHandler;
 use Markocupic\SacEventBlogBundle\Validator\ImageUploadValidator;
-use Markocupic\SacEventToolBundle\CalendarEventsHelper;
+use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Markocupic\SacEventToolBundle\Config\EventExecutionState;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Psr\Log\LogLevel;
@@ -122,7 +122,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
         $calendarEventsMemberModelAdapter = $this->framework->getAdapter(CalendarEventsMemberModel::class);
         $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
-        $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
+        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
         $inputAdapter = $this->framework->getAdapter(Input::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -235,7 +235,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $template->text = $objBlog->text;
         $template->title = $objBlog->title;
         $template->publishState = (int) $objBlog->publishState;
-        $template->eventPeriod = $calendarEventsHelperAdapter->getEventPeriod($objEvent);
+        $template->eventPeriod = $calendarEventsUtilAdapter->getEventPeriod($objEvent);
 
         // Get the gallery
         $template->images = $this->getGalleryImages($objBlog);
@@ -514,7 +514,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
     private function getTourProfile(CalendarEventsBlogModel $objEventBlogModel): string
     {
-        $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
+        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
 
         if (!empty($objEventBlogModel->tourProfile)) {
@@ -524,7 +524,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
-            $arrData = $calendarEventsHelperAdapter->getTourProfileAsArray($objEvent);
+            $arrData = $calendarEventsUtilAdapter->getTourProfileAsArray($objEvent);
 
             return implode("\r\n", $arrData);
         }
@@ -534,7 +534,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
     private function getTourTechDifficulties(CalendarEventsBlogModel $objEventBlogModel): string
     {
-        $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
+        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
 
         if (!empty($objEventBlogModel->tourTechDifficulty)) {
@@ -544,7 +544,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
-            $arrData = $calendarEventsHelperAdapter->getTourTechDifficultiesAsArray($objEvent);
+            $arrData = $calendarEventsUtilAdapter->getTourTechDifficultiesAsArray($objEvent);
 
             if (empty($arrData)) {
                 return $this->translator->trans('ERR.md_write_event_blog_notSpecified', [], 'contao_default');

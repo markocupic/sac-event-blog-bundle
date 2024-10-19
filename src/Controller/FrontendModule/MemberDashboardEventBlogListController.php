@@ -34,7 +34,7 @@ use Contao\PageModel;
 use Contao\System;
 use Contao\Template;
 use Contao\Validator;
-use Markocupic\SacEventToolBundle\CalendarEventsHelper;
+use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
@@ -109,7 +109,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         // Adapters
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
         $dateAdapter = $this->framework->getAdapter(Date::class);
-        $calendarEventsHelperAdapter = $this->framework->getAdapter(CalendarEventsHelper::class);
+        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
         $configAdapter = $this->framework->getAdapter(Config::class);
         $databaseAdapter = $this->framework->getAdapter(Database::class);
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
@@ -141,7 +141,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
                 // Check if event still exists
                 if (($objEvent = $calendarEventsModelAdapter->findByPk($objEventBlog->eventId)) !== null) {
                     // Overwrite date if event still exists in tl_calendar_events
-                    $arrEventBlog['date'] = $calendarEventsHelperAdapter->getEventPeriod($objEvent, $configAdapter->get('dateFormat'), false);
+                    $arrEventBlog['date'] = $calendarEventsUtilAdapter->getEventPeriod($objEvent, $configAdapter->get('dateFormat'), false);
                     $objPage = $pageModelAdapter->findByPk($model->eventBlogFormJumpTo);
 
                     if (null !== $objPage) {
