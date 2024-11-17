@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
+ * (c) Marko Cupic <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -46,7 +46,7 @@ use Symfony\Component\HttpFoundation\Response;
 #[AsFrontendModule(EventBlogReaderController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_event_blog_reader')]
 class EventBlogReaderController extends AbstractFrontendModuleController
 {
-    public const TYPE = 'event_blog_reader';
+    public const string TYPE = 'event_blog_reader';
 
     private CalendarEventsBlogModel|null $blog = null;
     private bool $isPreviewMode = false;
@@ -61,7 +61,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     ) {
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
+    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             // Adapters

@@ -1,47 +1,45 @@
+{% use "@Contao/component/_headline.html.twig" %}
+
 <!-- indexer::stop -->
 {% if not isAjaxRequest %}
-    {# append the version parameter to ensure that clients receive the latest version of the asset, when it changes. #}
-    {% set fileMakeTime = getFileMakeTime('vendor/markocupic/sac-event-blog-bundle/public/js/event_blog_list_vue.js') %}
-    {% do addJavascriptResource('bundles/markocupicsaceventblog/js/event_blog_list_vue.js|' ~ fileMakeTime) %}
-
-    {% do addHtmlToBody('<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>') %}
+    {% do addJavascriptResource(insert_tag('asset::js/event_blog_list_vue.js::markocupic_sac_event_blog')) %}
+    {% do addHtmlToBody('<script src="'~insert_tag('asset::vue/dist/vue.global.prod.js::markocupic_sac_event_blog')~'"></script>') %}
 
     <div class="{{ class }} block" {{ cssID }}{% if style is defined %} style="{{ style }}"{% endif %}>
 
-        <!-- headline start -->
-        {% if headline|default and headline is not empty %}<{{ hl }}>{{ headline }}</{{ hl }}>{% endif %}
-    <!-- headline end -->
+        {% block headline_component %}
+            {% set headline = {
+                text: headline,
+                tag_name: hl,
+            } %}
+            {{ parent() }}
+        {% endblock %}
 
-    <div id="eventBlogList{{ id }}">
-
-        <div class=" list-container" v-html="listContent"></div>
-
-        <!-- start modal -->
-        <div class="modal" class="event-blog-reader-modal" tabindex="-1" role="dialog" aria-labelledby="eventBlogReaderModalTitle{{ id }}" aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-fullscreen-xl-down" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="eventBlogReaderModalTitle{{ id }}">Tourenberichte</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
-                    </div>
-
-                    <div class="modal-body px-3 px-sm-4 px-lg-5">
-                        <div class="d-flex justify-content-between justify-content-md-end">
-                            <button type="button" v-if="hasPrevItem()" v-on:click="goToPrevItem()" class="btn btn-primary ms-0"><i class="fa-solid fa-arrow-left"></i> Vorheriger Bericht</button>
-                            <button type="button" v-if="hasNextItem()" v-on:click="goToNextItem()" class="btn btn-primary ms-2">Nächster Bericht <i class="fa-solid fa-arrow-right"></i></button>
+        <div id="eventBlogList{{ id }}">
+            <div class=" list-container" v-html="listContent"></div>
+            <!-- start modal -->
+            <div class="modal" class="event-blog-reader-modal" tabindex="-1" role="dialog" aria-labelledby="eventBlogReaderModalTitle{{ id }}" aria-hidden="true">
+                <div class="modal-dialog modal-xl modal-fullscreen-xl-down" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="eventBlogReaderModalTitle{{ id }}">Tourenberichte</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
                         </div>
-
-                        <div v-html="readerContent"></div>
-                    </div>
-
-                    <div class="modal-footer d-none d-sm-block">{# Do not show the footer on mobile phones #}
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Schliessen</button>
+                        <div class="modal-body px-3 px-sm-4 px-lg-5">
+                            <div class="d-flex justify-content-between justify-content-md-end">
+                                <button type="button" v-if="hasPrevItem()" v-on:click="goToPrevItem()" class="btn btn-primary ms-0"><i class="fa-solid fa-arrow-left"></i> Vorheriger Bericht</button>
+                                <button type="button" v-if="hasNextItem()" v-on:click="goToNextItem()" class="btn btn-primary ms-2">Nächster Bericht <i class="fa-solid fa-arrow-right"></i></button>
+                            </div>
+                            <div v-html="readerContent"></div>
+                        </div>
+                        <div class="modal-footer d-none d-sm-block">{# Do not show the footer on mobile phones #}
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Schliessen</button>
+                        </div>
                     </div>
                 </div>
             </div>
+            <!-- end modal -->
         </div>
-        <!-- end modal -->
-    </div>
     </div>
 
     <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
@@ -59,7 +57,6 @@
             });
         }, false);
     </script>
-
 {% endif %}
 
 {% if isAjaxRequest %}
@@ -67,14 +64,12 @@
         {% for blog in blogs %}
             <div itemscope itemtype="http://schema.org/Article">
                 <div class="card event-item" data-aos="fade-down" data-aos-duration="600" data-aos-once="true" data-aos-anchor-placement="top-bottom">
-
                     <div class="p-2 d-flex align-items-center">
                         {{ insert_tag('image::' ~ getAvatarResourcePath(blog.author.model ?? null) ~ '?width=32&height=32&mode=crop&class=rounded-circle')|raw }}
                         {# Respect privacy and do not show the author name, if an author (frontend user) has deleted his account #}
                         {% set author_name = blog.author.name ?? 'Unbekannt' %}
                         <p class="card-text fw-bold small m-0 ms-2">von {{ author_name }}</p>
                     </div>
-
                     {% if blog.singleSRC %}
                         <div class="image-zoom-in">
                             <a href="{{ blog.href }}" class="item-reader-link" aria-label="{{ blog.title|escape('html_attr') }}">
@@ -82,29 +77,21 @@
                             </a>
                         </div>
                     {% endif %}
-
                     <div class="card-body">
                         <p class="card-date m-0">
                             <time datetime="{{ blog.dateAdded|date('Y-m-d\TH:i:sP') }}">
                                 <small>{{ blog.dateAdded|date('d.m.Y') }}</small>
                             </time>
                         </p>
-
                         <a href="{{ blog.href }}" title="weiterlesen" class="text-decoration-none item-reader-link">
                             <h6 class="card-title mt-0">{{ blog.title }}</h6>
                         </a>
-
                         <p class="card-news-teaser">{{ blog.text|raw[0:80] }}</p>
                     </div>
                 </div>
             </div>
         {% endfor %}
     </div>
-
     {{ pagination|raw }}
 {% endif %}
 <!-- indexer::continue -->
-
-
-
-

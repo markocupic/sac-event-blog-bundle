@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
+ * (c) Marko Cupic <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -24,6 +24,7 @@ use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\CoreBundle\Routing\ScopeMatcher;
+use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\Dbafs;
 use Contao\File;
 use Contao\FilesModel;
@@ -43,9 +44,9 @@ use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventBlogBundle\Upload\Exception\ImageUploadException;
 use Markocupic\SacEventBlogBundle\Upload\ImageUploadHandler;
 use Markocupic\SacEventBlogBundle\Validator\ImageUploadValidator;
-use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Markocupic\SacEventToolBundle\Config\EventExecutionState;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
+use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Psr\Log\LogLevel;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
@@ -60,26 +61,26 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AsFrontendModule(MemberDashboardEventBlogWriteController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_member_dashboard_write_event_blog')]
 class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleController
 {
-    public const TYPE = 'member_dashboard_write_event_blog';
+    public const string TYPE = 'member_dashboard_write_event_blog';
 
     private FrontendUser|null $user;
     private PageModel|null $page;
 
     public function __construct(
-        private readonly ContaoFramework $framework,
         private readonly Connection $connection,
-        private readonly ScopeMatcher $scopeMatcher,
+        private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
+        private readonly ContaoFramework $framework,
+        private readonly ImageUploadHandler $imageUploadHandler,
+        private readonly ImageUploadValidator $imageUploadValidator,
         private readonly RequestStack $requestStack,
+        private readonly ScopeMatcher $scopeMatcher,
+        private readonly Security $security,
         private readonly TranslatorInterface $translator,
         private readonly UrlParser $urlParser,
-        private readonly Security $security,
-        private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
-        private readonly ImageUploadValidator $imageUploadValidator,
-        private readonly ImageUploadHandler $imageUploadHandler,
-        private readonly string $projectDir,
-        private readonly string $tmpPath,
         private readonly string $eventBlogAssetDir,
         private readonly string $locale,
+        private readonly string $projectDir,
+        private readonly string $tmpPath,
     ) {
         // Get logged in member object
         if (($user = $this->security->getUser()) instanceof FrontendUser) {
@@ -87,7 +88,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         }
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
+    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             if (null !== $page) {
@@ -107,9 +108,9 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     /**
      * @throws \Exception
      */
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
-        $template->showDashboard = true;
+        $template->set('showDashboard', true);
 
         // Do not allow for not authorized users
         if (null === $this->user) {
@@ -132,7 +133,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
         // Handle messages
         if (empty($this->user->email) || !$validatorAdapter->isEmail($this->user->email)) {
-            $template->showDashboard = false;
+            $template->set('showDashboard', false);
             $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_blog_emailAddressNotFound', [], 'contao_default'));
             $this->addMessagesToTemplate($template);
 
@@ -142,7 +143,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objEvent = $calendarEventsModelAdapter->findByPk($inputAdapter->get('eventId'));
 
         if (null === $objEvent) {
-            $template->showDashboard = false;
+            $template->set('showDashboard', false);
             $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_eventNotFound', [$inputAdapter->get('eventId')], 'contao_default'));
             $this->addMessagesToTemplate($template);
 
@@ -155,7 +156,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         if (null === $objBlog) {
             if ($objEvent->endDate + $model->eventBlogTimeSpanForCreatingNew * 24 * 60 * 60 < time()) {
                 // Do not allow blogging for old events
-                $template->showDashboard = false;
+                $template->set('showDashboard', false);
                 $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_createBlogDeadlineExpired', [], 'contao_default'));
                 $this->addMessagesToTemplate($template);
 
@@ -175,7 +176,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
                 // User has not participated on the event neither as guide nor as participant and is not allowed to write a report
                 if (!$blnAllow) {
-                    $template->showDashboard = false;
+                    $template->set('showDashboard', false);
                     $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_writingPermissionDenied', [], 'contao_default'));
                     $this->addMessagesToTemplate($template);
 
@@ -225,55 +226,55 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             throw new \Exception('Blog model not found.');
         }
 
-        $template->request_token = $this->contaoCsrfTokenManager->getDefaultTokenValue();
-        $template->event = $objEvent->row;
-        $template->eventId = $objEvent->id;
-        $template->eventName = $objEvent->title;
-        $template->executionState = $objEvent->executionState;
-        $template->eventSubstitutionText = $objEvent->eventSubstitutionText;
-        $template->youTubeId = $objBlog->youTubeId;
-        $template->text = $objBlog->text;
-        $template->title = $objBlog->title;
-        $template->publishState = (int) $objBlog->publishState;
-        $template->eventPeriod = $calendarEventsUtilAdapter->getEventPeriod($objEvent);
+        $template->set('request_token', $this->contaoCsrfTokenManager->getDefaultTokenValue());
+        $template->set('event', $objEvent->row);
+        $template->set('eventId', $objEvent->id);
+        $template->set('eventName', $objEvent->title);
+        $template->set('executionState', $objEvent->executionState);
+        $template->set('eventSubstitutionText', $objEvent->eventSubstitutionText);
+        $template->set('youTubeId', $objBlog->youTubeId);
+        $template->set('text', $objBlog->text);
+        $template->set('title', $objBlog->title);
+        $template->set('publishState', (int) $objBlog->publishState);
+        $template->set('eventPeriod', $calendarEventsUtilAdapter->getEventPeriod($objEvent));
 
         // Get the gallery
-        $template->images = $this->getGalleryImages($objBlog);
+        $template->set('images', $this->getGalleryImages($objBlog));
 
         if ('' !== $objBlog->tourWaypoints) {
-            $template->tourWaypoints = nl2br((string) $objBlog->tourWaypoints);
+            $template->set('tourWaypoints', nl2br((string) $objBlog->tourWaypoints));
         }
 
         if ('' !== $objBlog->tourProfile) {
-            $template->tourProfile = nl2br((string) $objBlog->tourProfile);
+            $template->set('tourProfile', nl2br((string) $objBlog->tourProfile));
         }
 
         if ('' !== $objBlog->tourTechDifficulty) {
-            $template->tourTechDifficulty = nl2br((string) $objBlog->tourTechDifficulty);
+            $template->set('tourTechDifficulty', nl2br((string) $objBlog->tourTechDifficulty));
         }
 
         if ('' !== $objBlog->tourHighlights) {
-            $template->tourHighlights = nl2br((string) $objBlog->tourHighlights);
+            $template->set('tourHighlights', nl2br((string) $objBlog->tourHighlights));
         }
 
         if ('' !== $objBlog->tourPublicTransportInfo) {
-            $template->tourPublicTransportInfo = nl2br((string) $objBlog->tourPublicTransportInfo);
+            $template->set('tourPublicTransportInfo', nl2br((string) $objBlog->tourPublicTransportInfo));
         }
 
         // Generate forms
-        $template->objEventBlogTextAndYoutubeForm = $this->generateTextAndYoutubeForm($objBlog);
-        $template->objEventBlogImageUploadForm = $this->generatePictureUploadForm($objBlog, $model);
+        $template->set('objEventBlogTextAndYoutubeForm', $this->generateTextAndYoutubeForm($objBlog));
+        $template->set('objEventBlogImageUploadForm', $this->generatePictureUploadForm($objBlog, $model));
 
         // Image dimension and max upload file size restrictions
-        $template->maxImageWidth = $model->eventBlogMaxImageWidth;
-        $template->maxImageHeight = $model->eventBlogMaxImageHeight;
-        $template->maxImageFileSize = $model->eventBlogMaxImageFileSize;
+        $template->set('maxImageWidth', $model->eventBlogMaxImageWidth);
+        $template->set('maxImageHeight', $model->eventBlogMaxImageHeight);
+        $template->set('maxImageFileSize', $model->eventBlogMaxImageFileSize);
 
         // Get the preview link
-        $template->previewLink = $this->getPreviewLink($objBlog, $model);
+        $template->set('previewLink', $this->getPreviewLink($objBlog, $model));
 
         // Twig callable
-        $template->binToUuid = static fn (string $uuid): string => StringUtil::binToUuid($uuid);
+        $template->set('binToUuid', static fn (string $uuid): string => StringUtil::binToUuid($uuid));
 
         // Check if all images are labeled with a legend and a photographer name
         if (PublishState::STILL_IN_PROGRESS === (int) $objBlog->publishState) {
@@ -360,7 +361,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'value' => $this->getTourTitle($objEventBlogModel),
         ]);
 
-        // text
+        // Text
         $maxlength = 1700;
         $objForm->addFormField('text', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_text', [$maxlength], 'contao_default'),
@@ -369,7 +370,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'value' => (string) $objEventBlogModel->text,
         ]);
 
-        // tour waypoints
+        // Tour waypoints
         $eval = ['mandatory' => true, 'maxlength' => 300, 'rows' => 2, 'decodeEntities' => true, 'placeholder' => 'z.B. Engelberg 1000m - Herrenrüti 1083 m - Galtiberg 1800 m - Einstieg 2000 m'];
 
         $objForm->addFormField(
@@ -382,7 +383,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             ]
         );
 
-        // tour profile
+        // Tour profile
         $eval = ['mandatory' => true, 'rows' => 2, 'decodeEntities' => true, 'placeholder' => 'z.B. Aufst: 1500 Hm/8 h, Abst: 1500 Hm/3 h'];
 
         $objForm->addFormField(
@@ -395,7 +396,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             ]
         );
 
-        // tour difficulties
+        // Tour difficulties
         $eval = ['mandatory' => true, 'rows' => 2, 'decodeEntities' => true];
 
         $objForm->addFormField('tourTechDifficulty', [
@@ -405,7 +406,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'value' => $this->getTourTechDifficulties($objEventBlogModel),
         ]);
 
-        // tour highlights (not mandatory)
+        // Tour highlights (not mandatory)
         $eval = ['mandatory' => true, 'class' => 'publish-clubmagazine-field', 'rows' => 2, 'decodeEntities' => true];
 
         $objForm->addFormField('tourHighlights', [
@@ -415,7 +416,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'value' => (string) $objEventBlogModel->tourHighlights,
         ]);
 
-        // tour public transport info
+        // Tour public transport info
         $eval = ['mandatory' => false, 'class' => 'publish-clubmagazine-field', 'rows' => 2, 'decodeEntities' => true];
 
         $objForm->addFormField('tourPublicTransportInfo', [
@@ -425,7 +426,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'value' => (string) $objEventBlogModel->tourPublicTransportInfo,
         ]);
 
-        // youTube id
+        // YouTube ID
         $objForm->addFormField(
             'youTubeId',
             [
@@ -610,6 +611,9 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
             'inputType' => FrontendWidget::TYPE,
             'eval' => [
+                'chunking' => true,
+                'chunkSize' => 2000,
+                'concurrent' => true,
                 'maxlength' => $moduleModel->eventBlogMaxImageFileSize,
                 'extensions' => implode(',', $allowedExtensions),
                 'storeFile' => true,
@@ -641,7 +645,13 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             $arrPaths = array_map(fn ($dir) => Path::join($this->projectDir, $this->tmpPath, $dir), $arrTransferKeys);
 
             if (empty($arrPaths)) {
-                $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_noValidImagesSelectedForUpload', [], 'contao_default'));
+                $messageAdapter->addInfo(
+                    $this->translator->trans(
+                        'ERR.md_write_event_noValidImagesSelectedForUpload',
+                        [],
+                        'contao_default',
+                    ),
+                );
 
                 $controllerAdapter->reload();
             }
@@ -656,7 +666,13 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             ;
 
             if (!$files->hasResults()) {
-                $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_noValidImagesSelectedForUpload', [], 'contao_default'));
+                $messageAdapter->addInfo(
+                    $this->translator->trans(
+                        'ERR.md_write_event_noValidImagesSelectedForUpload',
+                        [],
+                        'contao_default',
+                    ),
+                );
 
                 $controllerAdapter->reload();
             }
@@ -675,15 +691,29 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                     $this->imageUploadHandler->addMetaData($objFilesModel, $this->user, $this->page);
                     $this->imageUploadHandler->addUploadedImageToGallery($objFilesModel, $objEventBlogModel);
 
-                    $messageAdapter->addInfo($this->translator->trans('FORM.md_write_event_confirmImageUploadSuccessful', [$file->getFilename()], 'contao_default'));
+                    $messageAdapter->addInfo(
+                        $this->translator->trans(
+                            'FORM.md_write_event_confirmImageUploadSuccessful',
+                            [$file->getFilename()],
+                            'contao_default'
+                        ),
+                    );
                 } catch (ImageUploadException $e) {
-                    $logger?->log(LogLevel::ERROR, $e->getMessage(), ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
+                    $logger?->log(
+                        LogLevel::ERROR,
+                        $e->getMessage(),
+                        ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')],
+                    );
                     $messageAdapter->addError($e->getTranslatableText());
 
                     $this->connection->rollBack();
                     continue;
                 } catch (\Exception $e) {
-                    $logger?->log(LogLevel::ERROR, $e->getMessage(), ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
+                    $logger?->log(
+                        LogLevel::ERROR,
+                        $e->getMessage(),
+                        ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')],
+                    );
                     $messageAdapter->addError($this->translator->trans('ERR.md_write_event_blog_generalUploadError', [], 'contao_default'));
 
                     $this->connection->rollBack();
@@ -772,21 +802,23 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         // Set adapters
         $messageAdapter = $this->framework->getAdapter(Message::class);
 
-        $template->hasInfoMessage = false;
-        $template->hasErrorMessage = false;
+        $template->set('hasInfoMessage', false);
+        $template->set('hasErrorMessage', false);
+
+        $flashBag = $this->requestStack->getCurrentRequest()->getSession()->getFlashBag();
 
         if ($messageAdapter->hasInfo()) {
-            $template->hasInfoMessage = true;
-            $arrInfoMsg = $this->requestStack->getCurrentRequest()->getSession()->getFlashBag()->get('contao.FE.info');
-            $template->infoMessage = $arrInfoMsg[0];
-            $template->infoMessages = $arrInfoMsg;
+            $template->set('hasInfoMessage', true);
+            $arrInfoMsg = $flashBag->get('contao.FE.info');
+            $template->set('infoMessage', $arrInfoMsg[0]);
+            $template->set('infoMessages', $arrInfoMsg);
         }
 
         if ($messageAdapter->hasError()) {
-            $template->hasErrorMessage = true;
-            $arrErrMsg = $this->requestStack->getCurrentRequest()->getSession()->getFlashBag()->get('contao.FE.error');
-            $template->errorMessage = $arrErrMsg[0];
-            $template->errorMessages = $arrErrMsg;
+            $template->set('hasErrorMessage', true);
+            $arrErrMsg = $flashBag->get('contao.FE.error');
+            $template->set('errorMessage', $arrErrMsg[0]);
+            $template->set('errorMessages', $arrErrMsg);
         }
 
         $messageAdapter->reset();

@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
+ * (c) Marko Cupic <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -20,6 +20,7 @@ use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
+use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\CoreBundle\Util\LocaleUtil;
 use Contao\Environment;
 use Contao\FilesModel;
@@ -29,7 +30,6 @@ use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Pagination;
 use Contao\StringUtil;
-use Contao\Template;
 use Contao\Validator;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
@@ -39,7 +39,7 @@ use Symfony\Component\HttpFoundation\Response;
 #[AsFrontendModule(EventBlogListController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_event_blog_list')]
 class EventBlogListController extends AbstractFrontendModuleController
 {
-    public const TYPE = 'event_blog_list';
+    public const string TYPE = 'event_blog_list';
 
     private Collection|null $blogs;
 
@@ -50,7 +50,7 @@ class EventBlogListController extends AbstractFrontendModuleController
     ) {
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
+    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             // Adapters
@@ -87,7 +87,7 @@ class EventBlogListController extends AbstractFrontendModuleController
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
         // Adapters
         $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);
@@ -112,7 +112,7 @@ class EventBlogListController extends AbstractFrontendModuleController
             $arrBlogIds[] = $arrBlog['id'];
             // If the profile has been deleted, $objMember will be null!
             $objMember = $memberModelModelAdapter->findOneBySacMemberId($arrBlog['sacMemberId']);
-            $arrBlog['author'] = null !== $objMember ? $objMember?->row() : [];
+            $arrBlog['author'] = null !== $objMember ? $objMember->row() : [];
             $arrBlog['author']['model'] = $objMember;
             $arrBlog['author']['name'] = null !== $objMember ? $objMember->firstname.' '.$objMember->lastname : $this->blogs->authorname;
             $arrBlog['href'] = null !== $objPageModel ? $stringUtilAdapter->ampersand($objPageModel->getFrontendUrl('/'.$this->blogs->id)) : null;
@@ -148,7 +148,7 @@ class EventBlogListController extends AbstractFrontendModuleController
             $arrBlogsAll[] = $arrBlog;
         }
 
-        $template->arrBlogIds = $arrBlogIds;
+        $template->set('arrBlogIds', $arrBlogIds);
 
         // Prepare the pagination
         $total = \count($arrBlogsAll);
@@ -174,7 +174,7 @@ class EventBlogListController extends AbstractFrontendModuleController
             $limit = min($model->perPage + $offset, $total);
 
             $objPagination = new Pagination($total, $model->perPage, $configAdapter->get('maxPaginationLinks'), $id);
-            $template->pagination = $objPagination->generate(' ');
+            $template->set('pagination', $objPagination->generate(' '));
         }
 
         // Add blogs to the template
@@ -187,9 +187,9 @@ class EventBlogListController extends AbstractFrontendModuleController
             $arrBlogs[] = $arrBlogsAll[$i];
         }
 
-        $template->blogs = $arrBlogs;
-        $template->language = LocaleUtil::formatAsLanguageTag($request->getLocale());
-        $template->isAjaxRequest = $environmentAdapter->get('isAjaxRequest');
+        $template->set('blogs', $arrBlogs);
+        $template->set('language', LocaleUtil::formatAsLanguageTag($request->getLocale()));
+        $template->set('isAjaxRequest', $environmentAdapter->get('isAjaxRequest'));
 
         return $template->getResponse();
     }

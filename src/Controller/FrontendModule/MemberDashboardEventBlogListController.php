@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
+ * (c) Marko Cupic <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -23,6 +23,7 @@ use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
+use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\Database;
 use Contao\Date;
 use Contao\Environment;
@@ -32,10 +33,9 @@ use Contao\Message;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\System;
-use Contao\Template;
 use Contao\Validator;
-use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
+use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -45,7 +45,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AsFrontendModule(MemberDashboardEventBlogListController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_member_dashboard_event_blog_list')]
 class MemberDashboardEventBlogListController extends AbstractFrontendModuleController
 {
-    public const TYPE = 'member_dashboard_event_blog_list';
+    public const string TYPE = 'member_dashboard_event_blog_list';
     protected FrontendUser|null $user;
 
     public function __construct(
@@ -61,7 +61,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         }
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
+    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             if (null !== $page) {
@@ -74,7 +74,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
         // Do not allow for not authorized users
         if (null === $this->user) {
@@ -91,15 +91,15 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         }
 
         // Get the time span for creating a new event blog
-        $template->eventBlogTimeSpanForCreatingNew = $model->eventBlogTimeSpanForCreatingNew;
+        $template->set('eventBlogTimeSpanForCreatingNew', $model->eventBlogTimeSpanForCreatingNew);
 
         // Add messages to template
         $this->addMessagesToTemplate($template);
         $objForm = $this->generateCreateNewEventBlogForm($model);
-        $template->newEventBlogForm = $objForm->generate();
+        $template->set('newEventBlogForm', $objForm->generate());
 
         // Get event report list
-        $template->arrEventBlogs = $this->getEventBlogs($model);
+        $template->set('arrEventBlogs', $this->getEventBlogs($model));
 
         return $template->getResponse();
     }
@@ -218,23 +218,23 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
     /**
      * Add messages from session to template.
      */
-    private function addMessagesToTemplate(Template $template): void
+    private function addMessagesToTemplate(FragmentTemplate $template): void
     {
         // Adapters
         $messageAdapter = $this->framework->getAdapter(Message::class);
         $systemAdapter = $this->framework->getAdapter(System::class);
 
         if ($messageAdapter->hasInfo()) {
-            $template->hasInfoMessage = true;
+            $template->set('hasInfoMessage', true);
             $session = $systemAdapter->getContainer()->get('session')->getFlashBag()->get('contao.FE.info');
-            $template->infoMessage = $session[0];
+            $template->set('infoMessage', $session[0]);
         }
 
         if ($messageAdapter->hasError()) {
-            $template->hasErrorMessage = true;
+            $template->set('hasErrorMessage', true);
             $session = $systemAdapter->getContainer()->get('session')->getFlashBag()->get('contao.FE.error');
-            $template->errorMessage = $session[0];
-            $template->errorMessages = $session;
+            $template->set('errorMessage', $session[0]);
+            $template->set('errorMessages', $session);
         }
 
         $messageAdapter->reset();

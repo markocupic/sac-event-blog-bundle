@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
+ * (c) Marko Cupic <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -21,7 +21,7 @@ use Terminal42\NotificationCenterBundle\Token\Definition\TextTokenDefinition;
 
 class OnNewEventBlogType implements NotificationTypeInterface
 {
-    public const NAME = 'notify_on_new_event_blog';
+    public const string NAME = 'notify_on_new_event_blog';
 
     public function __construct(
         private readonly TokenDefinitionFactoryInterface $factory,

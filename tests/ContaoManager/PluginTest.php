@@ -3,7 +3,7 @@
 /*
  * This file is part of SAC Event Blog Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic <m.cupic@gmx.ch>
  * @license GPL-3.0-or-later
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -21,8 +21,6 @@ use Markocupic\SacEventBlogBundle\MarkocupicSacEventBlogBundle;
 use Markocupic\SacEventToolBundle\MarkocupicSacEventToolBundle;
 
 /**
- * Class PluginTest
- *
  * @package Markocupic\SacEventBlogBundle\Tests\ContaoManager
  */
 class PluginTest extends ContaoTestCase

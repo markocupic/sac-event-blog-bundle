@@ -51,37 +51,37 @@ services:
     # Member dashboard module: display the forms for writing new event reports
     Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogWriteController:
         arguments:
-            - '@contao.framework'
             - '@database_connection'
-            - '@contao.routing.scope_matcher'
+            - '@contao.csrf.token_manager'
+            - '@contao.framework'
+            - '@Markocupic\SacEventBlogBundle\Upload\ImageUploadHandler'
+            - '@Markocupic\SacEventBlogBundle\Validator\ImageUploadValidator'
             - '@request_stack'
+            - '@contao.routing.scope_matcher'
+            - '@security.helper'
             - '@translator'
             - '@Codefog\HasteBundle\UrlParser'
-            - '@security.helper'
-            - '@contao.csrf.token_manager'
-            - '@Markocupic\SacEventBlogBundle\Validator\ImageUploadValidator'
-            - '@Markocupic\SacEventBlogBundle\Upload\ImageUploadHandler'
-            - '%kernel.project_dir%'
-            - '%markocupic_contao_filepond_uploader.tmp_path%'
             - '%sac_event_blog.asset_dir%'
             - '%sacevt.locale%'
+            - '%kernel.project_dir%'
+            - '%markocupic_contao_filepond_uploader.tmp_path%'
         public: true
 
 
     Markocupic\SacEventBlogBundle\Controller\Ajax\MemberDashboardWriteEventBlogController:
         arguments:
+            - '@Codefog\HasteBundle\UrlParser'
+            - '@Markocupic\SacEventToolBundle\Image\RotateImage'
+            - '@Terminal42\NotificationCenterBundle\NotificationCenter'
+            - '@contao.csrf.token_manager'
             - '@contao.framework'
             - '@database_connection'
-            - '@contao.csrf.token_manager'
             - '@request_stack'
-            - '@security.helper'
             - '@router'
+            - '@security.helper'
             - '@translator'
-            - '@Markocupic\SacEventToolBundle\Image\RotateImage'
-            - '@Codefog\HasteBundle\UrlParser'
-            - '@Terminal42\NotificationCenterBundle\NotificationCenter'
-            - '%kernel.project_dir%'
             - '%contao.csrf_token_name%'
+            - '%kernel.project_dir%'
             - '%sacevt.locale%'
         public: true
 

@@ -1,4 +1,4 @@
-{% do addJavascriptResource('assets/contao-component-vue-js/vue/dist/vue.global.prod.js|static') %}
+{% do addJavascriptResource(insert_tag('asset::vue/dist/vue.global.prod.js::markocupic_sac_event_blog')) %}
 
 {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
     <div class="me-2">
