@@ -67,20 +67,17 @@ services:
             - '%markocupic_contao_filepond_uploader.tmp_path%'
         public: true
 
-
     Markocupic\SacEventBlogBundle\Controller\Ajax\MemberDashboardWriteEventBlogController:
         arguments:
-            - '@Codefog\HasteBundle\UrlParser'
-            - '@Markocupic\SacEventToolBundle\Image\RotateImage'
-            - '@Terminal42\NotificationCenterBundle\NotificationCenter'
-            - '@contao.csrf.token_manager'
-            - '@contao.framework'
             - '@database_connection'
+            - '@contao.framework'
             - '@request_stack'
+            - '@Markocupic\SacEventToolBundle\Image\RotateImage'
             - '@router'
             - '@security.helper'
             - '@translator'
-            - '%contao.csrf_token_name%'
+            - '@Codefog\HasteBundle\UrlParser'
+            - '@Terminal42\NotificationCenterBundle\NotificationCenter'
             - '%kernel.project_dir%'
             - '%sacevt.locale%'
         public: true

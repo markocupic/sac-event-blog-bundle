@@ -16,7 +16,6 @@ namespace Markocupic\SacEventBlogBundle\Controller\Ajax;
 
 use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
-use Contao\CoreBundle\Exception\InvalidRequestTokenException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\FilesModel;
@@ -42,8 +41,6 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
-use Symfony\Component\Security\Csrf\CsrfToken;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use Terminal42\NotificationCenterBundle\NotificationCenter;
 
@@ -59,18 +56,16 @@ class MemberDashboardWriteEventBlogController extends AbstractController
      * @throws \Exception
      */
     public function __construct(
-        private readonly ContaoFramework $framework,
         private readonly Connection $connection,
-        private readonly CsrfTokenManagerInterface $tokenManager,
+        private readonly ContaoFramework $framework,
         private readonly RequestStack $requestStack,
-        private readonly Security $security,
-        private readonly RouterInterface $router,
-        private readonly TranslatorInterface $translator,
         private readonly RotateImage $rotateImage,
+        private readonly RouterInterface $router,
+        private readonly Security $security,
+        private readonly TranslatorInterface $translator,
         private readonly UrlParser $urlParser,
         private readonly NotificationCenter $notificationCenter,
         private readonly string $projectDir,
-        private readonly string $tokenName,
         private readonly string $locale,
     ) {
     }
@@ -78,12 +73,11 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/setPublishState', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_publish_state', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/setPublishState', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_publish_state', defaults: ['_scope' => 'frontend', '_token_check' => true], methods: ['POST'])]
     public function setPublishStateAction(): JsonResponse
     {
         $this->framework->initialize();
         $this->checkHasLoggedInFrontendUser();
-        $this->checkIsTokenValid();
         $this->checkIsXmlHttpRequest();
 
         $request = $this->requestStack->getCurrentRequest();
@@ -248,12 +242,11 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/sortGallery', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_sort_gallery', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/sortGallery', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_sort_gallery', defaults: ['_scope' => 'frontend', '_token_check' => true], methods: ['POST'])]
     public function sortGalleryAction(): JsonResponse
     {
         $this->framework->initialize();
         $this->checkHasLoggedInFrontendUser();
-        $this->checkIsTokenValid();
         $this->checkIsXmlHttpRequest();
 
         $user = $this->security->getUser();
@@ -304,12 +297,11 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/removeImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_remove_image', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/removeImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_remove_image', defaults: ['_scope' => 'frontend', '_token_check' => true], methods: ['POST'])]
     public function removeImageAction(): JsonResponse
     {
         $this->framework->initialize();
         $this->checkHasLoggedInFrontendUser();
-        $this->checkIsTokenValid();
         $this->checkIsXmlHttpRequest();
 
         $request = $this->requestStack->getCurrentRequest();
@@ -381,12 +373,11 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/rotateImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_rotate_image', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/rotateImage', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_rotate_image', defaults: ['_scope' => 'frontend', '_token_check' => true], methods: ['POST'])]
     public function rotateImageAction(): JsonResponse
     {
         $this->framework->initialize();
         $this->checkHasLoggedInFrontendUser();
-        $this->checkIsTokenValid();
         $this->checkIsXmlHttpRequest();
 
         $request = $this->requestStack->getCurrentRequest();
@@ -410,12 +401,11 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/getCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_get_caption', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/getCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_get_caption', defaults: ['_scope' => 'frontend', '_token_check' => true], methods: ['POST'])]
     public function getCaptionAction(): JsonResponse
     {
         $this->framework->initialize();
         $this->checkHasLoggedInFrontendUser();
-        $this->checkIsTokenValid();
         $this->checkIsXmlHttpRequest();
 
         $request = $this->requestStack->getCurrentRequest();
@@ -462,12 +452,11 @@ class MemberDashboardWriteEventBlogController extends AbstractController
     /**
      * @throws \Exception
      */
-    #[Route('/ajaxMemberDashboardWriteEventBlog/setCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_caption', defaults: ['_scope' => 'frontend'], methods: ['POST'])]
+    #[Route('/ajaxMemberDashboardWriteEventBlog/setCaption', name: 'sac_event_tool_ajax_member_dashboard_write_event_blog_set_caption', defaults: ['_scope' => 'frontend', '_token_check' => true], methods: ['POST'])]
     public function setCaptionAction(): JsonResponse
     {
         $this->framework->initialize();
         $this->checkHasLoggedInFrontendUser();
-        $this->checkIsTokenValid();
         $this->checkIsXmlHttpRequest();
 
         $request = $this->requestStack->getCurrentRequest();
@@ -519,15 +508,6 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
         if (!$user instanceof FrontendUser) {
             throw new \Exception('Access denied! You have to be logged in as a Contao frontend user');
-        }
-    }
-
-    private function checkIsTokenValid(): void
-    {
-        $request = $this->requestStack->getCurrentRequest();
-
-        if (!$this->tokenManager->isTokenValid(new CsrfToken($this->tokenName, $request->get('REQUEST_TOKEN')))) {
-            throw new InvalidRequestTokenException('Invalid CSRF token. Please reload the page and try again.');
         }
     }
 
