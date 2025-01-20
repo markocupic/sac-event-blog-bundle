@@ -32,7 +32,6 @@ use Contao\Input;
 use Contao\Message;
 use Contao\ModuleModel;
 use Contao\PageModel;
-use Contao\System;
 use Contao\Validator;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
 use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
@@ -87,14 +86,14 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
 
         // Handle messages
         if (empty($this->user->email) || !$validatorAdapter->isEmail($this->user->email)) {
-            $messageAdapter->addInfo($this->translator->trans('md_write_event_blog_emailAddressNotFound', [], 'contao_default'));
+            $messageAdapter->addInfo($this->translator->trans('ERR.md_write_event_blog_emailAddressNotFound', [], 'contao_default'));
         }
 
         // Get the time span for creating a new event blog
         $template->set('eventBlogTimeSpanForCreatingNew', $model->eventBlogTimeSpanForCreatingNew);
 
         // Add messages to template
-        $this->addMessagesToTemplate($template);
+        $this->addMessagesToTemplate($request, $template);
         $objForm = $this->generateCreateNewEventBlogForm($model);
         $template->set('newEventBlogForm', $objForm->generate());
 
@@ -218,23 +217,24 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
     /**
      * Add messages from session to template.
      */
-    private function addMessagesToTemplate(FragmentTemplate $template): void
+    private function addMessagesToTemplate(Request $request, FragmentTemplate $template): void
     {
         // Adapters
         $messageAdapter = $this->framework->getAdapter(Message::class);
-        $systemAdapter = $this->framework->getAdapter(System::class);
+
+        $session = $request->getSession();
 
         if ($messageAdapter->hasInfo()) {
             $template->set('hasInfoMessage', true);
-            $session = $systemAdapter->getContainer()->get('session')->getFlashBag()->get('contao.FE.info');
-            $template->set('infoMessage', $session[0]);
+            $message = $session->getFlashBag()->get('contao.FE.info');
+            $template->set('infoMessage', $message[0]);
         }
 
         if ($messageAdapter->hasError()) {
             $template->set('hasErrorMessage', true);
-            $session = $systemAdapter->getContainer()->get('session')->getFlashBag()->get('contao.FE.error');
-            $template->set('errorMessage', $session[0]);
-            $template->set('errorMessages', $session);
+            $message = $session->getFlashBag()->get('contao.FE.error');
+            $template->set('errorMessage', $message[0]);
+            $template->set('errorMessages', $message);
         }
 
         $messageAdapter->reset();
