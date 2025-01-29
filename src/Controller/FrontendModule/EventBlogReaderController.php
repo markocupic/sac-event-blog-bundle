@@ -250,7 +250,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
 
         // Defaults
         $opt = [
-            'version' => 6,
+            'version' => 8,
             'scale' => 4,
             'outputType' => QRCode::OUTPUT_IMAGE_PNG,
             'eccLevel' => QRCode::ECC_L,
