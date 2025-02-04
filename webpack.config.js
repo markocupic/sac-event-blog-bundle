@@ -13,6 +13,10 @@ Encore
         to: 'icons/[path][name].[ext]',
     })
     .copyFiles({
+        from: './assets/images',
+        to: 'images/[path][name].[ext]',
+    })
+    .copyFiles({
         from: './assets/js',
         to: 'js/[path][name].[hash:8].[ext]',
     })

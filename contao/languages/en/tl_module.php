@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 // Legends
 $GLOBALS['TL_LANG']['tl_module']['events_blog_legend'] = 'Touren- und Kursberichte-Einstellungen';
+$GLOBALS['TL_LANG']['tl_module']['api_legend'] = 'API-Einstellungen';
 
 // Fields
 $GLOBALS['TL_LANG']['tl_module']['eventBlogTimeSpanForCreatingNew'] = ['Frist in Tagen wie lange nach Event-Ende noch Berichte eröffnet werden können', 'Geben Sie in Tagen an, wie lange nach Event-Ende es möglich sein soll, Berichte zu einem Event schreiben zu können.'];
@@ -25,3 +26,5 @@ $GLOBALS['TL_LANG']['tl_module']['eventBlogMaxImageWidth'] = ['Maximale Bildbrei
 $GLOBALS['TL_LANG']['tl_module']['eventBlogMaxImageHeight'] = ['Maximale Bildhöhe in Pixeln', 'Legen Sie die maximale Bildhöhe fest. Grössere Bilder werden beim Upload automatisch verkleinert.'];
 $GLOBALS['TL_LANG']['tl_module']['eventBlogMaxImageFileSize'] = ['Maximale Bildgrösse in Bytes', 'Legen Sie die maximale Bildgrösse in Bytes fest.'];
 $GLOBALS['TL_LANG']['tl_module']['eventBlogOnPublishNotification'] = ['Benachrichtigung bei neu erstelltem Event-Bericht', ''];
+$GLOBALS['TL_LANG']['tl_module']['eventBlogApiKey'] = ['API Key', 'Geben Sie den API-Key kein, welcher für die Ajax-Requests verwendet werden soll.'];
+$GLOBALS['TL_LANG']['tl_module']['eventBlogReaderModule'] = ['SAC Tourenberichte Reader Modul', 'Geben Sie an, welches SAC Tourenberichte Reader Modul verwendet werden soll.'];

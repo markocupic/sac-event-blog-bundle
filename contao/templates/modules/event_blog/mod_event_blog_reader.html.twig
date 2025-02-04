@@ -2,11 +2,11 @@
 
     {% if headline %}
         <h1 class="content-headline mt-0 mb-0 text-break">{{ blog.title }}</h1>
-        <date class="d-block mb-3">vom: {{ eventDates|raw }}</date>
+        <date class="d-block mt-4">vom: {{ eventDates|raw }}</date>
     {% endif %}
 
     {% if eventSubstitutionText|default %}
-        <h4 class="mt-0 mb-3" style="color: red"><!-- indexer::stop -->Ausweichtour:<!-- indexer::continue --> {{ eventSubstitutionText }}</h4>
+        <h4 class="mt-4 mb-4" style="color: red"><!-- indexer::stop -->Ausweichtour:<!-- indexer::continue --> {{ eventSubstitutionText }}</h4>
     {% endif %}
 
     <div class="row gx-4">

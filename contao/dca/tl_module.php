@@ -18,7 +18,7 @@ use Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEvent
 use Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogWriteController;
 
 // Contao frontend modules
-$GLOBALS['TL_DCA']['tl_module']['palettes'][EventBlogListController::TYPE] = '{title_legend},name,headline,type;{config_legend},eventBlogOrganizers,jumpTo,numberOfItems,skipFirst,perPage;{template_legend:hide},eventBlogListTemplate;{image_legend:hide},imgSize;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
+$GLOBALS['TL_DCA']['tl_module']['palettes'][EventBlogListController::TYPE] = '{title_legend},name,headline,type;{config_legend},eventBlogOrganizers,jumpTo,eventBlogReaderModule,numberOfItems,skipFirst,perPage;{template_legend:hide},eventBlogListTemplate;{image_legend:hide},imgSize;{api_legend:hide},eventBlogApiKey;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 $GLOBALS['TL_DCA']['tl_module']['palettes'][EventBlogReaderController::TYPE] = '{title_legend},name,headline,type;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 $GLOBALS['TL_DCA']['tl_module']['palettes'][MemberDashboardEventBlogListController::TYPE] = '{title_legend},name,headline,type;{events_blog_legend},eventBlogTimeSpanForCreatingNew,eventBlogFormJumpTo;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
 $GLOBALS['TL_DCA']['tl_module']['palettes'][MemberDashboardEventBlogWriteController::TYPE] = '{title_legend},name,headline,type;{events_blog_legend},eventBlogReaderPage,eventBlogMaxImageWidth,eventBlogMaxImageHeight,eventBlogMaxImageFileSize,eventBlogTimeSpanForCreatingNew,eventBlogOnPublishNotification;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID';
@@ -101,4 +101,21 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogOrganizers'] = [
     'relation'   => ['type' => 'hasMany', 'load' => 'lazy'],
     'eval'       => ['multiple' => true, 'mandatory' => false, 'tl_class' => 'clr m12'],
     'sql'        => 'blob NULL',
+];
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogApiKey'] = [
+    'filter'    => true,
+    'sorting'   => true,
+    'search'    => true,
+    'exclude'   => true,
+    'inputType' => 'text',
+    'eval'      => ['doNotCopy' => true, 'mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'],
+    'sql'       => "varchar(255) NOT NULL default ''",
+];
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['eventBlogReaderModule'] = [
+    'inputType' => 'picker',
+    'eval'      => ['mandatory' => true, 'tl_class' => 'clr'],
+    'sql'       => "int(10) unsigned NOT NULL default 0",
+    'relation'  => ['type' => 'hasOne', 'load' => 'lazy', 'table' => 'tl_module'],
 ];
