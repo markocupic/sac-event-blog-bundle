@@ -21,7 +21,7 @@
         <p class="small">*Tourenberichte können bis maximal <strong>{{ eventBlogTimeSpanForCreatingNew }} Tage nach Tourende</strong> verfasst werden.</p>
     </div>
 
-    <table class="table layout-table table-responsive table-striped">
+    <table class="table table-responsive">
         {% for blog in arrEventBlogs %}
             <tr>
                 <td>{{ blog.date|raw }}</td>
@@ -29,13 +29,13 @@
                 {% if blog.canEditBlog and blog.blogLink %}
                     <td class="text-center">
                         <a href="{{ blog.blogLink }}" role="button" title="Touren-/Kursbericht bearbeiten" class="btn btn-sm btn-success">
-                            <i class="fa-light fa-fw fa-pencil"></i>
+                            <i class="fa-regular fa-fw fa-pencil"></i>
                         </a>
                     </td>
                 {% elseif blog.blogLink %}
                     <td class="text-center">
                         <a href="{{ blog.blogLink }}" role="button" title="Touren-/Kursbericht ansehen" class="btn btn-sm btn-success">
-                            <i class="fa-light fa-fw fa-eye"></i>
+                            <i class="fa-regular fa-fw fa-eye"></i>
                         </a>
                     </td>
                 {% else %}
