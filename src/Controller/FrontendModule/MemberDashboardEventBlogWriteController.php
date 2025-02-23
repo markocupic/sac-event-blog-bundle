@@ -357,72 +357,62 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm->addFormField('title', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_title', [], 'contao_default'),
             'inputType' => 'text',
-            'eval' => ['mandatory' => true, 'maxlength' => '250', 'decodeEntities' => true],
+            'eval' => $this->getFormFieldConfig('title'),
             'value' => $this->getTourTitle($objEventBlogModel),
         ]);
 
         // Text
-        $maxlength = 1700;
         $objForm->addFormField('text', [
-            'label' => $this->translator->trans('FORM.md_write_event_blog_text', [$maxlength], 'contao_default'),
+            'label' => $this->translator->trans('FORM.md_write_event_blog_text', [$this->getFormFieldConfig('text')['maxlength']], 'contao_default'),
             'inputType' => 'textarea',
-            'eval' => ['mandatory' => true, 'maxlength' => $maxlength, 'rows' => 8, 'decodeEntities' => true],
+            'eval' => $this->getFormFieldConfig('text'),
             'value' => (string) $objEventBlogModel->text,
         ]);
+        $objForm->getWidget('text')->addAttribute('data-maxlength', $this->getFormFieldConfig('text')['maxlength']);
 
         // Tour waypoints
-        $eval = ['mandatory' => true, 'maxlength' => 300, 'rows' => 2, 'decodeEntities' => true, 'placeholder' => 'z.B. Engelberg 1000m - Herrenrüti 1083 m - Galtiberg 1800 m - Einstieg 2000 m'];
-
         $objForm->addFormField(
             'tourWaypoints',
             [
                 'label' => $this->translator->trans('FORM.md_write_event_blog_tourWaypoints', [], 'contao_default'),
                 'inputType' => 'textarea',
-                'eval' => $eval,
+                'eval' => $this->getFormFieldConfig('tourWaypoints'),
                 'value' => $this->getTourWaypoints($objEventBlogModel),
             ]
         );
 
         // Tour profile
-        $eval = ['mandatory' => true, 'rows' => 2, 'decodeEntities' => true, 'placeholder' => 'z.B. Aufst: 1500 Hm/8 h, Abst: 1500 Hm/3 h'];
-
         $objForm->addFormField(
             'tourProfile',
             [
                 'label' => $this->translator->trans('FORM.md_write_event_blog_tourProfile', [], 'contao_default'),
                 'inputType' => 'textarea',
-                'eval' => $eval,
+                'eval' => $this->getFormFieldConfig('tourProfile'),
                 'value' => $this->getTourProfile($objEventBlogModel),
             ]
         );
 
         // Tour difficulties
-        $eval = ['mandatory' => true, 'rows' => 2, 'decodeEntities' => true];
-
         $objForm->addFormField('tourTechDifficulty', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_tourTechDifficulty', [], 'contao_default'),
             'inputType' => 'textarea',
-            'eval' => $eval,
+            'eval' => $this->getFormFieldConfig('tourTechDifficulty'),
             'value' => $this->getTourTechDifficulties($objEventBlogModel),
         ]);
 
         // Tour highlights (not mandatory)
-        $eval = ['mandatory' => true, 'class' => 'publish-clubmagazine-field', 'rows' => 2, 'decodeEntities' => true];
-
         $objForm->addFormField('tourHighlights', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_tourHighlights', [], 'contao_default'),
             'inputType' => 'textarea',
-            'eval' => $eval,
+            'eval' => $this->getFormFieldConfig('tourHighlights'),
             'value' => (string) $objEventBlogModel->tourHighlights,
         ]);
 
         // Tour public transport info
-        $eval = ['mandatory' => false, 'class' => 'publish-clubmagazine-field', 'rows' => 2, 'decodeEntities' => true];
-
         $objForm->addFormField('tourPublicTransportInfo', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_tourPublicTransportInfo', [], 'contao_default'),
             'inputType' => 'textarea',
-            'eval' => $eval,
+            'eval' => $this->getFormFieldConfig('tourPublicTransportInfo'),
             'value' => (string) $objEventBlogModel->tourPublicTransportInfo,
         ]);
 
@@ -432,7 +422,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             [
                 'label' => $this->translator->trans('FORM.md_write_event_blog_youTubeId', [], 'contao_default'),
                 'inputType' => 'text',
-                'eval' => ['maxlength' => '11', 'placeholder' => 'z.B. G02hYgT3nGw'],
+                'eval' => $this->getFormFieldConfig('youTubeId'),
                 'value' => (string) $objEventBlogModel->youTubeId,
             ]
         );
@@ -475,14 +465,67 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         }
 
         // Add some Vue.js attributes to the form widgets
-        $this->addVueAttributesToFormWidget($objForm);
+        $this->addAttributesToFormWidgets($objForm);
 
         return $objForm->generate();
+    }
+
+    private function getFormFieldConfig(string $fieldName): array
+    {
+        $arrFormFieldConfig = [
+            'title' => [
+                'decodeEntities' => true,
+                'mandatory' => true,
+                'maxlength' => 250,
+            ],
+            'text' => [
+                'decodeEntities' => true,
+                'mandatory' => true,
+                'maxlength' => 1700,
+                'rows' => 8,
+            ],
+            'tourWaypoints' => [
+                'decodeEntities' => true,
+                'mandatory' => true,
+                'maxlength' => 300,
+                'placeholder' => 'z.B. Engelberg 1000 m - Herrenrüti 1083 m - Galtiberg 1800 m - Einstieg 2000 m',
+                'rows' => 5,
+            ],
+            'tourProfile' => [
+                'decodeEntities' => true,
+                'mandatory' => true,
+                'placeholder' => 'z.B. Aufst: 1500 Hm/8 h, Abst: 1500 Hm/3 h',
+                'rows' => 5,
+            ],
+            'tourTechDifficulty' => [
+                'decodeEntities' => true,
+                'mandatory' => true,
+                'rows' => 5,
+            ],
+            'tourHighlights' => [
+                'class' => 'publish-clubmagazine-field',
+                'decodeEntities' => true,
+                'mandatory' => true,
+                'rows' => 5,
+            ],
+            'tourPublicTransportInfo' => [
+                'class' => 'publish-clubmagazine-field',
+                'decodeEntities' => true,
+                'rows' => 5,
+            ],
+            'youTubeId' => [
+                'maxlength' => 11,
+                'placeholder' => 'z.B. G02hYgT3nGw',
+            ],
+        ];
+
+        return $arrFormFieldConfig[$fieldName];
     }
 
     private function getTourTitle(CalendarEventsBlogModel $objEventBlogModel): string
     {
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
         if (!empty($objEventBlogModel->title)) {
             return $objEventBlogModel->title;
@@ -491,7 +534,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
-            return '' !== $objEvent->title ? $objEvent->title : '';
+            return '' !== $objEvent->title ? $stringUtilAdapter->substr($objEvent->title, $this->getFormFieldConfig('title')['maxlength']) : '';
         }
 
         return '';
@@ -500,14 +543,18 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     private function getTourWaypoints(CalendarEventsBlogModel $objEventBlogModel): string
     {
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
         if (!empty($objEventBlogModel->tourWaypoints)) {
             return $objEventBlogModel->tourWaypoints;
         }
+
         $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
-            return !empty($objEvent->tourDetailText) ? $objEvent->tourDetailText : '';
+            $maxlength = $this->getFormFieldConfig('tourWaypoints')['maxlength'];
+
+            return !empty($objEvent->tourDetailText) ? $stringUtilAdapter->substr($objEvent->tourDetailText, $maxlength) : '';
         }
 
         return '';
@@ -557,10 +604,13 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         return '';
     }
 
-    private function addVueAttributesToFormWidget(Form $objForm): void
+    private function addAttributesToFormWidgets(Form $objForm): void
     {
-        $objForm->getWidget('text')->addAttribute('v-model', 'ctrl_text.value');
-        $objForm->getWidget('text')->addAttribute('v-on:keyup', 'onKeyUp("ctrl_text")');
+        $widgets = ['title', 'text', 'tourWaypoints'];
+
+        foreach ($widgets as $widgetName) {
+            $objForm->getWidget($widgetName)->addAttribute('data-character-limit-indicator', $this->getFormFieldConfig($widgetName)['maxlength']);
+        }
     }
 
     /**

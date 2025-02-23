@@ -12,8 +12,9 @@
             <div class="modal-body">
                 <div id="editReportFormBox">
                     {{ objEventBlogTextAndYoutubeForm|raw }}
-                    <p id="ctrl_text_strLenRemaining" class="text-success">
-                        Verbleibende Zeichen (Leerzeichen inklusive): [[ ctrl_text.strLenRemaining ]]
+                    {# Template for the character limit indicator #}
+                    <p class="character-limit-indicator-box template text-success small mt-0 d-none">
+                        Verbleibende Zeichen (Leerzeichen inklusive): <span class="character-limit-indicator">{# Will contain the remaining number of available bay characters. #}</span>
                     </p>
                 </div>
             </div>
@@ -29,32 +30,45 @@
         const app = createApp({
             data() {
                 return {
-                    ctrl_text: {
-                        value: null,
-                        len: 0,
-                        strLenRemaining: 0,
-                    },
+                    charLimitIndicators: {},
                 };
             },
 
             mounted() {
-                this.ctrl_text.value = document.getElementById('ctrl_text').textContent;
-                this.ctrl_text.len = document.getElementById('ctrl_text').textContent.length;
-                this.ctrl_text.strLenRemaining = parseInt(document.getElementById('ctrl_text').getAttribute('maxlength')) - this.ctrl_text.len;
-                // Cut and append string length remain indicator
-                this.cutAndAppend(document.getElementById('ctrl_text_strLenRemaining'), document.getElementById('ctrl_text').parentElement);
+                const widgets = document.querySelectorAll('#editReportFormBox [data-character-limit-indicator]');
+
+                for (const widget of widgets) {
+                    this.charLimitIndicators[widget.id] = {
+                        id: widget.id,
+                        value: widget.value,
+                        len: widget.value.length,
+                        remaining: parseInt(widget.getAttribute('data-character-limit-indicator')) - widget.value.length,
+                    }
+
+                    const cloneElement = document.querySelector('#editReportFormBox .character-limit-indicator-box.template').cloneNode(true);
+                    const charIndicatorElement = widget.insertAdjacentElement('afterend', cloneElement);
+                    charIndicatorElement.setAttribute('data-character-indicator-for', widget.id);
+                    charIndicatorElement.classList.remove('d-none', 'template');
+                    charIndicatorElement.querySelector('.character-limit-indicator').textContent = this.getCharLimitIndicatorRemaining(widget.id);
+
+                    widget.addEventListener('keyup', (e) => {
+                        const widget = e.target;
+                        this.charLimitIndicators[widget.id].len = widget.value.length;
+                        this.charLimitIndicators[widget.id].remaining = parseInt(widget.getAttribute('data-character-limit-indicator')) - widget.value.length;
+                        widget.parentElement.querySelector('.character-limit-indicator').textContent = this.getCharLimitIndicatorRemaining(widget.id);
+                    });
+                }
             },
 
             methods: {
-                onKeyUp: function (elemId) {
-                    if (elemId === 'ctrl_text') {
-                        this.ctrl_text.len = document.getElementById('ctrl_text').value.length;
-                        this.ctrl_text.strLenRemaining = parseInt(document.getElementById('ctrl_text').getAttribute('maxlength')) - this.ctrl_text.len;
-                    }
+                getCharLimitIndicator(id) {
+                    return this.charLimitIndicators[id];
                 },
-                cutAndAppend: function (elem, parentNode) {
-                    let childElem = elem.parentElement.removeChild(elem);
-                    parentNode.appendChild(childElem);
+                getCharLimitIndicatorRemaining(id) {
+                    return this.charLimitIndicators[id].remaining;
+                },
+                getCharLimitIndicatorLen(id) {
+                    return this.charLimitIndicators[id].len;
                 }
             }
         });
