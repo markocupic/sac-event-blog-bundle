@@ -9,11 +9,12 @@ services:
 
     Markocupic\SacEventBlogBundle\DataContainer\CalendarEventsBlog:
         arguments:
-            - '@security.helper'
+            - '@Markocupic\SacEventToolBundle\Download\BinaryFileDownload'
+            - '@Markocupic\SacEventToolBundle\Util\CalendarEventsUtil'
             - '@database_connection'
             - '@request_stack'
-            - '@Markocupic\SacEventToolBundle\Download\BinaryFileDownload'
             - '@router'
+            - '@security.helper'
             - '%kernel.project_dir%'
             - '%sacevt.temp_dir%'
             - '%sac_event_blog.docx_export_template%'
@@ -30,6 +31,7 @@ services:
     # Event blog reader module
     Markocupic\SacEventBlogBundle\Controller\FrontendModule\EventBlogReaderController:
         arguments:
+            - '@Markocupic\SacEventToolBundle\Util\CalendarEventsUtil'
             - '@contao.framework'
             - '@contao.routing.scope_matcher'
             - '@Codefog\HasteBundle\UrlParser'
@@ -51,6 +53,7 @@ services:
     # Member dashboard module: display the forms for writing new event reports
     Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogWriteController:
         arguments:
+            - '@Markocupic\SacEventToolBundle\Util\CalendarEventsUtil'
             - '@database_connection'
             - '@contao.csrf.token_manager'
             - '@contao.framework'

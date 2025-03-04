@@ -52,6 +52,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     private bool $isPreviewMode = false;
 
     public function __construct(
+        private readonly CalendarEventsUtil $calendarEventsUtil,
         private readonly ContaoFramework $framework,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly UrlParser $urlParser,
@@ -109,7 +110,6 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         // Adapters
         $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
-        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
 
         // Set data
         $template->setData($this->blog->row());
@@ -184,32 +184,32 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $template->set('youTubeId', !empty($this->blog->youTubeId) ? $this->blog->youTubeId : null);
 
         // tour instructors
-        $arrTourInstructors = $calendarEventsUtilAdapter->getInstructorNamesAsArray($objEvent);
+        $arrTourInstructors = $this->calendarEventsUtil->getInstructorNamesAsArray($objEvent);
 
         if (!empty($arrTourInstructors)) {
             $template->set('tourInstructors', implode(', ', $arrTourInstructors));
         }
 
         // tour types
-        $arrTourTypes = CalendarEventsUtil::getTourTypesAsArray($objEvent, 'title');
+        $arrTourTypes = $this->calendarEventsUtil->getTourTypesAsArray($objEvent, 'title');
 
         if (!empty($arrTourTypes)) {
             $template->set('tourTypes', implode(', ', $arrTourTypes));
         }
 
         // event dates
-        $template->set('eventDates', CalendarEventsUtil::getEventPeriod($objEvent, 'd.m.Y', false));
+        $template->set('eventDates', $this->calendarEventsUtil->getEventPeriod($objEvent, 'd.m.Y', false));
 
         // tour tech. difficulty
         $template->set('tourTechDifficulty', $this->blog->tourTechDifficulty ?? '');
 
         if (empty($template->get('tourTechDifficulty')) && !empty($objEvent->tourTechDifficulty)) {
-            $arrTourTechDiff = $calendarEventsUtilAdapter->getTourTechDifficultiesAsArray($objEvent);
+            $arrTourTechDiff = $this->calendarEventsUtil->getTourTechDifficultiesAsArray($objEvent);
             $template->set('tourTechDifficulty', !empty($arrTourTechDiff) ? implode(', ', $arrTourTechDiff) : null);
         }
 
         // event organizers
-        $arrEventOrganizers = $calendarEventsUtilAdapter->getEventOrganizersAsArray($objEvent);
+        $arrEventOrganizers = $this->calendarEventsUtil->getEventOrganizersAsArray($objEvent);
 
         if (!empty($arrEventOrganizers)) {
             $template->set('eventOrganizers', implode(', ', $arrEventOrganizers));

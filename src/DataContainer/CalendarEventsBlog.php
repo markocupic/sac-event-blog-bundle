@@ -45,14 +45,15 @@ use Symfony\Component\Routing\RouterInterface;
 
 class CalendarEventsBlog
 {
-    private const TABLE_NAME = 'tl_calendar_events_blog';
+    private const string TABLE_NAME = 'tl_calendar_events_blog';
 
     public function __construct(
-        private readonly Security $security,
+        private readonly BinaryFileDownload $binaryFileDownload,
+        private readonly CalendarEventsUtil $calendarEventsUtil,
         private readonly Connection $connection,
         private readonly RequestStack $requestStack,
-        private readonly BinaryFileDownload $binaryFileDownload,
         private readonly RouterInterface $router,
+        private readonly Security $security,
         private readonly string $projectDir,
         private readonly string $tempDir,
         private readonly string $eventBlogDocxExportTemplate,
@@ -226,11 +227,11 @@ class CalendarEventsBlog
         $objPhpWord = new MsWordTemplateProcessor($docxTemplateSrc, $targetFile);
 
         // Organizers
-        $arrOrganizers = CalendarEventsUtil::getEventOrganizersAsArray($objEvent);
+        $arrOrganizers = $this->calendarEventsUtil->getEventOrganizersAsArray($objEvent);
         $strOrganizers = implode(', ', $arrOrganizers);
 
         // Instructors
-        $mainInstructorName = CalendarEventsUtil::getMainInstructorName($objEvent);
+        $mainInstructorName = $this->calendarEventsUtil->getMainInstructorName($objEvent);
         $mainInstructorEmail = '';
 
         if (null !== ($objInstructor = UserModel::findByPk($objEvent->mainInstructor))) {
@@ -245,7 +246,7 @@ class CalendarEventsBlog
         }
 
         // Event dates
-        $arrEventDates = CalendarEventsUtil::getEventTimestamps($objEvent);
+        $arrEventDates = $this->calendarEventsUtil->getEventTimestamps($objEvent);
         $arrEventDates = array_map(
             static fn ($tstamp) => date('Y-m-d', (int) $tstamp),
             $arrEventDates
@@ -278,7 +279,7 @@ class CalendarEventsBlog
         }
 
         // tourTypes
-        $arrTourTypes = CalendarEventsUtil::getTourTypesAsArray($objEvent, 'title');
+        $arrTourTypes = $this->calendarEventsUtil->getTourTypesAsArray($objEvent, 'title');
 
         $options = ['multiline' => true];
         $objPhpWord->replace('checkedByInstructor', $strCheckedByInstructor, $options);

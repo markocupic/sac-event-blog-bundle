@@ -48,6 +48,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
     protected FrontendUser|null $user;
 
     public function __construct(
+        private readonly CalendarEventsUtil $calendarEventsUtil,
         private readonly ContaoFramework $framework,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly Security $security,
@@ -108,7 +109,6 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         // Adapters
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
         $dateAdapter = $this->framework->getAdapter(Date::class);
-        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
         $configAdapter = $this->framework->getAdapter(Config::class);
         $databaseAdapter = $this->framework->getAdapter(Database::class);
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
@@ -140,7 +140,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
                 // Check if event still exists
                 if (($objEvent = $calendarEventsModelAdapter->findByPk($objEventBlog->eventId)) !== null) {
                     // Overwrite date if event still exists in tl_calendar_events
-                    $arrEventBlog['date'] = $calendarEventsUtilAdapter->getEventPeriod($objEvent, $configAdapter->get('dateFormat'), false);
+                    $arrEventBlog['date'] = $this->calendarEventsUtil->getEventPeriod($objEvent, $configAdapter->get('dateFormat'), false);
                     $objPage = $pageModelAdapter->findByPk($model->eventBlogFormJumpTo);
 
                     if (null !== $objPage) {

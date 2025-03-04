@@ -67,6 +67,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     private PageModel|null $page;
 
     public function __construct(
+        private readonly CalendarEventsUtil $calendarEventsUtil,
         private readonly Connection $connection,
         private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
         private readonly ContaoFramework $framework,
@@ -123,7 +124,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
         $calendarEventsMemberModelAdapter = $this->framework->getAdapter(CalendarEventsMemberModel::class);
         $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
-        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
         $inputAdapter = $this->framework->getAdapter(Input::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -236,7 +236,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $template->set('text', $objBlog->text);
         $template->set('title', $objBlog->title);
         $template->set('publishState', (int) $objBlog->publishState);
-        $template->set('eventPeriod', $calendarEventsUtilAdapter->getEventPeriod($objEvent));
+        $template->set('eventPeriod', $this->calendarEventsUtil->getEventPeriod($objEvent));
 
         // Get the gallery
         $template->set('images', $this->getGalleryImages($objBlog));
@@ -562,7 +562,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
     private function getTourProfile(CalendarEventsBlogModel $objEventBlogModel): string
     {
-        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
 
         if (!empty($objEventBlogModel->tourProfile)) {
@@ -572,7 +571,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
-            $arrData = $calendarEventsUtilAdapter->getTourProfileAsArray($objEvent);
+            $arrData = $this->calendarEventsUtil->getTourProfileAsArray($objEvent);
 
             return implode("\r\n", $arrData);
         }
@@ -582,7 +581,6 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
     private function getTourTechDifficulties(CalendarEventsBlogModel $objEventBlogModel): string
     {
-        $calendarEventsUtilAdapter = $this->framework->getAdapter(CalendarEventsUtil::class);
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
 
         if (!empty($objEventBlogModel->tourTechDifficulty)) {
@@ -592,7 +590,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
-            $arrData = $calendarEventsUtilAdapter->getTourTechDifficultiesAsArray($objEvent);
+            $arrData = $this->calendarEventsUtil->getTourTechDifficultiesAsArray($objEvent);
 
             if (empty($arrData)) {
                 return $this->translator->trans('ERR.md_write_event_blog_notSpecified', [], 'contao_default');
