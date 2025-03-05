@@ -20,8 +20,18 @@
     </div>
 </div>
 <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
-    // Do not send the form twice
-    document.querySelector('#ModalFotoupload form').addEventListener('submit', (e) => {
-        e.target.querySelector('#ctrl_submitImageUploadFormBtn').disabled = true;
+    // Prevent the submit while the upload is in progress.
+    document.querySelector('#ModalFotoupload form').addEventListener('submit', (event) => {
+        if (event.currentTarget.querySelector('.filepond-wrapper.filepond--is-busy')) {
+            event.preventDefault();
+            alert('Bitte warte mit dem Absenden, bis der Bildupload beendet ist.');
+            window.setTimeout(() => {
+                // Re-enable the submit button, because the Contao form_wrapper template
+                // contains a script that prevent multiple form submits
+                document.getElementById('ctrl_submitImageUploadFormBtn').removeAttribute('disabled');
+            }, 200);
+        } else {
+            document.getElementById('ctrl_submitImageUploadFormBtn').disabled = true;
+        }
     });
 </script>
