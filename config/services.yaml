@@ -43,6 +43,7 @@ services:
     # Member dashboard module: list event reports and the form to generate new event reports
     Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogListController:
         arguments:
+            - '@Markocupic\SacEventToolBundle\Util\CalendarEventsUtil'
             - '@contao.framework'
             - '@contao.routing.scope_matcher'
             - '@security.helper'
