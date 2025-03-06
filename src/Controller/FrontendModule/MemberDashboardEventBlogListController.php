@@ -172,7 +172,15 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
 
         $arrOptions = [];
         $intStartDateMin = $model->eventBlogTimeSpanForCreatingNew > 0 ? time() - $model->eventBlogTimeSpanForCreatingNew * 24 * 3600 : time();
-        $arrEvents = $calendarEventsMemberModelAdapter->findEventsByMemberId($this->user->id, [], $intStartDateMin, time(), true, true);
+
+        $options = [
+            'startTstamp' => $intStartDateMin,
+            'endTstamp' => time(),
+            'blnInstructorRole' => true,
+            'blnShowEventsWithParticipationOnly' => true,
+        ];
+
+        $arrEvents = $calendarEventsMemberModelAdapter->findEventsByMemberId($this->user->id, $options);
 
         if (!empty($arrEvents)) {
             foreach ($arrEvents as $event) {

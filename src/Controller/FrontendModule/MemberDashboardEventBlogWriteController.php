@@ -166,7 +166,15 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             if (!$messageAdapter->hasError()) {
                 $blnAllow = false;
                 $intStartDateMin = $model->eventBlogTimeSpanForCreatingNew > 0 ? time() - $model->eventBlogTimeSpanForCreatingNew * 24 * 3600 : time();
-                $arrAllowedEvents = $calendarEventsMemberModelAdapter->findEventsByMemberId($this->user->id, [], $intStartDateMin, time(), true, true);
+
+                $options = [
+                    'startTstamp' => $intStartDateMin,
+                    'endTstamp' => time(),
+                    'blnInstructorRole' => true,
+                    'blnShowEventsWithParticipationOnly' => true,
+                ];
+
+                $arrAllowedEvents = $calendarEventsMemberModelAdapter->findEventsByMemberId($this->user->id, $options);
 
                 foreach ($arrAllowedEvents as $allowedEvent) {
                     if ((int) $allowedEvent['id'] === (int) $inputAdapter->get('eventId')) {
