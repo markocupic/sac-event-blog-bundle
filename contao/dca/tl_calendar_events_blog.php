@@ -149,7 +149,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'textarea',
-            'eval'      => ['doNotCopy' => true, 'max-length' => 1700, 'mandatory' => true, 'tl_class' => 'clr'],
+            'eval'      => ['doNotCopy' => true, 'maxlength' => 1700, 'mandatory' => true, 'tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
         'youTubeId'               => [
@@ -215,7 +215,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'search'    => true,
             'exclude'   => true,
             'inputType' => 'textarea',
-            'eval'      => ['doNotCopy' => true, 'max-length' => 300, 'mandatory' => false, 'tl_class' => 'clr'],
+            'eval'      => ['doNotCopy' => true, 'maxlength' => 300, 'mandatory' => false, 'tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
         'tourProfile'             => [

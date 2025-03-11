@@ -484,7 +484,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'title' => [
                 'decodeEntities' => true,
                 'mandatory' => true,
-                'maxlength' => 250,
+                'maxlength' => 255,
             ],
             'text' => [
                 'decodeEntities' => true,
