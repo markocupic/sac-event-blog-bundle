@@ -124,7 +124,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'search'    => true,
             'inputType' => 'textarea',
             'exclude'   => true,
-            'eval'      => ['doNotCopy' => true, 'mandatory' => false, 'readonly' => true, 'maxlength' => 128, 'tl_class' => 'clr'],
+            'eval'      => ['doNotCopy' => true, 'mandatory' => false, 'readonly' => true, 'rgxp' => 'maxlength128', 'tl_class' => 'clr'],
             'sql'       => 'text NULL',
         ],
         'eventStartDate'          => [
@@ -215,7 +215,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'search'    => true,
             'exclude'   => true,
             'inputType' => 'textarea',
-            'eval'      => ['doNotCopy' => true, 'maxlength' => 300, 'mandatory' => false, 'tl_class' => 'clr'],
+            'eval'      => ['doNotCopy' => true, 'rgxp' => 'maxlength300', 'mandatory' => false, 'tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
         'tourProfile'             => [
