@@ -127,22 +127,6 @@ class CalendarEventsBlog
     #[AsCallback(table: self::TABLE_NAME, target: 'config.onload')]
     public function keepBlogUpToDate(): void
     {
-        // Delete old and unpublished blogs
-        $limit = time() - 60 * 60 * 24 * 30;
-
-        $this->connection->executeStatement(
-            'DELETE FROM tl_calendar_events_blog WHERE tstamp < ? AND publishState < ?',
-            [$limit, PublishState::PUBLISHED],
-        );
-
-        // Delete unfinished blogs older the 14 days
-        $limit = time() - 60 * 60 * 24 * 14;
-
-        $this->connection->executeStatement(
-            'DELETE FROM tl_calendar_events_blog WHERE tstamp < ? AND text = ? AND youTubeId = ? AND multiSRC = ?',
-            [$limit, '', '', null]
-        );
-
         // Keep blogs up to date, if e.g. events have been renamed
         $stmt = $this->connection->executeQuery('SELECT * FROM tl_calendar_events_blog', []);
 

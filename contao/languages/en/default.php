@@ -12,6 +12,9 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
+// Backend messages
+$GLOBALS['TL_LANG']['ERR']['maxlengthRgxp'] = 'Im Moment enthält Ihre Eingabe %d Zeichen, erlaubt sind lediglich %d Zeichen.';
+
 // Frontend member dashboard write event blog frontend module - error messages
 $GLOBALS['TL_LANG']['ERR']['md_write_event_blog_mailAddressNotFound'] = 'Leider wurde für dieses Konto in der Datenbank keine E-Mail-Adresse gefunden. Daher stehen einige Funktionen nur eingeschränkt zur Verfügung. Bitte hinterle auf der Webseite des Zentralverbands deine E-Mail-Adresse.';
 $GLOBALS['TL_LANG']['ERR']['md_write_event_blog_eventNotFound'] = 'Event mit ID %s nicht gefunden.';
