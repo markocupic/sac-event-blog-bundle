@@ -24,6 +24,7 @@
     },
     "require": {
         "php": "^8.3",
+        "ext-iconv": "*",
         "contao/core-bundle": "^5.3",
         "chillerlan/php-qrcode": "^5.0",
         "codefog/contao-haste": "^5.0",
