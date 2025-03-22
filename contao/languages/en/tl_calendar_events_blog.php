@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 
 use Markocupic\SacEventBlogBundle\Config\PublishState;
+use Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogWriteController;
 
 // Operations
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['exportBlog'] = ['Blog exportieren', 'Blog mit ID %s exportieren'];
@@ -37,13 +38,13 @@ $GLOBALS['TL_LANG']['tl_calendar_events_blog']['authorName'] = ['Name des Autors
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['pid'] = ['Event-ID', 'Geben Sie die Event-ID an.'];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['title'] = ['Titel', 'Geben Sie den Titel für den Bericht ein'];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['eventTitle'] = ['Event Name', 'Geben Sie den Namen des Events ein, dem der Bericht zugeordnet werden soll.'];
-$GLOBALS['TL_LANG']['tl_calendar_events_blog']['text'] = ['Bericht (1700 Zeichen)', 'Geben Sie bitte einen Bericht ein.'];
+$GLOBALS['TL_LANG']['tl_calendar_events_blog']['text'] = ['Bericht ['.ceil(1.05 * MemberDashboardEventBlogWriteController::getFormFieldConfig('text')['maxlength']).' Zeichen]', 'Geben Sie hier bitte den Bericht ein.'];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['youTubeId'] = ['Youtube Movie ID', 'Geben Sie bitte die Youtube Movie ID ein.'];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['multiSRC'] = ['Bilder auswählen', 'Wählen Sie hier die Bilder aus.'];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['organizers'] = ['Veranstalter/Ortsgruppe', 'Wählen Sie hier den Veranstalter des Events aus.'];
-$GLOBALS['TL_LANG']['tl_calendar_events_blog']['eventSubstitutionText'] = ['Ausweichtour (128 Zeichen)', 'Geben Sie eine allfällige Ausweichtour an.'];
+$GLOBALS['TL_LANG']['tl_calendar_events_blog']['eventSubstitutionText'] = ['Ausweichtour ['.ceil(1.05*MemberDashboardEventBlogWriteController::getFormFieldConfig('eventSubstitutionText')['maxlength']).' Zeichen]', 'Geben Sie eine allfällige Ausweichtour an.'];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['eventStartDate'] = ['Event-Datum', ''];
-$GLOBALS['TL_LANG']['tl_calendar_events_blog']['tourWaypoints'] = ['Tourenstationen mit Höhenangaben (300 Zeichen)', ''];
+$GLOBALS['TL_LANG']['tl_calendar_events_blog']['tourWaypoints'] = ['Tourenstationen mit Höhenangaben ['.ceil(1.05*MemberDashboardEventBlogWriteController::getFormFieldConfig('tourWaypoints')['maxlength']).' Zeichen]', ''];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['tourProfile'] = ['Höhenunterschied und Zeitbedarf pro Tag', ''];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['tourTechDifficulty'] = ['Technische Schwierigkeiten', ''];
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['tourHighlights'] = ['Highlights und Bemerkungen', ''];

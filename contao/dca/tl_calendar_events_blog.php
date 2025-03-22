@@ -17,6 +17,7 @@ use Contao\DataContainer;
 use Contao\Input;
 use Contao\System;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
+use Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogWriteController;
 
 $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
     'config'   => [
@@ -124,7 +125,8 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'search'    => true,
             'inputType' => 'textarea',
             'exclude'   => true,
-            'eval'      => ['doNotCopy' => true, 'mandatory' => false, 'readonly' => true, 'rgxp' => 'maxlength128', 'tl_class' => 'clr'],
+            // maxlength frontend: 128, backend: + 6
+            'eval'      => ['doNotCopy' => true, 'mandatory' => false, 'readonly' => true, 'rgxp' => 'maxlengthDecoded'.ceil(1.05 * MemberDashboardEventBlogWriteController::getFormFieldConfig('eventSubstitutionText')['maxlength']), 'tl_class' => 'clr'],
             'sql'       => 'text NULL',
         ],
         'eventStartDate'          => [
@@ -149,7 +151,8 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'textarea',
-            'eval'      => ['doNotCopy' => true, 'rgxp' => 'maxlength1700', 'mandatory' => true, 'tl_class' => 'clr'],
+            // maxlength frontend: 1700, backend: + 5%
+            'eval'      => ['doNotCopy' => true, 'rgxp' => 'maxlengthDecoded'.ceil(1.05 * MemberDashboardEventBlogWriteController::getFormFieldConfig('text')['maxlength']), 'mandatory' => true, 'tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
         'youTubeId'               => [
@@ -215,7 +218,8 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'search'    => true,
             'exclude'   => true,
             'inputType' => 'textarea',
-            'eval'      => ['doNotCopy' => true, 'rgxp' => 'maxlength300', 'mandatory' => false, 'tl_class' => 'clr'],
+            // maxlength frontend: 300, backend: + 5%
+            'eval'      => ['doNotCopy' => true, 'rgxp' => 'maxlengthDecoded'.ceil(1.05 * MemberDashboardEventBlogWriteController::getFormFieldConfig('tourWaypoints')['maxlength']), 'mandatory' => false, 'tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
         'tourProfile'             => [
