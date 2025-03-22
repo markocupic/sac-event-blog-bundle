@@ -149,7 +149,7 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'textarea',
-            'eval'      => ['doNotCopy' => true, 'maxlength' => 1700, 'mandatory' => true, 'tl_class' => 'clr'],
+            'eval'      => ['doNotCopy' => true, 'rgxp' => 'maxlength1700', 'mandatory' => true, 'tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
         'youTubeId'               => [
