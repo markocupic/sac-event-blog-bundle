@@ -106,21 +106,6 @@ class CalendarEventsBlog
         }
     }
 
-    #[AsCallback(table: self::TABLE_NAME, target: 'config.onload')]
-    public function adjustDcaFields(): void
-    {
-        // Overwrite readonly attribute for admins
-        if ($this->security->isGranted('ROLE_ADMIN')) {
-            $fields = $GLOBALS['TL_DCA'][self::TABLE_NAME]['fields'];
-
-            foreach ($fields as $strFieldName => $arrField) {
-                if (isset($arrField['eval']['readonly']) && $arrField['eval']['readonly']) {
-                    $GLOBALS['TL_DCA'][self::TABLE_NAME]['fields'][$strFieldName]['eval']['readonly'] = false;
-                }
-            }
-        }
-    }
-
     /**
      * @throws \Exception
      */
@@ -128,7 +113,7 @@ class CalendarEventsBlog
     public function keepBlogUpToDate(): void
     {
         // Keep blogs up to date, if e.g. events have been renamed
-        $stmt = $this->connection->executeQuery('SELECT * FROM tl_calendar_events_blog', []);
+        $stmt = $this->connection->executeQuery('SELECT * FROM tl_calendar_events_blog');
 
         while (false !== ($arrBlog = $stmt->fetchAssociative())) {
             $blog = CalendarEventsBlogModel::findByPk($arrBlog['id']);
