@@ -38,28 +38,29 @@
         <br>
 
         <p><strong>Veröffentlichungs-Level:</strong> {{ publishState|default('') }} - {{ ('tl_calendar_events_blog.publishStateRef.'~publishState|default(''))|trans({}, 'contao_default') }}</p>
+        <nav class="overflow-x-auto">
+            <div class="event-blog-form-buttons d-inline-flex flex-nowrap align-items-center pb-4">
+                {% if publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+                    <div class="me-2">
+                        <button class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#ModalWriteTextAndYt"><i class="fa-regular fa-pencil"></i> Bericht bearbeiten</button>
+                    </div>
 
-        <div class="event-blog-form-buttons d-flex flex-row align-items-center">
-            {% if publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-                <div class="me-2">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ModalWriteTextAndYt"><i class="fa-regular fa-pencil"></i> Bericht bearbeiten</button>
-                </div>
+                    <div class="me-2">
+                        <button class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#ModalFotoupload"><i class="fa-regular fa-images"></i> Foto-Upload</button>
+                    </div>
+                {% endif %}
 
-                <div class="me-2">
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#ModalFotoupload"><i class="fa-regular fa-images"></i> Foto-Upload</button>
-                </div>
-            {% endif %}
+                {% if previewLink|default() %}
+                    <div class="me-2">
+                        <a class="btn btn-primary text-nowrap" target="_blank" rel="noopener" href="{{ previewLink }}"><i class="fa-solid fa-desktop"></i> Vorschau</a>
+                    </div>
+                {% endif %}
 
-            {% if previewLink|default() %}
-                <div class="me-2">
-                    <a class="btn btn-primary" target="_blank" rel="noopener" href="{{ previewLink }}"><i class="fa-solid fa-desktop"></i> Vorschau</a>
-                </div>
-            {% endif %}
-
-            {% if not text|default() is empty and publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-                {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_change_publish_state_partial.html.twig') %}
-            {% endif %}
-        </div>
+                {% if not text|default() is empty and publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+                    {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_change_publish_state_partial.html.twig') %}
+                {% endif %}
+            </div>
+        </nav>
 
         {% if publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
             <!-- Modal box tour report form -->
