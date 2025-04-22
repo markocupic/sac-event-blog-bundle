@@ -63,7 +63,7 @@
     <div class="grid-card equal-height block">
         {% for blog in blogs %}
             <div itemscope itemtype="http://schema.org/Article">
-                <div class="card event-item bg-white" data-aos="fade-down" data-aos-duration="600" data-aos-once="true" data-aos-anchor-placement="top-bottom">
+                <div class="card event-item bg-white">
                     <div class="image-zoom-in">
                         <a href="{{ blog.href }}" class="item-reader-link" aria-label="{{ blog.title|escape('html_attr') }}">
                             {% if blog.singleSRC|default and blog.singleSRC.uuid|default %}
