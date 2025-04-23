@@ -24,6 +24,11 @@ Encore
         from: './node_modules/vue/dist',
         to: 'vue/dist/[path][name].[hash:8].[ext]',
     })
+    .copyFiles({
+        from: './node_modules/sortablejs',
+        to: 'sortablejs/[path][name].[hash:8].[ext]',
+        pattern: /(Sortable\.min\.js)$/,
+    })
     // enables @babel/preset-env polyfills
     .configureBabelPresetEnv((config) => {
         config.useBuiltIns = 'usage';

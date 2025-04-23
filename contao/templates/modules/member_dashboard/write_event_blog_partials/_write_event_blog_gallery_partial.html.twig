@@ -31,145 +31,244 @@
 
 
     {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-        <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
-            document.addEventListener("DOMContentLoaded", (event) => {
-                // Open modal for caption edit
-                jQuery('button.add-caption').click(function () {
-                    let path = jQuery(this).closest('.thumbnail').attr('data-path');
-                    let item = jQuery(this).closest('.thumbnail').attr('data-item');
-                    let fileUuid = jQuery(this).closest('.thumbnail').attr('data-file-uuid');
-                    let modal = jQuery('.modal.write-event-blog-image-caption').first();
-                    jQuery(modal).find('.image-full-res').attr('src', path);
-                    jQuery(modal).attr('data-item', item);
+        {% add to body %}
+            <script>
+                document.addEventListener("DOMContentLoaded", () => {
+                    // Open modal for caption edit
+                    const captionButtons = document.querySelectorAll('button.add-caption');
 
-                    // Get caption text by xhr request
-                    $.post('ajaxMemberDashboardWriteEventBlog/getCaption', {
-                        'REQUEST_TOKEN': '{{ request_token }}',
-                        'fileUuid': fileUuid
-                    }).done(function (json) {
-                        if (json.status !== 'success') {
-                            console.log(json);
-                        } else {
-                            jQuery(modal).modal('toggle');
-                            jQuery(modal).find('#imageCaptionInput').val(json.caption);
-                            jQuery(modal).find('#imagePhotographerInput').val(json.photographer);
-                        }
-                    }).always(function () {
-                        //window.location.reload();
-                    });
-                });
+                    for (const button of captionButtons) {
+                        button.addEventListener("click", async () => {
+                            const thumbnail = button.closest('.thumbnail');
+                            const path = thumbnail.getAttribute('data-path');
+                            const item = thumbnail.getAttribute('data-item');
+                            const fileUuid = thumbnail.getAttribute('data-file-uuid');
+                            const modal = document.querySelector('.modal.write-event-blog-image-caption');
 
-                // Save caption to the server
-                jQuery('.modal.write-event-blog-image-caption button#saveCaptionButton').click(function () {
-                    jQuery('.write-event-blog-image-caption').modal('hide');
-                    let caption = jQuery('.modal.write-event-blog-image-caption #imageCaptionInput').val();
-                    let photographer = jQuery('.modal.write-event-blog-image-caption #imagePhotographerInput').val();
-                    let modal = jQuery(this).closest('.modal');
-                    let item = jQuery(modal).attr('data-item');
-                    let thumbnail = jQuery('#dashboardEventBlogGallery').find('.thumbnail[data-item="' + item + '"]');
-                    thumbnail.attr('data-caption', caption);
-                    let fileUuid = jQuery(thumbnail).attr('data-file-uuid');
-                    jQuery(modal).modal('hide');
-
-                    $.post('ajaxMemberDashboardWriteEventBlog/setCaption', {
-                        'REQUEST_TOKEN': '{{ request_token }}',
-                        'fileUuid': fileUuid,
-                        'caption': caption,
-                        'photographer': photographer
-                    }).done(function (json) {
-                        if (json.status !== 'success') {
-                            console.log(json);
-                        }
-                    }).always(function () {
-                        window.location.reload();
-                    });
-                });
-            });
-        </script>
-    {% endif %}
-
-
-    {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-
-        <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
-            "use strict";
-
-            document.addEventListener("DOMContentLoaded", (event) => {
-
-                /**
-                 * Remove image from collection
-                 */
-                jQuery('.remove-image').on('click touchmove', function (e) {
-                    e.preventDefault();
-                    let elImage = jQuery(this).closest('[data-file-uuid]');
-                    if (elImage.length) {
-                        let uuid = jQuery(elImage).data('file-uuid');
-                        if (typeof uuid !== 'undefined') {
-                            $.post('ajaxMemberDashboardWriteEventBlog/removeImage', {
-                                'REQUEST_TOKEN': '{{ request_token }}',
-                                'eventId': '{{ eventId }}',
-                                'uuid': uuid
-                            }).done(function (json) {
-                                if (json.status !== 'success') {
-                                    console.log(json);
+                            if (modal) {
+                                const imageFullRes = modal.querySelector('.image-full-res');
+                                if (imageFullRes) {
+                                    imageFullRes.setAttribute('src', path);
                                 }
-                                elImage.fadeOut(400, function () {
-                                    jQuery(this).remove();
-                                });
-                            });
-                        }
-                    }
-                });
 
-                // Rotate image
-                jQuery('.rotate-image').on('click touchmove', function (e) {
-                    e.preventDefault();
-                    let elImage = jQuery(this).closest('[data-file-id]');
-                    if (elImage.length) {
-                        let fileId = jQuery(elImage).data('file-id');
-                        if (typeof fileId !== 'undefined') {
-                            $.post('ajaxMemberDashboardWriteEventBlog/rotateImage', {
-                                'REQUEST_TOKEN': '{{ request_token }}',
-                                'fileId': fileId
-                            }).done(function (json) {
-                                if (json.status !== 'success') {
-                                    console.log(json);
-                                } else {
-                                    window.location = document.URL;
+                                modal.setAttribute('data-item', item);
+
+                                // Get caption text via the fetch API
+                                try {
+                                    const response = await fetch('ajaxMemberDashboardWriteEventBlog/getCaption', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                        },
+                                        body: `REQUEST_TOKEN={{ request_token }}&fileUuid=${fileUuid}`
+                                    });
+
+                                    const json = await response.json();
+
+                                    if (json.status !== 'success') {
+                                        console.log(json);
+                                    } else {
+                                        // Open Bootstrap modal window
+                                        const bsModal = new bootstrap.Modal(modal);
+                                        bsModal.show();
+
+                                        const imageCaptionInput = modal.querySelector('#imageCaptionInput');
+                                        const imagePhotographerInput = modal.querySelector('#imagePhotographerInput');
+
+                                        if (imageCaptionInput) {
+                                            imageCaptionInput.value = json.caption;
+                                        }
+
+                                        if (imagePhotographerInput) {
+                                            imagePhotographerInput.value = json.photographer;
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error("Error fetching caption:", error);
                                 }
-                            });
-                        }
-                    }
-                });
-
-                /**
-                 * Image drag and drop sorting
-                 * @type {Element|*}
-                 */
-                let container = document.getElementById("dashboardEventBlogGallery");
-                Sortable.create(container, {
-                    animation: 50, // ms, animation speed moving items when sorting, `0` — without animation
-                    //handle: ".sortable-item", // Restricts sort start click/touch to the specified element
-                    draggable: ".sortable-item", // Specifies which items inside the element should be sortable
-                    onUpdate: function (event) {
-                        let item = event.item; // the current dragged HTMLElement
-                        let arrUuid = [];
-                        let collection = jQuery(item).closest('.sortable-thumbnail-container').find('.sortable-item');
-                        jQuery(collection).each(function () {
-                            arrUuid.push(jQuery(this).data('fileUuid'));
+                            }
                         });
-                        $.post('ajaxMemberDashboardWriteEventBlog/sortGallery', {
-                            'REQUEST_TOKEN': '{{ request_token }}',
-                            'eventId': '{{ eventId }}',
-                            'uuids': JSON.stringify(arrUuid)
-                        }).done(function (json) {
-                            if (json.status !== 'success') {
-                                console.log(json);
+                    }
+
+                    // Save caption to the server
+                    const saveButtons = document.querySelectorAll('.modal.write-event-blog-image-caption button#saveCaptionButton');
+
+                    for (const saveButton of saveButtons) {
+                        saveButton.addEventListener("click", async () => {
+                            const modal = saveButton.closest('.modal.write-event-blog-image-caption');
+
+                            if (modal) {
+                                // Close Bootstrap modal window
+                                const bsModal = new bootstrap.Modal(modal);
+                                bsModal.hide();
+
+                                const caption = modal.querySelector('#imageCaptionInput')?.value || '';
+                                const photographer = modal.querySelector('#imagePhotographerInput')?.value || '';
+                                const item = modal.getAttribute('data-item');
+                                const thumbnail = document.querySelector(`#dashboardEventBlogGallery .thumbnail[data-item="${item}"]`);
+
+                                if (thumbnail) {
+                                    thumbnail.setAttribute('data-caption', caption);
+                                    const fileUuid = thumbnail.getAttribute('data-file-uuid');
+
+                                    // Save caption via the fetch API
+                                    try {
+                                        const response = await fetch('ajaxMemberDashboardWriteEventBlog/setCaption', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/x-www-form-urlencoded',
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                            },
+                                            body: `REQUEST_TOKEN={{ request_token }}&fileUuid=${fileUuid}&caption=${caption}&photographer=${photographer}`
+                                        });
+
+                                        const json = await response.json();
+
+                                        if (json.status !== 'success') {
+                                            console.log(json);
+                                        }
+                                    } catch (error) {
+                                        console.error("Error saving caption:", error);
+                                    } finally {
+                                        window.location.reload();
+                                    }
+                                }
                             }
                         });
                     }
                 });
-            });
-        </script>
+            </script>
+
+        {% endadd %}
+    {% endif %}
+
+
+    {% if publishState is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
+        {% add to head %}
+            <script src="{{ asset('sortablejs/Sortable.min.js', 'markocupic_sac_event_blog') }}"></script>
+        {% endadd %}
+        {% add to body %}
+            <script>
+                "use strict";
+
+                document.addEventListener("DOMContentLoaded", () => {
+                    /**
+                     * Remove image from collection
+                     */
+                    const removeImageButtons = document.querySelectorAll('.remove-image');
+
+                    for (const button of removeImageButtons) {
+                        button.addEventListener("click", async (e) => {
+                            e.preventDefault();
+                            const elImage = button.closest('[data-file-uuid]');
+                            if (elImage) {
+                                const uuid = elImage.getAttribute('data-file-uuid');
+                                if (uuid) {
+                                    try {
+                                        const response = await fetch('ajaxMemberDashboardWriteEventBlog/removeImage', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/x-www-form-urlencoded',
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                            },
+                                            body: `REQUEST_TOKEN={{ request_token }}&eventId={{ eventId }}&uuid=${uuid}`
+                                        });
+
+                                        const json = await response.json();
+                                        if (json.status !== 'success') {
+                                            console.log(json);
+                                        } else {
+                                            elImage.style.transition = 'opacity 0.4s';
+                                            elImage.style.opacity = '0';
+                                            setTimeout(() => elImage.remove(), 400);
+                                        }
+                                    } catch (error) {
+                                        console.error("Error removing image:", error);
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    /**
+                     * Rotate image
+                     */
+                    const rotateImageButtons = document.querySelectorAll('.rotate-image');
+
+                    for (const button of rotateImageButtons) {
+                        button.addEventListener("click", async (e) => {
+                            e.preventDefault();
+                            const elImage = button.closest('[data-file-id]');
+                            if (elImage) {
+                                const fileId = elImage.getAttribute('data-file-id');
+                                if (fileId) {
+                                    try {
+                                        const response = await fetch('ajaxMemberDashboardWriteEventBlog/rotateImage', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/x-www-form-urlencoded',
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                            },
+                                            body: `REQUEST_TOKEN={{ request_token }}&fileId=${fileId}`
+                                        });
+
+                                        const json = await response.json();
+                                        if (json.status !== 'success') {
+                                            console.log(json);
+                                        } else {
+                                            window.location.reload();
+                                        }
+                                    } catch (error) {
+                                        console.error("Error rotating image:", error);
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    /**
+                     * Image drag-and-drop sorting
+                     */
+                    const container = document.getElementById("dashboardEventBlogGallery");
+
+                    if (container) {
+                        Sortable.create(container, {
+                            animation: 50, // Animation speed in milliseconds
+                            draggable: ".sortable-item", // Specifies sortable items
+                            onUpdate: async (event) => {
+                                const item = event.item; // Current dragged element
+                                const arrUuid = [];
+                                const collection = item.closest('.sortable-thumbnail-container')
+                                    ?.querySelectorAll('.sortable-item');
+                                if (collection) {
+                                    for (const elem of collection) {
+                                        arrUuid.push(elem.getAttribute('data-file-uuid'));
+                                    }
+                                }
+
+                                try {
+                                    const response = await fetch('ajaxMemberDashboardWriteEventBlog/sortGallery', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/x-www-form-urlencoded',
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                        },
+                                        body: `REQUEST_TOKEN={{ request_token }}&eventId={{ eventId }}&uuids=${JSON.stringify(arrUuid)}`
+                                    });
+
+                                    const json = await response.json();
+                                    if (json.status !== 'success') {
+                                        console.log(json);
+                                    }
+                                } catch (error) {
+                                    console.error("Error sorting gallery:", error);
+                                }
+                            }
+                        });
+                    }
+                });
+            </script>
+        {% endadd %}
     {% endif %}
 {% endif %}

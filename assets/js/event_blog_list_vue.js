@@ -1,5 +1,3 @@
-"use strict";
-
 /*
  * This file is part of SAC Event Blog Bundle.
  *
@@ -10,9 +8,101 @@
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
-document.addEventListener("DOMContentLoaded", function (event) {
-    //window.FontAwesome.dom.watch();
-});
+"use strict";
+
+
+class RequestStackProcessor {
+
+    stack = [];
+    requestUuids = [];
+    isProcessing = false;
+    interval = null;
+
+    // Add a URL to the stack
+    addUrl(url, eventName) {
+        // This will remove
+        // all previous requests from the stack
+        this.clearStack();
+
+        const uuid = this.generateUUID();
+
+        this.stack.push({
+            'url': url,
+            'eventName': eventName,
+            'uuid': uuid,
+        });
+
+        this.requestUuids.push(uuid);
+
+        if (this.interval === null) {
+            this.interval = setInterval(() => this.processStack(), 500);
+        }
+    }
+
+    clearStack() {
+        this.stack = [];
+        this.requestUuids = [];
+        this.isProcessing = false;
+    }
+
+    generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            const r = Math.random() * 16 | 0; // Random number between 0 and 15
+            const v = c === 'x' ? r : (r & 0x3 | 0x8); // Ensure the UUID version and variant
+            return v.toString(16); // Convert to hexadecimal
+        });
+    }
+
+    uuidExists(uuid) {
+        return this.requestUuids.includes(uuid);
+    }
+
+    // Process the first url in the stack
+    async processStack() {
+        if (this.isProcessing) return; // Avoid multiple simultaneous processing
+
+        if (!this.stack.length > 0) {
+            return;
+        }
+
+        try {
+            this.isProcessing = true;
+
+            // Get the first URL from the stack
+            const requestItem = this.stack.shift();
+            const response = await this.processUrl(requestItem.url);
+
+            const event = new CustomEvent(requestItem.eventName, {
+                detail: {
+                    'response': response,
+                    'url': requestItem.url,
+                    'uuid': requestItem.uuid,
+                }
+            });
+
+            document.dispatchEvent(event);
+
+        } catch (error) {
+            console.error(`Error processing ${requestItem.url}:`, error);
+        }
+
+        this.isProcessing = false;
+    }
+
+    async processUrl(url) {
+        try {
+            return await fetch(url, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-requested-with': 'XMLHttpRequest'
+                },
+            });
+        } catch (error) {
+            throw new Error(`Failed to fetch ${url}`);
+        }
+    }
+}
 
 class EventBlogList {
     constructor(elId, opt) {
@@ -20,12 +110,7 @@ class EventBlogList {
         // Defaults
         const defaults = {
             'params': {
-                'listModuleId': null,
-                'apiKey': null,
-                'readerModuleId': null,
-                'itemIds': [],
-                'perPage': 4,
-                'language': 'en',
+                'listModuleId': null, 'apiKey': null, 'readerModuleId': null, 'itemIds': [], 'perPage': 4, 'language': 'en',
             },
         };
 
@@ -45,6 +130,7 @@ class EventBlogList {
                     currentPage: null,
                     currentItemIndex: null,
                     currentItemId: null,
+                    readerRequestStackProcessor: new RequestStackProcessor(),
                 };
             },
 
@@ -56,17 +142,18 @@ class EventBlogList {
                 let page = await self.getUrlParam('page_e' + self.options.params.listModuleId, null);
                 self.currentPage = page === null ? 1 : parseInt(page);
 
-                document.onkeydown = (function (e) {
-                    self._checkKeyPress(e);
+                document.onkeydown = ((e) => {
+                    self._handleKeyPress(e);
                 });
 
                 // Handle modal
-                window.setTimeout(function () {
+                window.setTimeout(() => {
                     let modal = document.querySelector(elId + ' .modal');
                     if (modal) {
-                        modal.addEventListener('hidden.bs.modal', function (event) {
+                        modal.addEventListener('hidden.bs.modal', (event) => {
                             self.currentItemId = null;
                             self.readerContent = '';
+                            self.readerRequestStackProcessor.clearStack();
                         });
                     }
                 }, 1000);
@@ -74,6 +161,7 @@ class EventBlogList {
                 // Open event blog with id 120
                 // https://www.sac-pilatus.ch/home.html?show_event_blog=120
                 let eventBlogId = null;
+
                 if (false !== (eventBlogId = await self.getUrlParam('show_event_blog', false))) {
                     self.currentItemId = eventBlogId;
 
@@ -82,14 +170,18 @@ class EventBlogList {
                     self.currentPage = self.getCurrentPage();
 
                     // Fetch detail page
-                    self.fetchReaderContent();
-                    self.fetchReaderContent();
+                    self.fetchReaderDetailContent();
                 }
 
                 // Set self.currentPage if user goes back/forward in the browser history
                 window.onpopstate = async function (event) {
                     self.currentPage = await self.getUrlParam('page_e' + self.options.params.listModuleId, 1);
                 };
+
+                //
+                document.addEventListener('REQUEST_STACK_PROCESSOR::modal-reader-content-loaded', (event) => {
+                    this.updateDetailContentInModal(event);
+                });
 
             },
 
@@ -124,7 +216,7 @@ class EventBlogList {
                         self.currentPage = self.getCurrentPage();
 
                         // Fetch detail page
-                        self.fetchReaderContent();
+                        self.fetchReaderDetailContent();
                     }
                 },
 
@@ -140,111 +232,135 @@ class EventBlogList {
 
                     let self = this;
 
-                    let url = window.location.protocol + '//' + window.location.hostname + '/_api/' + self.options.params.apiKey + '/' + self.options.params.listModuleId
-                        + '?page_e' + self.options.params.listModuleId + '=' + self.currentPage
-                        + '&_locale=' + self.options.params.language
-                    ;
+                    let url = window.location.protocol + '//' + window.location.hostname + '/_api/' + self.options.params.apiKey + '/' + self.options.params.listModuleId + '?page_e' + self.options.params.listModuleId + '=' + self.currentPage + '&_locale=' + self.options.params.language;
 
                     fetch(url, {
 
-                            method: "GET",
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        }
-                    ).then(function (res) {
+                        method: "GET", headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    }).then((res) => {
                         return res.json();
-                    }).then(function (json) {
-                        jQuery(elId + ' .list-container').css('opacity', 0);
-                        self.listContent = json.compiledHTML;
-                        jQuery(elId + ' .list-container').fadeTo('slow', 1);
-                    }).then(function () {
+                    }).then((json) => {
+                        const list = document.querySelector(elId + ' .list-container');
+
+                        self._fadeOutAndIn(list, json.compiledHTML, 500);
+
+                        return new Promise(resolve => setTimeout(() => {
+                            resolve();
+                        }, 510));
+                    }).then(() => {
                         // trigger same height for item boxes
                         // see: vendor\markocupic\contao-theme-sac-pilatus\src\Resources\contao\files\theme-sac-pilatus\js\theme.js
-                        jQuery(window).trigger('vueupdate');
+                        window.dispatchEvent(new CustomEvent('vueupdate'));
 
                         let cssSelectorStr = elId + ' .pagination .link, ' + elId + ' .pagination .first, ' + elId + ' .pagination .last, ' + elId + ' .pagination .previous, ' + elId + ' .pagination .next';
-                        jQuery(cssSelectorStr).off("click");
-                        jQuery(cssSelectorStr).click(function (e) {
-                            e.stopPropagation();
-                            e.preventDefault();
-                            let href = jQuery(this).prop('href');
-                            let regexp = new RegExp("page_e" + self.options.params.listModuleId + "=([\\d]+)");
-                            let match = regexp.exec(href);
-                            let page = match ? match[1] : 1;
 
-                            self.currentPage = parseInt(page);
-                        });
-                    }).then(function () {
-                        let cssSelectorStr = elId + ' a.item-reader-link';
-                        jQuery(cssSelectorStr).off("click");
-                        jQuery(cssSelectorStr).click(function (e) {
-                            e.stopPropagation();
-                            e.preventDefault();
+                        const elements = document.querySelectorAll(cssSelectorStr);
 
-                            // Get the item id from href
-                            let href = e.currentTarget.getAttribute('href');
-                            let regex = /^(.*)(\/)([\d]+)/i;
-                            let match = regex.exec(href);
+                        for (const element of elements) {
+                            element.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
 
-                            if (match.length < 4) {
-                                console.log('Aborted! Could not load content. No item id found.');
-                                return;
-                            }
-                            let itemId = match[3];
+                                let href = element.getAttribute('href');
+                                let regexp = new RegExp("page_e" + self.options.params.listModuleId + "=([\\d]+)");
+                                let match = regexp.exec(href);
+                                let page = match ? match[1] : 1;
 
-                            if (!options.params.readerModuleId) {
-                                console.log('Aborted! Could not load content. No reader module id found.');
-                                return;
-                            }
+                                self.currentPage = parseInt(page);
+                            });
+                        }
+                    }).then(() => {
+                        const elements = document.querySelectorAll(elId + ' a.item-reader-link');
 
-                            // Fetch reader content
-                            itemId = parseInt(itemId);
-                            if (itemId === self.currentItemId) {
-                                self.fetchReaderContent();
-                                return;
-                            }
+                        for (const element of elements) {
+                            element.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
 
-                            self.currentItemId = parseInt(itemId);
-                        });
+                                // Get the item id from href
+                                let href = element.getAttribute('href');
+                                let regex = /^(.*)(\/)([\d]+)/i;
+                                let match = regex.exec(href);
+
+                                if (match.length < 4) {
+                                    console.log('Aborted! Could not load content. No item id found.');
+                                    return;
+                                }
+                                let itemId = match[3];
+
+                                if (!options.params.readerModuleId) {
+                                    console.log('Aborted! Could not load content. No reader module id found.');
+                                    return;
+                                }
+
+                                // Fetch reader content
+                                itemId = parseInt(itemId);
+
+                                if (itemId === self.currentItemId) {
+                                    self.fetchReaderDetailContent();
+                                    return;
+                                }
+
+                                self.currentItemId = parseInt(itemId);
+                            });
+                        }
                     });
+                },
+
+                updateDetailContentInModal: async function updateDetailContentInModal(event) {
+                    try {
+                        const response = await event.detail.response;
+                        const uuid = event.detail.uuid;
+                        const json = await response.json();
+                        this.readerContent = json.compiledHTML;
+
+                        if (!this.readerRequestStackProcessor.uuidExists(uuid)) {
+                            console.log('Aborted! Could not load content. UUID not found.');
+                            return;
+                        }
+
+                        let elModal = document.querySelector(elId + ' .modal');
+                        let modal = bootstrap.Modal.getOrCreateInstance(elModal);
+
+                        if (!this.isModalOpen()) {
+                            modal.show();
+                        }
+
+                        this._initLightbox();
+
+                    } catch (error) {
+                        console.log(error);
+                    }
                 },
 
                 /**
                  * Fetch reader/detail content
                  * Use markocupic/contao-content-api
                  */
-                fetchReaderContent: function fetchReaderContent() {
-                    let self = this;
+                fetchReaderDetailContent: function fetchReaderDetailContent() {
 
                     // Use referer param to generate qrcode in EventBlogReaderController
-                    let referer = btoa(window.location.href);
+                    const encodedReferer = btoa(window.location.href);
 
-                    let url = '/_api/' + self.options.params.apiKey + '/' + self.options.params.readerModuleId
-                        + '?items=' + self.currentItemId
-                        + '&referer=' + referer
-                        + '&_locale=' + self.options.params.language
-                    ;
+                    const url = `/_api/${this.options.params.apiKey}/${this.options.params.readerModuleId}?items=${this.currentItemId}&referer=${encodedReferer}&_locale=${this.options.params.language}`;
+                    this.readerRequestStackProcessor.clearStack();
 
-                    fetch(url, {
-                            method: "GET",
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        }
-                    ).then(function (res) {
-                        return res.json();
-                    }).then(function (json) {
-                        self.readerContent = json.compiledHTML;
-                    }).then(function () {
-                        let elModal = document.querySelector(elId + ' .modal');
-                        let modal = bootstrap.Modal.getOrCreateInstance(elModal);
-                        if (!self.isModalOpen()) {
-                            modal.show();
-                        }
-                    }).then(function () {
-                        self._initLightbox();
-                    });
+                    // the request stack processor will handle the request
+                    // and the REQUEST_STACK_PROCESSOR::modal-reader-content-loaded
+                    // will be dispatched when we have a response
+                    this.readerRequestStackProcessor.addUrl(url, 'REQUEST_STACK_PROCESSOR::modal-reader-content-loaded');
+                },
+
+                /**
+                 * Check for the prev item
+                 * @returns {boolean}
+                 */
+                hasPrevItem: function hasPrevItem() {
+                    let self = this;
+                    return typeof self.itemIds[self.currentItemIndex - 1] !== 'undefined';
+
                 },
 
                 /**
@@ -266,16 +382,6 @@ class EventBlogList {
                     self.currentItemId = parseInt(self.itemIds[self.currentItemIndex + 1]);
                 },
 
-                /**
-                 * Check for the prev item
-                 * @returns {boolean}
-                 */
-                hasPrevItem: function hasPrevItem() {
-                    let self = this;
-                    return typeof self.itemIds[self.currentItemIndex - 1] !== 'undefined';
-
-                },
-
                 getCurrentItemIndex: function getCurrentItemIndex() {
                     let self = this;
                     return self.itemIds.indexOf(parseInt(self.currentItemId));
@@ -294,40 +400,6 @@ class EventBlogList {
                     let self = this;
                     // Fetch reader content
                     self.currentItemId = parseInt(self.itemIds[self.currentItemIndex - 1]);
-                },
-
-                /**
-                 * Init Lightbox
-                 * @private
-                 */
-                _initLightbox: function _initLightbox() {
-                    // GLightbox support
-                    if ('undefined' !== typeof GLightbox) {
-                        (function () {
-                            'use strict';
-                            document.querySelectorAll('a[data-lightbox]').forEach((element) => {
-                                if (!!element.dataset.lightbox) {
-                                    element.setAttribute('data-gallery', element.dataset.lightbox);
-                                }
-                            });
-                            GLightbox({
-                                selector: 'a[data-lightbox]'
-                            });
-                        })();
-                    } else {
-                        // Colorbox support
-                        jQuery(function ($) {
-                            jQuery('a[data-lightbox]').map(function () {
-                                jQuery(this).colorbox({
-                                    // Put custom options here
-                                    loop: false,
-                                    rel: jQuery(this).attr('data-lightbox'),
-                                    maxWidth: '95%',
-                                    maxHeight: '95%'
-                                });
-                            });
-                        });
-                    }
                 },
 
                 /**
@@ -371,9 +443,9 @@ class EventBlogList {
                             urlParams.append(parameter, value);
                         }
 
-                        href = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
+                        href = `${window.location.protocol}//${window.location.hostname}${window.location.pathname}`;
 
-                        resolve(href + (urlParams.toString() ? '?' + urlParams.toString() : ''));
+                        resolve(href + (urlParams.toString() ? `?${urlParams.toString()}` : ''));
                     });
 
                 },
@@ -398,35 +470,10 @@ class EventBlogList {
                             urlParams.delete(parameter)
                         }
 
-                        href = window.location.protocol + '//' + window.location.hostname + window.location.pathname;
+                        href = `${window.location.protocol}//${window.location.hostname}${window.location.pathname}`;
 
-                        resolve(href + (urlParams.toString() ? '?' + urlParams.toString() : ''));
+                        resolve(href + (urlParams.toString() ? `?${urlParams.toString()}` : ''));
                     });
-
-                },
-
-                /**
-                 *
-                 * @param e
-                 * @private
-                 */
-                _checkKeyPress: function _checkKeyPress(e) {
-
-                    let self = this;
-                    e = e || window.event;
-
-                    // Left arrow
-                    if (e.keyCode == '37') {
-                        if (self.isModalOpen() && self.hasPrevItem()) {
-                            self.goToPrevItem();
-                        }
-                    }
-                    // Right arrow
-                    else if (e.keyCode == '39') {
-                        if (self.isModalOpen() && self.hasNextItem()) {
-                            self.goToNextItem();
-                        }
-                    }
 
                 },
 
@@ -436,8 +483,100 @@ class EventBlogList {
                  */
                 isModalOpen: function isModalOpen() {
                     return !!document.querySelector(elId + ' .modal.show');
+                },
 
-                }
+                /**
+                 *
+                 * @param e
+                 * @private
+                 */
+                _handleKeyPress: function _handleKeyPress(e) {
+                    const LEFT_ARROW = 37;
+                    const RIGHT_ARROW = 39;
+
+                    e = e || window.event;
+
+                    const handleLeftArrow = () => {
+                        if (this.isModalOpen() && this.hasPrevItem()) {
+                            this.goToPrevItem();
+                        }
+                    };
+
+                    const handleRightArrow = () => {
+                        if (this.isModalOpen() && this.hasNextItem()) {
+                            this.goToNextItem();
+                        }
+                    };
+
+                    switch (e.keyCode) {
+                        case LEFT_ARROW:
+                            handleLeftArrow();
+                            break;
+                        case RIGHT_ARROW:
+                            handleRightArrow();
+                            break;
+                        default:
+                            break;
+                    }
+                },
+
+                _removeEventListener: function _removeEventListener(elementSelector) {
+                    const elements = document.querySelectorAll(elementSelector);
+                    for (const element of elements) {
+                        const clonedElement = element.cloneNode(true);
+                        element.parentNode.replaceChild(clonedElement, element);
+                    }
+                },
+
+                _fadeOutAndIn: function _fadeOutAndIn(element, newContent, duration) {
+                    // Fade out the element
+                    element.style.transition = `opacity ${duration}ms ease`;
+                    element.style.opacity = '0';
+
+                    // Wait for the fade-out to complete
+                    setTimeout(() => {
+                        // Change the content
+                        element.innerHTML = newContent;
+
+                        // Fade in the element
+                        element.style.transition = `opacity ${duration}ms ease`;
+                        element.style.opacity = '1';
+                    }, duration); // Match the transition duration
+                },
+
+                /**
+                 * Init Lightbox
+                 * @private
+                 */
+                _initLightbox: function _initLightbox() {
+                    // GLightbox support
+                    if ('undefined' !== typeof GLightbox) {
+                        (function () {
+                            'use strict';
+                            document.querySelectorAll('a[data-lightbox]').forEach((element) => {
+                                if (!!element.dataset.lightbox) {
+                                    element.setAttribute('data-gallery', element.dataset.lightbox);
+                                }
+                            });
+                            GLightbox({
+                                selector: 'a[data-lightbox]'
+                            });
+                        })();
+                    } else {
+                        // Colorbox support
+                        if (typeof jQuery !== 'undefined') {
+                            const links = document.querySelectorAll('a[data-lightbox]');
+
+                            for (const link of links) {
+                                jQuery(link).colorbox({
+                                    // Put custom options here
+                                    loop: false, rel: jQuery(link).attr('data-lightbox'), maxWidth: '95%', maxHeight: '95%'
+                                });
+                            }
+
+                        }
+                    }
+                },
             }
         });
         app.mount(elId);

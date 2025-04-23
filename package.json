@@ -5,7 +5,10 @@
         "url": "git+github.com/markocupic/sac-event-blog-bundle"
     },
     "scripts": {
-        "build": "encore production"
+        "dev-server": "encore dev-server",
+        "dev": "encore dev",
+        "watch": "encore dev --watch",
+        "build": "encore production --progress"
     },
     "license": "MIT",
     "dependencies": {
@@ -17,7 +20,8 @@
         "autoprefixer": "^10.2.6",
         "core-js": "^3.15.0",
         "file-loader": "^6.0.0",
-        "postcss-loader": "^5.0.0"
+        "postcss-loader": "^5.0.0",
+        "sortablejs": "^1.15.6"
     },
     "browserslist": [
         "defaults"
