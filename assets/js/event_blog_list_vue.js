@@ -27,9 +27,7 @@ class RequestStackProcessor {
         const uuid = this.generateUUID();
 
         this.stack.push({
-            'url': url,
-            'eventName': eventName,
-            'uuid': uuid,
+            'url': url, 'eventName': eventName, 'uuid': uuid,
         });
 
         this.requestUuids.push(uuid);
@@ -74,9 +72,7 @@ class RequestStackProcessor {
 
             const event = new CustomEvent(requestItem.eventName, {
                 detail: {
-                    'response': response,
-                    'url': requestItem.url,
-                    'uuid': requestItem.uuid,
+                    'response': response, 'url': requestItem.url, 'uuid': requestItem.uuid,
                 }
             });
 
@@ -92,10 +88,8 @@ class RequestStackProcessor {
     async processUrl(url) {
         try {
             return await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-requested-with': 'XMLHttpRequest'
+                method: 'GET', headers: {
+                    'Content-Type': 'application/json', 'x-requested-with': 'XMLHttpRequest'
                 },
             });
         } catch (error) {
@@ -115,7 +109,7 @@ class EventBlogList {
         };
 
         // merge options and defaults
-        let options = {...defaults, ...opt}
+        const options = {...defaults, ...opt}
 
         const {createApp} = Vue
 
@@ -123,23 +117,16 @@ class EventBlogList {
         const app = createApp({
             data() {
                 return {
-                    options: options,
-                    listContent: '',
-                    readerContent: '',
-                    itemIds: [],
-                    currentPage: null,
-                    currentItemIndex: null,
-                    currentItemId: null,
-                    readerRequestStackProcessor: new RequestStackProcessor(),
+                    options: options, listContent: '', readerContent: '', itemIds: [], currentPage: null, currentItemIndex: null, currentItemId: null, readerRequestStackProcessor: new RequestStackProcessor(),
                 };
             },
 
             async mounted() {
-                let self = this;
+                const self = this;
 
                 self.itemIds = self.options.params.itemIds;
 
-                let page = await self.getUrlParam('page_e' + self.options.params.listModuleId, null);
+                const page = await self.getUrlParam('page_e' + self.options.params.listModuleId, null);
                 self.currentPage = page === null ? 1 : parseInt(page);
 
                 document.onkeydown = ((e) => {
@@ -148,7 +135,7 @@ class EventBlogList {
 
                 // Handle modal
                 window.setTimeout(() => {
-                    let modal = document.querySelector(elId + ' .modal');
+                    const modal = document.querySelector(elId + ' .modal');
                     if (modal) {
                         modal.addEventListener('hidden.bs.modal', (event) => {
                             self.currentItemId = null;
@@ -178,19 +165,18 @@ class EventBlogList {
                     self.currentPage = await self.getUrlParam('page_e' + self.options.params.listModuleId, 1);
                 };
 
-                //
+                // Listen to the REQUEST_STACK_PROCESSOR::modal-reader-content-loaded event
                 document.addEventListener('REQUEST_STACK_PROCESSOR::modal-reader-content-loaded', (event) => {
                     this.updateDetailContentInModal(event);
                 });
-
             },
 
             watch: {
                 currentPage: async function (val) {
-                    let self = this;
+                    const self = this;
 
                     // Add the current page to the url without reloading the page
-                    let nextURL = await (function () {
+                    const nextURL = await (function () {
                         if (self.currentPage < 2) {
                             return self.removeUrlParam('page_e' + self.options.params.listModuleId);
                         } else {
@@ -207,7 +193,7 @@ class EventBlogList {
                 },
 
                 currentItemId: function (val) {
-                    let self = this;
+                    const self = this;
 
                     // currentItemId === null do not change page
                     if (self.currentItemId !== null) {
@@ -230,9 +216,9 @@ class EventBlogList {
                  */
                 fetchList: function fetchList() {
 
-                    let self = this;
+                    const self = this;
 
-                    let url = window.location.protocol + '//' + window.location.hostname + '/_api/' + self.options.params.apiKey + '/' + self.options.params.listModuleId + '?page_e' + self.options.params.listModuleId + '=' + self.currentPage + '&_locale=' + self.options.params.language;
+                    const url = window.location.protocol + '//' + window.location.hostname + '/_api/' + self.options.params.apiKey + '/' + self.options.params.listModuleId + '?page_e' + self.options.params.listModuleId + '=' + self.currentPage + '&_locale=' + self.options.params.language;
 
                     fetch(url, {
 
@@ -254,7 +240,7 @@ class EventBlogList {
                         // see: vendor\markocupic\contao-theme-sac-pilatus\src\Resources\contao\files\theme-sac-pilatus\js\theme.js
                         window.dispatchEvent(new CustomEvent('vueupdate'));
 
-                        let cssSelectorStr = elId + ' .pagination .link, ' + elId + ' .pagination .first, ' + elId + ' .pagination .last, ' + elId + ' .pagination .previous, ' + elId + ' .pagination .next';
+                        const cssSelectorStr = elId + ' .pagination .link, ' + elId + ' .pagination .first, ' + elId + ' .pagination .last, ' + elId + ' .pagination .previous, ' + elId + ' .pagination .next';
 
                         const elements = document.querySelectorAll(cssSelectorStr);
 
@@ -263,10 +249,10 @@ class EventBlogList {
                                 e.stopPropagation();
                                 e.preventDefault();
 
-                                let href = element.getAttribute('href');
-                                let regexp = new RegExp("page_e" + self.options.params.listModuleId + "=([\\d]+)");
-                                let match = regexp.exec(href);
-                                let page = match ? match[1] : 1;
+                                const href = element.getAttribute('href');
+                                const regexp = new RegExp("page_e" + self.options.params.listModuleId + "=([\\d]+)");
+                                const match = regexp.exec(href);
+                                const page = match ? match[1] : 1;
 
                                 self.currentPage = parseInt(page);
                             });
@@ -280,14 +266,15 @@ class EventBlogList {
                                 e.preventDefault();
 
                                 // Get the item id from href
-                                let href = element.getAttribute('href');
-                                let regex = /^(.*)(\/)([\d]+)/i;
-                                let match = regex.exec(href);
+                                const href = element.getAttribute('href');
+                                const regex = /^(.*)(\/)([\d]+)/i;
+                                const match = regex.exec(href);
 
                                 if (match.length < 4) {
                                     console.log('Aborted! Could not load content. No item id found.');
                                     return;
                                 }
+
                                 let itemId = match[3];
 
                                 if (!options.params.readerModuleId) {
@@ -321,8 +308,8 @@ class EventBlogList {
                             return;
                         }
 
-                        let elModal = document.querySelector(elId + ' .modal');
-                        let modal = bootstrap.Modal.getOrCreateInstance(elModal);
+                        const elModal = document.querySelector(elId + ' .modal');
+                        const modal = bootstrap.Modal.getOrCreateInstance(elModal);
 
                         if (!this.isModalOpen()) {
                             modal.show();
@@ -358,7 +345,7 @@ class EventBlogList {
                  * @returns {boolean}
                  */
                 hasPrevItem: function hasPrevItem() {
-                    let self = this;
+                    const self = this;
                     return typeof self.itemIds[self.currentItemIndex - 1] !== 'undefined';
 
                 },
@@ -368,7 +355,7 @@ class EventBlogList {
                  * @returns {boolean}
                  */
                 hasNextItem: function hasNextItem() {
-                    let self = this;
+                    const self = this;
                     return typeof self.itemIds[self.currentItemIndex + 1] !== 'undefined';
 
                 },
@@ -378,17 +365,17 @@ class EventBlogList {
                  * The watcher will do the rest...
                  */
                 goToNextItem: function goToNextItem() {
-                    let self = this;
+                    const self = this;
                     self.currentItemId = parseInt(self.itemIds[self.currentItemIndex + 1]);
                 },
 
                 getCurrentItemIndex: function getCurrentItemIndex() {
-                    let self = this;
+                    const self = this;
                     return self.itemIds.indexOf(parseInt(self.currentItemId));
                 },
 
                 getCurrentPage: function getCurrentPage() {
-                    let self = this;
+                    const self = this;
                     return Math.floor(parseInt(self.currentItemIndex) / parseInt(self.options.params.perPage)) + 1;
                 },
 
@@ -397,7 +384,7 @@ class EventBlogList {
                  * The watcher will do the rest...
                  */
                 goToPrevItem: function goToPrevItem() {
-                    let self = this;
+                    const self = this;
                     // Fetch reader content
                     self.currentItemId = parseInt(self.itemIds[self.currentItemIndex - 1]);
                 },
@@ -411,7 +398,7 @@ class EventBlogList {
                 getUrlParam: function getUrlParam(parameter, defaultvalue) {
 
                     return new Promise(resolve => {
-                        let params = new URLSearchParams(document.location.search);
+                        const params = new URLSearchParams(document.location.search);
                         if (params.has(parameter)) {
                             resolve(params.get(parameter));
                         } else {
@@ -434,8 +421,8 @@ class EventBlogList {
                             href = window.location.href;
                         }
 
-                        let url = new URL(href);
-                        let urlParams = new URLSearchParams(url.search);
+                        const url = new URL(href);
+                        const urlParams = new URLSearchParams(url.search);
 
                         if (urlParams.has(parameter)) {
                             urlParams.set(parameter, value);
@@ -463,8 +450,8 @@ class EventBlogList {
                             href = window.location.href;
                         }
 
-                        let url = new URL(href);
-                        let urlParams = new URLSearchParams(url.search);
+                        const url = new URL(href);
+                        const urlParams = new URLSearchParams(url.search);
 
                         if (urlParams.has(parameter)) {
                             urlParams.delete(parameter)
@@ -545,36 +532,18 @@ class EventBlogList {
                 },
 
                 /**
-                 * Init Lightbox
+                 * Initialize Lightbox
                  * @private
                  */
                 _initLightbox: function _initLightbox() {
-                    // GLightbox support
+                    const self = this;
+
+                    // Initialize GLightbox (Vanilla)
                     if ('undefined' !== typeof GLightbox) {
-                        (function () {
-                            'use strict';
-                            document.querySelectorAll('a[data-lightbox]').forEach((element) => {
-                                if (!!element.dataset.lightbox) {
-                                    element.setAttribute('data-gallery', element.dataset.lightbox);
-                                }
-                            });
                             GLightbox({
-                                selector: 'a[data-lightbox]'
+                                selector: '.sac-event-blog-reader--modal a[data-lightbox]'
                             });
-                        })();
-                    } else {
-                        // Colorbox support
-                        if (typeof jQuery !== 'undefined') {
-                            const links = document.querySelectorAll('a[data-lightbox]');
-
-                            for (const link of links) {
-                                jQuery(link).colorbox({
-                                    // Put custom options here
-                                    loop: false, rel: jQuery(link).attr('data-lightbox'), maxWidth: '95%', maxHeight: '95%'
-                                });
-                            }
-
-                        }
+                        });
                     }
                 },
             }

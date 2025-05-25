@@ -1,4 +1,4 @@
-<div class="{{ class }} block" {{ cssID }}>
+<div class="{{ class }} sac-event-blog-reader--modal block" {{ cssID }}>
 
     {% if headline %}
         <h1 class="content-headline mt-0 mb-0 text-break">{{ blog.title }}</h1>
@@ -32,11 +32,11 @@
                             {% set glightbox_attr = ('title: ' ~ caption_text ~ ';') %}
                             <li class="col-12 col-sm-6 col-md-4">
                                 {{ contao_figure(item.uuid, [400, 400, 'crop'], {
-                                    metadata: { alt: item.meta.get('caption'), caption: caption_text },
+                                    metadata: { title: caption_text, alt: item.meta.get('caption'), caption: caption_text },
                                     enableLightbox: true,
                                     lightboxGroupIdentifier: 'mod_event_blog_reader_' ~ blog.id,
                                     linkHref: item.href,
-                                    options: { attr: { class: 'image_container thumbnail responsive hide-figcaption' }, link_attr: { 'data-glightbox': glightbox_attr } }
+                                    options: { attr: { class: 'thumbnail responsive hide-figcaption' }, link_attr: { 'data-glightbox': glightbox_attr } }
                                 }) }}
                             </li>
                         {% endfor %}
