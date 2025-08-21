@@ -7,16 +7,13 @@
             </div>
             <div class="modal-body">
                 <div>
-                    <p class="mt-0 small"><strong>Bitte beachte ...</strong>
-                        <br>
-                        - Alle (erkennbaren) Personen auf den Bildern musst du vor deiner Publikation um Erlaubnis fragen.
-                        <br>
-                        - Du musst das Urheberrecht der Bilder für die Veröffentlichung haben.
-                        <br>
-                        - Die maximal mögliche Dateigrösse für Bilduploads von <strong>{{ (maxImageFileSize/1000000)|round(1, 'floor') }} MB</strong>.
-                        <br>
-                        - Falls deine Bilder die maximale Auflösung von <strong>{{ maxImageWidth }}x{{ maxImageWidth }} Pixeln</strong> überschreiten, werden diese automatisch verkleinert.
-                    </p>
+                    <p class="mt-0"><strong>Bitte beachte ...</strong></p>
+                    <ul class="mt-0 list-bullet">
+                        <li>Alle (erkennbaren) Personen auf den Bildern musst du vor deiner Publikation um Erlaubnis gefragt haben.</li>
+                        <li>Du musst das Urheberrecht der Bilder für die Veröffentlichung haben.</li>
+                        <li>Die maximal mögliche Dateigrösse für Bilduploads von <strong>{{ (maxImageFileSize/1000000)|round(1, 'floor') }} MB</strong>.</li>
+                        <li>Falls deine Bilder die maximale Auflösung von <strong>{{ maxImageWidth }}x{{ maxImageWidth }} Pixeln</strong> überschreiten, werden diese automatisch verkleinert.</li>
+                    </ul>
                 </div>
                 {{ objEventBlogImageUploadForm|raw }}
             </div>
