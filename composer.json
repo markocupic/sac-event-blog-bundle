@@ -34,7 +34,7 @@
         "markocupic/sac-event-tool-bundle": "dev-contao5",
         "markocupic/zip-bundle": "^1.1",
         "terminal42/notification_center": "^2.0",
-        "markocupic/contao-filepond-uploader": "dev-main"
+        "markocupic/contao-filepond-uploader": "^1.0"
     },
     "require-dev": {
         "contao/manager-plugin": "^2.4",
