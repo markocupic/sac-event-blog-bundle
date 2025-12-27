@@ -38,6 +38,7 @@ use Contao\System;
 use Contao\Template;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
+use Markocupic\ContaoFilepondUploader\Widget\FilepondFrontendWidget;
 use Markocupic\ContaoFilepondUploader\Widget\FrontendWidget;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
@@ -668,17 +669,18 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         // Add the Filepond uploader to the form
         $objForm->addFormField('fileUpload', [
             'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
-            'inputType' => FrontendWidget::TYPE,
+            'inputType' => FilepondFrontendWidget::TYPE,
             'eval' => [
                 'chunking' => true,
-                'chunkSize' => 2000,
-                'concurrent' => true,
+                'chunkSize' => 3000000,
                 'maxlength' => $moduleModel->eventBlogMaxImageFileSize,
+                'maxImageWidth' => 10000, // The client accepts images up to 10000px wide
+                'maxImageHeight' => 10000, // The client accepts images up to 10000px high
                 'extensions' => implode(',', $allowedExtensions),
                 'storeFile' => true,
                 'multiple' => true,
                 'mSize' => 0, // infinite
-                // Enable client side image resizing
+                 // Enable client side image resizing
                 'allowImageResize' => true,
                 'imageResizeTargetWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
                 'imageResizeTargetHeight' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
