@@ -671,21 +671,23 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
             'inputType' => FilepondFrontendWidget::TYPE,
             'eval' => [
-                'chunking' => true,
+                'chunkUploads' => true,
                 'chunkSize' => 3000000,
                 'maxlength' => $moduleModel->eventBlogMaxImageFileSize,
-                'maxImageWidth' => 10000, // The client accepts images up to 10000px wide
-                'maxImageHeight' => 10000, // The client accepts images up to 10000px high
+                'maxImageWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight), // The client accepts images up to 10000px wide
+                'maxImageHeight' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight), // The client accepts images up to 10000px high
                 'extensions' => implode(',', $allowedExtensions),
                 'storeFile' => true,
+                'addToDbafs' => true,
                 'multiple' => true,
                 'mSize' => 0, // infinite
                  // Enable client side image resizing
-                'allowImageResize' => true,
-                'imageResizeTargetWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
-                'imageResizeTargetHeight' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
-                'imageResizeMode' => 'contain',
-                'imageResizeUpscale' => false,
+                'imgResize' => true,
+                'imgResizeBrowser' => true,
+                'imgResizeWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
+                'imgResizeHeight' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
+                'imgResizeModeBrowser' => 'contain',
+                'imgResizeUpscaleBrowser' => false,
             ],
         ]);
 
@@ -699,6 +701,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         if ($objForm->validate() && $inputAdapter->post('FORM_SUBMIT') === $objForm->getFormId() && $inputAdapter->post('fileUpload')) {
             // $_POST['fileUpload'] will contain the transfer keys
             $arrTransferKeys = (array) $inputAdapter->post('fileUpload');
+
+            $arrTransferKeys = array_map('base64_decode', $arrTransferKeys);
 
             // Filter empty/invalid values
             $arrTransferKeys = array_filter($arrTransferKeys, static fn ($v) => !empty($v) && \is_string($v) && 0 === strrpos($v, 'filepond_'));
