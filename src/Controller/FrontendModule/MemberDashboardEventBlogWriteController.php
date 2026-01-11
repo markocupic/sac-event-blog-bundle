@@ -671,14 +671,14 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'label' => $this->translator->trans('FORM.md_write_event_blog_imageUpload', [], 'contao_default'),
             'inputType' => FilepondFrontendWidget::TYPE,
             'eval' => [
-                'chunkUploads' => true,
+                'chunkUploads' => false,
                 'chunkSize' => 3000000,
                 'maxlength' => $moduleModel->eventBlogMaxImageFileSize,
                 'maxImageWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight), // The client accepts images up to 10000px wide
                 'maxImageHeight' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight), // The client accepts images up to 10000px high
                 'extensions' => implode(',', $allowedExtensions),
-                'storeFile' => true,
-                'addToDbafs' => true,
+                'storeFile' => false, // We will store the file manually
+                'addToDbafs' => false,
                 'multiple' => true,
                 'mSize' => 0, // infinite
                  // Enable client side image resizing
