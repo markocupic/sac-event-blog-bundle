@@ -196,7 +196,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
             'label' => 'Tourenbericht zu einem Event erstellen',
             'inputType' => 'select',
             'options' => $arrOptions,
-            'eval' => ['mandatory' => true],
+            'eval' => ['mandatory' => true, 'includeBlankOption' => true, 'blankOptionLabel' => 'Bitte auswählen...'],
         ]);
 
         // Let's add  a submit button
