@@ -12,7 +12,9 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
+use Markocupic\SacEventBlogBundle\NotificationType\OnNewEventBlogNotificationType;
+
 $GLOBALS['TL_LANG']['tl_nc_notification']['type']['sac_event_blog_tool'] = 'Tourenberichte';
 
 // Notification type
-$GLOBALS['TL_LANG']['tl_nc_notification']['type']['notify_on_new_event_blog'] = ['Freigabe Tourenbericht für Redaktion', 'Dieser Benachrichtigungstyp wird nach Freigabe eines Berichts durch den Autor versandt.'];
+$GLOBALS['TL_LANG']['tl_nc_notification']['type'][OnNewEventBlogNotificationType::NAME] = ['Freigabe Tourenbericht für Redaktion', 'Dieser Benachrichtigungstyp wird nach Freigabe eines Berichts durch den Autor versandt.'];

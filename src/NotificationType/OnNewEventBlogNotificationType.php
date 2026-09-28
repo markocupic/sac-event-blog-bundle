@@ -19,9 +19,9 @@ use Terminal42\NotificationCenterBundle\Token\Definition\EmailTokenDefinition;
 use Terminal42\NotificationCenterBundle\Token\Definition\Factory\TokenDefinitionFactoryInterface;
 use Terminal42\NotificationCenterBundle\Token\Definition\TextTokenDefinition;
 
-class OnNewEventBlogType implements NotificationTypeInterface
+class OnNewEventBlogNotificationType implements NotificationTypeInterface
 {
-    public const string NAME = 'notify_on_new_event_blog';
+    public const string NAME = 'on_new_event_blog';
 
     public function __construct(
         private readonly TokenDefinitionFactoryInterface $factory,
@@ -38,11 +38,11 @@ class OnNewEventBlogType implements NotificationTypeInterface
         $tokenDefinitions = [];
 
         foreach ($this->getTokenConfig()['text_token'] as $token) {
-            $tokenDefinitions[] = $this->factory->create(TextTokenDefinition::class, $token, 'new_event_blog.'.$token);
+            $tokenDefinitions[] = $this->factory->create(TextTokenDefinition::class, $token, self::NAME.'.'.$token);
         }
 
         foreach ($this->getTokenConfig()['email_token'] as $token) {
-            $tokenDefinitions[] = $this->factory->create(EmailTokenDefinition::class, $token, 'new_event_blog.'.$token);
+            $tokenDefinitions[] = $this->factory->create(EmailTokenDefinition::class, $token, self::NAME.'.'.$token);
         }
 
         return $tokenDefinitions;
@@ -62,8 +62,8 @@ class OnNewEventBlogType implements NotificationTypeInterface
                 'blog_text',
                 'blog_link_backend',
                 'blog_link_frontend',
+                'event_id',
                 'event_title',
-                'author_name',
                 'author_name',
                 'author_email',
                 'author_sac_member_id',

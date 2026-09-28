@@ -30,7 +30,7 @@ use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Types\Types;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
-use Markocupic\SacEventBlogBundle\NotificationType\OnNewEventBlogType;
+use Markocupic\SacEventBlogBundle\NotificationType\OnNewEventBlogNotificationType;
 use Markocupic\SacEventToolBundle\Image\RotateImage;
 use Markocupic\SacEventToolBundle\Model\EventOrganizerModel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -151,7 +151,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
             $notificationId = false;
 
             if (null !== $objModule) {
-                $notificationId = $this->connection->fetchOne('SELECT id FROM tl_nc_notification WHERE type = :type', ['type' => OnNewEventBlogType::NAME], ['type' => Types::STRING]);
+                $notificationId = $this->connection->fetchOne('SELECT id FROM tl_nc_notification WHERE type = :type', ['type' => OnNewEventBlogNotificationType::NAME], ['type' => Types::STRING]);
             }
 
             if (false !== $notificationId && $request->request->get('eventId') > 0) {
@@ -210,7 +210,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                         'event_title' => $objEvent->title,
                         'event_id' => $objEvent->id,
                         'instructor_name' => '' !== $instructorName ? $instructorName : $this->translator->trans('MSC.md_write_event_blog_instructorNameNotSpecified', [], 'contao_default'),
-                        'instructor_email' => '' !== $instructorEmail ? $instructorEmail : $this->translator->trans('MSC.md_write_event_blog_instructorNameNotSpecified', [], 'contao_default'),
+                        'instructor_email' => $instructorEmail,
                         'webmaster_email' => '' !== $webmasterEmail ? $webmasterEmail : '',
                         'author_name' => $objUser->firstname.' '.$objUser->lastname,
                         'author_email' => $objUser->email,
