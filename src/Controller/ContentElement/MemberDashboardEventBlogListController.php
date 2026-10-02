@@ -12,15 +12,16 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
-namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
+namespace Markocupic\SacEventBlogBundle\Controller\ContentElement;
 
 use Codefog\HasteBundle\Form\Form;
 use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
 use Contao\Config;
+use Contao\ContentModel;
 use Contao\Controller;
-use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
-use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
+use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Twig\FragmentTemplate;
@@ -30,7 +31,6 @@ use Contao\Environment;
 use Contao\FrontendUser;
 use Contao\Input;
 use Contao\Message;
-use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Validator;
 use Markocupic\SacEventToolBundle\Model\CalendarEventsMemberModel;
@@ -41,12 +41,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AsFrontendModule(MemberDashboardEventBlogListController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_member_dashboard_event_blog_list')]
-class MemberDashboardEventBlogListController extends AbstractFrontendModuleController
+#[AsContentElement(MemberDashboardEventBlogListController::TYPE, category: 'sac_event_blog')]
+class MemberDashboardEventBlogListController extends AbstractContentElementController
 {
     public const string TYPE = 'member_dashboard_event_blog_list';
 
-    protected FrontendUser|null $user;
+    protected FrontendUser|null $user = null;
 
     public function __construct(
         private readonly CalendarEventsUtil $calendarEventsUtil,
@@ -62,8 +62,15 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         }
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
+    public function __invoke(Request $request, ContentModel $model, string $section, array|null $classes = null): Response
     {
+        // The element can not be rendered in the backend preview: show its name instead
+        if ($this->scopeMatcher->isBackendRequest($request)) {
+            return new Response('<p class="tl_gray">'.htmlspecialchars($GLOBALS['TL_LANG']['CTE'][self::TYPE][0] ?? self::TYPE).'</p>');
+        }
+
+        $page = $this->getPageModel();
+
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             if (null !== $page) {
                 // Neither cache nor search page
@@ -75,7 +82,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ContentModel $model, Request $request): Response
     {
         // Do not allow for not authorized users
         if (null === $this->user) {
@@ -105,7 +112,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         return $template->getResponse();
     }
 
-    private function getEventBlogs(ModuleModel $model): array
+    private function getEventBlogs(ContentModel $model): array
     {
         // Adapters
         $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
@@ -155,7 +162,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
         return $arrEventBlogs;
     }
 
-    private function generateCreateNewEventBlogForm(ModuleModel $model): Form
+    private function generateCreateNewEventBlogForm(ContentModel $model): Form
     {
         // Adapters
         $calendarEventsMemberModelAdapter = $this->framework->getAdapter(CalendarEventsMemberModel::class);

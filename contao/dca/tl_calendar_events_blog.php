@@ -17,7 +17,7 @@ use Contao\DataContainer;
 use Contao\Input;
 use Contao\System;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
-use Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogWriteController;
+use Markocupic\SacEventBlogBundle\Controller\ContentElement\MemberDashboardEventBlogWriteController;
 
 $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
     'config'   => [

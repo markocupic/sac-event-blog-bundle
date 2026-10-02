@@ -12,6 +12,18 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
+use Markocupic\SacEventBlogBundle\Controller\ContentElement\EventBlogListController;
+use Markocupic\SacEventBlogBundle\Controller\ContentElement\EventBlogReaderController;
+use Markocupic\SacEventBlogBundle\Controller\ContentElement\MemberDashboardEventBlogListController;
+use Markocupic\SacEventBlogBundle\Controller\ContentElement\MemberDashboardEventBlogWriteController;
+
+// Content elements
+$GLOBALS['TL_LANG']['CTE']['sac_event_blog'] = 'SAC Tourenberichte';
+$GLOBALS['TL_LANG']['CTE'][MemberDashboardEventBlogListController::TYPE] = ['SAC Mitgliederkonto Dashboard - Meine Tourenberichte'];
+$GLOBALS['TL_LANG']['CTE'][MemberDashboardEventBlogWriteController::TYPE] = ['SAC Mitgliederkonto Dashboard - Tourenbericht schreiben'];
+$GLOBALS['TL_LANG']['CTE'][EventBlogListController::TYPE] = ['SAC Tourenberichte Liste'];
+$GLOBALS['TL_LANG']['CTE'][EventBlogReaderController::TYPE] = ['SAC Tourenberichte Reader'];
+
 // Backend messages
 $GLOBALS['TL_LANG']['ERR']['maxlengthDecodedRgxp'] = 'Im Moment enthält Ihre Eingabe %d Zeichen, erlaubt sind lediglich %d Zeichen.';
 

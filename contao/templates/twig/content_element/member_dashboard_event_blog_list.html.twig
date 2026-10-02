@@ -1,13 +1,13 @@
-{% extends '@Contao/block_unsearchable' %}
+{% extends "@Contao/content_element/_base.html.twig" %}
+
+{% set searchable = false %}
 
 {% block content %}
-
     {% if hasInfoMessage is defined and not hasInfoMessage is empty %}
         <div class="alert alert-info" role="alert">
             {{ infoMessage }}
         </div>
     {% endif %}
-
     {% if errorMessages is defined and not errorMessages is empty %}
         {% for msg in errorMessages %}
             <div class="alert alert-danger" role="alert">
@@ -15,12 +15,10 @@
             </div>
         {% endfor %}
     {% endif %}
-
     <div class="alert flex-column bg-light">
         {{ newEventBlogForm|raw }}
         <p class="small">*Tourenberichte können bis maximal <strong>{{ eventBlogTimeSpanForCreatingNew }} Tage nach Tourende</strong> verfasst werden.</p>
     </div>
-
     <table class="table table-responsive">
         {% for blog in arrEventBlogs %}
             <tr>
@@ -44,6 +42,4 @@
             </tr>
         {% endfor %}
     </table>
-
 {% endblock %}
-

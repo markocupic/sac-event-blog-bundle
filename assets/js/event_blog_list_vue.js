@@ -105,7 +105,7 @@ class EventBlogList {
     // Defaults
     const defaults = {
       'params': {
-        'listModuleId': null, 'apiKey': null, 'readerModuleId': null, 'itemIds': [], 'perPage': 4, 'language': 'en',
+        'listElementId': null, 'readerElementId': null, 'elementUrl': '/_event_blog/element/0', 'itemIds': [], 'perPage': 4, 'language': 'en',
       },
     };
 
@@ -127,7 +127,7 @@ class EventBlogList {
 
         self.itemIds = self.options.params.itemIds;
 
-        const page = await self.getUrlParam('page_e' + self.options.params.listModuleId, null);
+        const page = await self.getUrlParam('page_e' + self.options.params.listElementId, null);
         self.currentPage = page === null ? 1 : parseInt(page);
 
         document.onkeydown = ((e) => {
@@ -163,7 +163,7 @@ class EventBlogList {
 
         // Set self.currentPage if user goes back/forward in the browser history
         window.onpopstate = async function (event) {
-          self.currentPage = await self.getUrlParam('page_e' + self.options.params.listModuleId, 1);
+          self.currentPage = await self.getUrlParam('page_e' + self.options.params.listElementId, 1);
         };
 
         // Listen to the REQUEST_STACK_PROCESSOR::modal-reader-content-loaded event
@@ -179,9 +179,9 @@ class EventBlogList {
           // Add the current page to the url without reloading the page
           const nextURL = await (function () {
             if (self.currentPage < 2) {
-              return self.removeUrlParam('page_e' + self.options.params.listModuleId);
+              return self.removeUrlParam('page_e' + self.options.params.listElementId);
             } else {
-              return self.setUrlParam('page_e' + self.options.params.listModuleId, self.currentPage);
+              return self.setUrlParam('page_e' + self.options.params.listElementId, self.currentPage);
             }
           })();
 
@@ -212,14 +212,24 @@ class EventBlogList {
       methods: {
 
         /**
+         * Get the url of the route that renders a content element
+         * see Markocupic\SacEventBlogBundle\Controller\Api\EventBlogContentElementController
+         * @param id
+         * @returns {string}
+         */
+        getElementUrl: function getElementUrl(id) {
+          // The url is generated with id 0 as placeholder (see contao/templates/twig/content_element/event_blog_list.html.twig)
+          return this.options.params.elementUrl.replace(/\/0$/, '/' + encodeURIComponent(id));
+        },
+
+        /**
          * Fetch items from server
-         * Use markocupic/contao-content-api
          */
         fetchList: function fetchList() {
 
           const self = this;
 
-          const url = window.location.protocol + '//' + window.location.hostname + '/_api/' + self.options.params.apiKey + '/' + self.options.params.listModuleId + '?page_e' + self.options.params.listModuleId + '=' + self.currentPage + '&_locale=' + self.options.params.language;
+          const url = self.getElementUrl(self.options.params.listElementId) + '?page_e' + self.options.params.listElementId + '=' + self.currentPage + '&_locale=' + self.options.params.language;
 
           fetch(url, {
 
@@ -251,7 +261,7 @@ class EventBlogList {
                 e.preventDefault();
 
                 const href = element.getAttribute('href');
-                const regexp = new RegExp("page_e" + self.options.params.listModuleId + "=([\\d]+)");
+                const regexp = new RegExp("page_e" + self.options.params.listElementId + "=([\\d]+)");
                 const match = regexp.exec(href);
                 const page = match ? match[1] : 1;
 
@@ -278,8 +288,8 @@ class EventBlogList {
 
                 let itemId = match[3];
 
-                if (!options.params.readerModuleId) {
-                  console.log('Aborted! Could not load content. No reader module id found.');
+                if (!options.params.readerElementId) {
+                  console.log('Aborted! Could not load content. No reader element id found.');
                   return;
                 }
 
@@ -325,14 +335,13 @@ class EventBlogList {
 
         /**
          * Fetch reader/detail content
-         * Use markocupic/contao-content-api
          */
         fetchReaderDetailContent: function fetchReaderDetailContent() {
 
           // Use referer param to generate qrcode in EventBlogReaderController
           const encodedReferer = btoa(window.location.href);
 
-          const url = `/_api/${this.options.params.apiKey}/${this.options.params.readerModuleId}?items=${this.currentItemId}&referer=${encodedReferer}&_locale=${this.options.params.language}`;
+          const url = `${this.getElementUrl(this.options.params.readerElementId)}?items=${this.currentItemId}&referer=${encodeURIComponent(encodedReferer)}&_locale=${this.options.params.language}`;
           this.readerRequestStackProcessor.clearStack();
 
           // the request stack processor will handle the request

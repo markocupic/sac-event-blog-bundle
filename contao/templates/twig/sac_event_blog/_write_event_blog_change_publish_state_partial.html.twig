@@ -80,7 +80,7 @@
                     this.pendingRequest = true;
 
                     const rt = '{{ request_token }}';
-                    const moduleId = '{{ id }}';
+                    const contentId = '{{ data.id }}';
                     const urlParams = new URLSearchParams(window.location.search);
 
                     let buttons = document.querySelectorAll('.event-blog-form-buttons > div > .btn');
@@ -94,7 +94,7 @@
                     const formData = new FormData();
                     formData.append('REQUEST_TOKEN', rt);
                     formData.append('publishState', String(this.publishState + 1));
-                    formData.append('moduleId', moduleId);
+                    formData.append('contentId', contentId);
                     formData.append('eventId', urlParams.get('eventId'));
 
                     // Fetch

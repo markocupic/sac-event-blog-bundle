@@ -1,7 +1,8 @@
-{% extends '@Contao/block_unsearchable' %}
+{% extends "@Contao/content_element/_base.html.twig" %}
+
+{% set searchable = false %}
 
 {% block content %}
-
     {% do addJavascriptResource(insert_tag('asset::vue/dist/vue.global.prod.js::markocupic_sac_event_blog')) %}
 
     {% if hasInfoMessage %}
@@ -12,7 +13,6 @@
             </div>
         {% endfor %}
     {% endif %}
-
     {% if hasErrorMessage %}
         {% for msg in errorMessages %}
             <div class="alert alert-danger" role="alert">
@@ -20,7 +20,6 @@
             </div>
         {% endfor %}
     {% endif %}
-
     {% if showDashboard %}
         <p class="mt-0 mb-0">Dein Bericht für:<p>
         <h4 class="mt-1"><span class="text-primary">{{ eventName|default('') }}</span></h4>
@@ -32,11 +31,9 @@
         {% if eventPeriod|default() %}
             <time class="small">Datum: {{ eventPeriod|raw }}</time>
         {% endif %}
-
         <br>
         <hr>
         <br>
-
         <p><strong>Veröffentlichungs-Level:</strong> {{ publishState|default('') }} - {{ ('tl_calendar_events_blog.publishStateRef.'~publishState|default(''))|trans({}, 'contao_default') }}</p>
         <nav class="overflow-x-auto">
             <div class="event-blog-form-buttons d-inline-flex flex-nowrap align-items-center pb-4">
@@ -49,90 +46,76 @@
                         <button class="btn btn-primary text-nowrap" data-bs-toggle="modal" data-bs-target="#ModalFotoupload"><i class="fa-regular fa-images"></i> Foto-Upload</button>
                     </div>
                 {% endif %}
-
                 {% if previewLink|default() %}
                     <div class="me-2">
                         <a class="btn btn-primary text-nowrap" target="_blank" rel="noopener" href="{{ previewLink }}"><i class="fa-solid fa-desktop"></i> Vorschau</a>
                     </div>
                 {% endif %}
-
                 {% if not text|default() is empty and publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
-                    {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_change_publish_state_partial.html.twig') %}
+                    {% include('@Contao/sac_event_blog/_write_event_blog_change_publish_state_partial.html.twig') %}
                 {% endif %}
             </div>
         </nav>
-
         {% if publishState|default() is constant('\\Markocupic\\SacEventBlogBundle\\Config\\PublishState::STILL_IN_PROGRESS') %}
             <!-- Modal box tour report form -->
-            {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_create_report_form_partial.html.twig') %}
+            {% include('@Contao/sac_event_blog/_write_event_blog_create_report_form_partial.html.twig') %}
 
             <!-- Modal box photo upload -->
-            {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_photoupload_partial.html.twig') %}
+            {% include('@Contao/sac_event_blog/_write_event_blog_photoupload_partial.html.twig') %}
 
             <!-- Modal box photo details (cation, rotate image, photographer name -->
-            {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_image_modal_box_partial.html.twig') %}
+            {% include('@Contao/sac_event_blog/_write_event_blog_image_modal_box_partial.html.twig') %}
         {% endif %}
-
         <br>
-
         {% if title is defined and not title is empty %}
             <div>
                 <h3>{{ title }}</h3>
             </div>
         {% endif %}
-
         {% if text is defined and not text is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Bericht</h5>
                 <p>{{ text|nl2br }}</p>
             </div>
         {% endif %}
-
         {% if eventOrganizers is defined and not eventOrganizers is empty %}
             <div class="event-info-box icon-box-small">
                 <h5 class="mt-lg-0">Gruppe</h5>
                 <p>{{ eventOrganizers }}</p>
             </div>
         {% endif %}
-
         {% if tourTechDifficulty is defined and not tourTechDifficulty is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Schwierigkeit</h5>
                 <p>{{ tourTechDifficulty|raw }}</p>
             </div>
         {% endif %}
-
         {% if tourWaypoints is defined and not tourWaypoints is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Tourenstationen mit Höhenangaben (nur stichwortartig)</h5>
                 <p>{{ tourWaypoints|raw }}</p>
             </div>
         {% endif %}
-
         {% if tourPublicTransportInfo is defined and not tourPublicTransportInfo is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>ÖV</h5>
                 <p>{{ tourPublicTransportInfo|raw }}</p>
             </div>
         {% endif %}
-
         {% if tourHighlights is defined and not tourHighlights is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Highlights</h5>
                 <p>{{ tourHighlights|raw }}</p>
             </div>
         {% endif %}
-
         {% if tourProfile is defined and not tourProfile is empty %}
             <div class="event-info-box icon-box-small">
                 <h5>Eckdaten</h5>
                 <p>{{ tourProfile|raw }}</p>
             </div>
         {% endif %}
-
         {# Gallery #}
-        {% include('@Contao_MarkocupicSacEventBlogBundle/_write_event_blog_gallery_partial.html.twig') %}
-
+        {% include('@Contao/sac_event_blog/_write_event_blog_gallery_partial.html.twig') %}
         {% if youTubeId is defined and not youTubeId is empty %}
             <br>
             <hr>
@@ -142,5 +125,4 @@
             </div>
         {% endif %}
     {% endif %}
-
 {% endblock %}

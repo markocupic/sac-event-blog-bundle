@@ -12,14 +12,15 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
-namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
+namespace Markocupic\SacEventBlogBundle\Controller\ContentElement;
 
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
-use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
-use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
+use Contao\ContentModel;
+use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Filesystem\FilesystemItem;
 use Contao\CoreBundle\Filesystem\FilesystemUtil;
@@ -28,13 +29,10 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\CoreBundle\Util\SymlinkUtil;
-use Contao\Environment;
 use Contao\FilesModel;
 use Contao\Folder;
 use Contao\Input;
 use Contao\MemberModel;
-use Contao\ModuleModel;
-use Contao\PageModel;
 use Contao\StringUtil;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
@@ -43,8 +41,8 @@ use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-#[AsFrontendModule(EventBlogReaderController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_event_blog_reader')]
-class EventBlogReaderController extends AbstractFrontendModuleController
+#[AsContentElement(EventBlogReaderController::TYPE, category: 'sac_event_blog')]
+class EventBlogReaderController extends AbstractContentElementController
 {
     public const string TYPE = 'event_blog_reader';
 
@@ -63,12 +61,17 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     ) {
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
+    public function __invoke(Request $request, ContentModel $model, string $section, array|null $classes = null): Response
     {
+        // The element can not be rendered in the backend preview: show its name instead
+        if ($this->scopeMatcher->isBackendRequest($request)) {
+            return new Response('<p class="tl_gray">'.htmlspecialchars($GLOBALS['TL_LANG']['CTE'][self::TYPE][0] ?? self::TYPE).'</p>');
+        }
+
+        $page = $this->getPageModel();
+
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             // Adapters
-            $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
-            $environmentAdapter = $this->framework->getAdapter(Environment::class);
             $inputAdapter = $this->framework->getAdapter(Input::class);
 
             // Set the item from the auto_item parameter
@@ -93,10 +96,10 @@ class EventBlogReaderController extends AbstractFrontendModuleController
                 $arrValues = [PublishState::PUBLISHED, $inputAdapter->get('items')];
             }
 
-            $this->blog = $calendarEventsBlogModelAdapter->findOneBy($arrColumns, $arrValues);
+            $this->blog = $this->framework->getAdapter(CalendarEventsBlogModel::class)->findOneBy($arrColumns, $arrValues);
 
             if (null === $this->blog) {
-                throw new PageNotFoundException('Page not found: '.$environmentAdapter->get('uri'));
+                throw new PageNotFoundException('Page not found: '.$request->getUri());
             }
         }
 
@@ -106,33 +109,24 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     /**
      * @throws \Exception
      */
-    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ContentModel $model, Request $request): Response
     {
-        // Adapters
-        $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);
-        $calendarEventsModelAdapter = $this->framework->getAdapter(CalendarEventsModel::class);
-
         // Set data
-        $template->setData($this->blog->row());
-
-        $template->set('class', $template->has('class') ? $template->get('class') : '');
-        $template->set('cssID', $template->has('cssID') ? $template->get('cssID') : '');
-
-        // Set title as headline
-        $template->set('headline', $this->blog->title);
+        // Keep the element data (class, cssID, ...) and add the blog data
+        $template->setData([...$template->getData(), ...$this->blog->row()]);
 
         // Twig callable
         $template->set('binToUuid', static fn (string $uuid): string => StringUtil::binToUuid($uuid));
 
         // Fallback if author is no more findable in tl_member
-        $objAuthor = $memberModelModelAdapter->findOneBySacMemberId($this->blog->sacMemberId);
+        $objAuthor = $this->framework->getAdapter(MemberModel::class)->findOneBySacMemberId($this->blog->sacMemberId);
 
         // Respect privacy and do not show the author name, if an author (frontend user) has deleted his account
         $template->set('authorName', null !== $objAuthor ? $objAuthor->firstname.' '.$objAuthor->lastname : 'Unbekannt');
 
         // !!! $objEvent can be NULL, if the related event no more exists
-        $objEvent = $calendarEventsModelAdapter->findById($this->blog->eventId);
-        $template->set('event', $objEvent->row());
+        $objEvent = $this->framework->getAdapter(CalendarEventsModel::class)->findById($this->blog->eventId);
+        $template->set('event', null !== $objEvent ? $objEvent->row() : []);
         $template->set('blog', $this->blog->row());
 
         if (!$this->isPreviewMode) {
@@ -155,15 +149,11 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         }
 
         // Add the gallery
-
-        // Find all images
         $filesystemItems = FilesystemUtil::listContentsFromSerialized($this->filesStorage, $this->blog->multiSRC ?? [])
             ->filter(static fn ($item) => \in_array($item->getExtension(true), ['jpg', 'JPG', 'png', 'PNG'], true))
         ;
 
-        // We do not have to sort the gallery,
-        // because we us custom sorting.
-
+        // We do not have to sort the gallery, because we us custom sorting.
         $imageList = [];
 
         /** @var FilesystemItem $filesystemItem */
@@ -184,36 +174,51 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         // Add YouTube movie
         $template->set('youTubeId', !empty($this->blog->youTubeId) ? $this->blog->youTubeId : null);
 
-        // tour instructors
-        $arrTourInstructors = $this->calendarEventsUtil->getInstructorNamesAsArray($objEvent);
-
-        if (!empty($arrTourInstructors)) {
-            $template->set('tourInstructors', implode(', ', $arrTourInstructors));
-        }
-
-        // tour types
-        $arrTourTypes = $this->calendarEventsUtil->getTourTypesAsArray($objEvent, 'title');
-
-        if (!empty($arrTourTypes)) {
-            $template->set('tourTypes', implode(', ', $arrTourTypes));
-        }
-
-        // event dates
-        $template->set('eventDates', $this->calendarEventsUtil->getEventPeriod($objEvent, 'd.m.Y', false));
-
         // tour tech. difficulty
         $template->set('tourTechDifficulty', $this->blog->tourTechDifficulty ?? '');
 
-        if (empty($template->get('tourTechDifficulty')) && !empty($objEvent->tourTechDifficulty)) {
-            $arrTourTechDiff = $this->calendarEventsUtil->getTourTechDifficultiesAsArray($objEvent);
-            $template->set('tourTechDifficulty', !empty($arrTourTechDiff) ? implode(', ', $arrTourTechDiff) : null);
-        }
+        if (null !== $objEvent) {
+            // tour instructors
+            $arrTourInstructors = $this->calendarEventsUtil->getInstructorNamesAsArray($objEvent);
 
-        // event organizers
-        $arrEventOrganizers = $this->calendarEventsUtil->getEventOrganizersAsArray($objEvent);
+            if (!empty($arrTourInstructors)) {
+                $template->set('tourInstructors', implode(', ', $arrTourInstructors));
+            }
 
-        if (!empty($arrEventOrganizers)) {
-            $template->set('eventOrganizers', implode(', ', $arrEventOrganizers));
+            // tour types
+            $arrTourTypes = $this->calendarEventsUtil->getTourTypesAsArray($objEvent, 'title');
+
+            if (!empty($arrTourTypes)) {
+                $template->set('tourTypes', implode(', ', $arrTourTypes));
+            }
+
+            // event dates
+            $template->set('eventDates', $this->calendarEventsUtil->getEventPeriod($objEvent, 'd.m.Y', false));
+
+            if (empty($template->get('tourTechDifficulty')) && !empty($objEvent->tourTechDifficulty)) {
+                $arrTourTechDiff = $this->calendarEventsUtil->getTourTechDifficultiesAsArray($objEvent);
+                $template->set('tourTechDifficulty', !empty($arrTourTechDiff) ? implode(', ', $arrTourTechDiff) : null);
+            }
+
+            // event organizers
+            $arrEventOrganizers = $this->calendarEventsUtil->getEventOrganizersAsArray($objEvent);
+
+            if (!empty($arrEventOrganizers)) {
+                $template->set('eventOrganizers', implode(', ', $arrEventOrganizers));
+            }
+        } else {
+            // The related event no longer exists: use the event dates stored in the blog
+            $eventDates = [];
+
+            if (!empty($this->blog->eventStartDate)) {
+                $eventDates[] = date('d.m.Y', (int) $this->blog->eventStartDate);
+            }
+
+            if (!empty($this->blog->eventEndDate) && date('d.m.Y', (int) $this->blog->eventEndDate) !== ($eventDates[0] ?? null)) {
+                $eventDates[] = date('d.m.Y', (int) $this->blog->eventEndDate);
+            }
+
+            $template->set('eventDates', implode(' - ', $eventDates));
         }
 
         if (!empty($this->blog->tourWaypoints)) {

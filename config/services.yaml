@@ -20,16 +20,16 @@ services:
             - '%sac_event_blog.docx_export_template%'
             - '%sacevt.locale%'
 
-    # Event blog list module
-    Markocupic\SacEventBlogBundle\Controller\FrontendModule\EventBlogListController:
+    # Event blog list content element
+    Markocupic\SacEventBlogBundle\Controller\ContentElement\EventBlogListController:
         arguments:
             - '@contao.framework'
             - '@contao.routing.scope_matcher'
             - '%kernel.project_dir%'
         public: true
 
-    # Event blog reader module
-    Markocupic\SacEventBlogBundle\Controller\FrontendModule\EventBlogReaderController:
+    # Event blog reader content element
+    Markocupic\SacEventBlogBundle\Controller\ContentElement\EventBlogReaderController:
         arguments:
             - '@Markocupic\SacEventToolBundle\Util\CalendarEventsUtil'
             - '@contao.framework'
@@ -40,8 +40,8 @@ services:
             - '%sacevt.locale%'
         public: true
 
-    # Member dashboard module: list event reports and the form to generate new event reports
-    Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogListController:
+    # Member dashboard content element: list event reports and the form to generate new event reports
+    Markocupic\SacEventBlogBundle\Controller\ContentElement\MemberDashboardEventBlogListController:
         arguments:
             - '@Markocupic\SacEventToolBundle\Util\CalendarEventsUtil'
             - '@contao.framework'
@@ -51,8 +51,8 @@ services:
             - '@Codefog\HasteBundle\UrlParser'
         public: true
 
-    # Member dashboard module: display the forms for writing new event reports
-    Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogWriteController:
+    # Member dashboard content element: display the forms for writing new event reports
+    Markocupic\SacEventBlogBundle\Controller\ContentElement\MemberDashboardEventBlogWriteController:
         arguments:
             - '@Markocupic\SacEventToolBundle\Util\CalendarEventsUtil'
             - '@database_connection'
@@ -71,7 +71,13 @@ services:
             - '%markocupic_contao_filepond_uploader.tmp_path%'
         public: true
 
-    Markocupic\SacEventBlogBundle\Controller\Ajax\MemberDashboardWriteEventBlogController:
+    # Renders the event blog list/reader content elements for the Vue.js frontend app
+    Markocupic\SacEventBlogBundle\Controller\Api\EventBlogContentElementController:
+        arguments:
+            - '@contao.framework'
+        public: true
+
+    Markocupic\SacEventBlogBundle\Controller\Api\MemberDashboardWriteEventBlogController:
         arguments:
             - '@database_connection'
             - '@contao.framework'

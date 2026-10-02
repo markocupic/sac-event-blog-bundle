@@ -12,11 +12,12 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
-namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
+namespace Markocupic\SacEventBlogBundle\Controller\ContentElement;
 
 use Contao\Config;
-use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
-use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
+use Contao\ContentModel;
+use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
@@ -26,7 +27,6 @@ use Contao\Environment;
 use Contao\FilesModel;
 use Contao\MemberModel;
 use Contao\Model\Collection;
-use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Pagination;
 use Contao\StringUtil;
@@ -36,12 +36,12 @@ use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-#[AsFrontendModule(EventBlogListController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_event_blog_list')]
-class EventBlogListController extends AbstractFrontendModuleController
+#[AsContentElement(EventBlogListController::TYPE, category: 'sac_event_blog')]
+class EventBlogListController extends AbstractContentElementController
 {
     public const string TYPE = 'event_blog_list';
 
-    private Collection|null $blogs;
+    private Collection|null $blogs = null;
 
     public function __construct(
         private readonly ContaoFramework $framework,
@@ -50,8 +50,13 @@ class EventBlogListController extends AbstractFrontendModuleController
     ) {
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
+    public function __invoke(Request $request, ContentModel $model, string $section, array|null $classes = null): Response
     {
+        // The element can not be rendered in the backend preview: show its name instead
+        if ($this->scopeMatcher->isBackendRequest($request)) {
+            return new Response('<p class="tl_gray">'.htmlspecialchars($GLOBALS['TL_LANG']['CTE'][self::TYPE][0] ?? self::TYPE).'</p>');
+        }
+
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             // Adapters
             $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
@@ -87,7 +92,7 @@ class EventBlogListController extends AbstractFrontendModuleController
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ContentModel $model, Request $request): Response
     {
         // Adapters
         $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);
@@ -100,8 +105,8 @@ class EventBlogListController extends AbstractFrontendModuleController
 
         $objPageModel = null;
 
-        if ($model->jumpTo) {
-            $objPageModel = $pageModelAdapter->findById($model->jumpTo);
+        if ($model->eventBlogJumpTo) {
+            $objPageModel = $pageModelAdapter->findById($model->eventBlogJumpTo);
         }
 
         $arrBlogsAll = [];

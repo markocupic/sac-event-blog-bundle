@@ -12,15 +12,16 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
-namespace Markocupic\SacEventBlogBundle\Controller\FrontendModule;
+namespace Markocupic\SacEventBlogBundle\Controller\ContentElement;
 
 use Codefog\HasteBundle\Form\Form;
 use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
+use Contao\ContentModel;
 use Contao\Controller;
-use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
-use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\CoreBundle\Routing\ScopeMatcher;
@@ -31,7 +32,6 @@ use Contao\FilesModel;
 use Contao\FrontendUser;
 use Contao\Input;
 use Contao\Message;
-use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\StringUtil;
 use Contao\System;
@@ -58,12 +58,12 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AsFrontendModule(MemberDashboardEventBlogWriteController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_member_dashboard_write_event_blog')]
-class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleController
+#[AsContentElement(MemberDashboardEventBlogWriteController::TYPE, category: 'sac_event_blog')]
+class MemberDashboardEventBlogWriteController extends AbstractContentElementController
 {
     public const string TYPE = 'member_dashboard_write_event_blog';
 
-    private FrontendUser|null $user;
+    private FrontendUser|null $user = null;
 
     private PageModel|null $page;
 
@@ -90,8 +90,15 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         }
     }
 
-    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
+    public function __invoke(Request $request, ContentModel $model, string $section, array|null $classes = null): Response
     {
+        // The element can not be rendered in the backend preview: show its name instead
+        if ($this->scopeMatcher->isBackendRequest($request)) {
+            return new Response('<p class="tl_gray">'.htmlspecialchars($GLOBALS['TL_LANG']['CTE'][self::TYPE][0] ?? self::TYPE).'</p>');
+        }
+
+        $page = $this->getPageModel();
+
         if ($this->scopeMatcher->isFrontendRequest($request)) {
             if (null !== $page) {
                 // Neither cache nor search page
@@ -165,7 +172,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     /**
      * @throws \Exception
      */
-    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ContentModel $model, Request $request): Response
     {
         $template->set('showDashboard', true);
 
@@ -617,7 +624,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     /**
      * @throws \Exception
      */
-    private function generatePictureUploadForm(CalendarEventsBlogModel $objEventBlogModel, ModuleModel $moduleModel): string
+    private function generatePictureUploadForm(CalendarEventsBlogModel $objEventBlogModel, ContentModel $contentModel): string
     {
         /** @var Controller $controllerAdapter */
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
@@ -664,9 +671,9 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             'eval' => [
                 'chunkUploads' => false,
                 'chunkSize' => 3000000,
-                'maxlength' => $moduleModel->eventBlogMaxImageFileSize,
-                'maxImageWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight), // The client accepts images up to 10000px wide
-                'maxImageHeight' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight), // The client accepts images up to 10000px high
+                'maxlength' => $contentModel->eventBlogMaxImageFileSize,
+                'maxImageWidth' => max($contentModel->eventBlogMaxImageWidth, $contentModel->eventBlogMaxImageHeight), // The client accepts images up to 10000px wide
+                'maxImageHeight' => max($contentModel->eventBlogMaxImageWidth, $contentModel->eventBlogMaxImageHeight), // The client accepts images up to 10000px high
                 'extensions' => implode(',', $allowedExtensions),
                 'storeFile' => false, // We will store the file manually
                 'addToDbafs' => false,
@@ -675,8 +682,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 // Enable client side image resizing
                 'imgResize' => true,
                 'imgResizeBrowser' => true,
-                'imgResizeWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
-                'imgResizeHeight' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
+                'imgResizeWidth' => max($contentModel->eventBlogMaxImageWidth, $contentModel->eventBlogMaxImageHeight),
+                'imgResizeHeight' => max($contentModel->eventBlogMaxImageWidth, $contentModel->eventBlogMaxImageHeight),
                 'imgResizeModeBrowser' => 'contain',
                 'imgResizeUpscaleBrowser' => false,
             ],
@@ -739,8 +746,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 try {
                     // Validate upload
                     $this->imageUploadValidator->validateFileExists($file);
-                    $this->imageUploadValidator->validateImageDimensions($file, $moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight);
-                    $this->imageUploadValidator->validateSize($file, $moduleModel->eventBlogMaxImageFileSize);
+                    $this->imageUploadValidator->validateImageDimensions($file, $contentModel->eventBlogMaxImageWidth, $contentModel->eventBlogMaxImageHeight);
+                    $this->imageUploadValidator->validateSize($file, $contentModel->eventBlogMaxImageFileSize);
 
                     // Move file to the target directory, add meta information to the image and append the image to the event blog gallery.
                     $objFilesModel = $this->imageUploadHandler->moveToTarget($file, $objEventBlogModel, $destDir);
@@ -789,7 +796,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         return $objForm->generate();
     }
 
-    private function getPreviewLink(CalendarEventsBlogModel $objBlog, ModuleModel $objModule): string
+    private function getPreviewLink(CalendarEventsBlogModel $objBlog, ContentModel $objContent): string
     {
         /** @var PageModel $pageModelAdapter */
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
@@ -800,8 +807,8 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         // Generate frontend preview link
         $previewLink = '';
 
-        if ($objModule->eventBlogReaderPage > 0) {
-            $objTarget = $pageModelAdapter->findById($objModule->eventBlogReaderPage);
+        if ($objContent->eventBlogReaderPage > 0) {
+            $objTarget = $pageModelAdapter->findById($objContent->eventBlogReaderPage);
 
             if (null !== $objTarget) {
                 $previewLink = $stringUtilAdapter->ampersand($objTarget->getAbsoluteUrl('/'.$objBlog->id));

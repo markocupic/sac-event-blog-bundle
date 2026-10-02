@@ -12,15 +12,15 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
 
-namespace Markocupic\SacEventBlogBundle\Controller\Ajax;
+namespace Markocupic\SacEventBlogBundle\Controller\Api;
 
 use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
+use Contao\ContentModel;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\FilesModel;
 use Contao\FrontendUser;
-use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\StringUtil;
 use Contao\UserModel;
@@ -90,7 +90,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
         $userModelAdapter = $this->framework->getAdapter(UserModel::class);
         $userRoleModelAdapter = $this->framework->getAdapter(UserRoleModel::class);
-        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+        $contentModelAdapter = $this->framework->getAdapter(ContentModel::class);
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
         $eventOrganizerModelAdapter = $this->framework->getAdapter(EventOrganizerModel::class);
@@ -147,12 +147,12 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         }
 
         // Notify back office via terminal42/notification_center if there is a new blog entry.
-        if (PublishState::APPROVED_FOR_REVIEW === (int) $request->request->get('publishState') && $objBlog->publishState < PublishState::APPROVED_FOR_REVIEW && $request->request->get('moduleId')) {
-            $objModule = $moduleModelAdapter->findById($request->request->get('moduleId'));
+        if (PublishState::APPROVED_FOR_REVIEW === (int) $request->request->get('publishState') && $objBlog->publishState < PublishState::APPROVED_FOR_REVIEW && $request->request->get('contentId')) {
+            $objContent = $contentModelAdapter->findById($request->request->get('contentId'));
 
             $notificationId = false;
 
-            if (null !== $objModule) {
+            if (null !== $objContent) {
                 $notificationId = $this->connection->fetchOne('SELECT id FROM tl_nc_notification WHERE type = :type', ['type' => OnNewEventBlogNotificationType::NAME], ['type' => Types::STRING]);
             }
 
@@ -170,8 +170,8 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                 // Generate frontend preview link
                 $previewLink = '';
 
-                if ($objModule->eventBlogReaderPage > 0) {
-                    $objTarget = $pageModelAdapter->findById($objModule->eventBlogReaderPage);
+                if ($objContent->eventBlogReaderPage > 0) {
+                    $objTarget = $pageModelAdapter->findById($objContent->eventBlogReaderPage);
 
                     if (null !== $objTarget) {
                         $previewLink = $stringUtilAdapter->ampersand($objTarget->getAbsoluteUrl('/'.$objBlog->id));

@@ -1,9 +1,10 @@
-<div class="{{ class }} sac-event-blog-reader--modal block" {{ cssID }}>
+{% extends "@Contao/content_element/_base.html.twig" %}
 
-    {% if headline %}
-        <h1 class="content-headline mt-0 mb-0 text-break">{{ blog.title }}</h1>
-        <date class="d-block mt-4">vom: {{ eventDates|raw }}</date>
-    {% endif %}
+{% set attributes = attrs(attributes|default).addClass('sac-event-blog-reader--modal block') %}
+
+{% block content %}
+    <h1 class="content-headline mt-0 mb-0 text-break">{{ blog.title }}</h1>
+    <date class="d-block mt-4">vom: {{ eventDates|raw }}</date>
 
     {% if eventSubstitutionText|default %}
         <h4 class="mt-4 mb-4" style="color: red"><!-- indexer::stop -->Ausweichtour:<!-- indexer::continue --> {{ eventSubstitutionText }}</h4>
@@ -34,7 +35,7 @@
                                 {{ contao_figure(item.uuid, [400, 400, 'crop'], {
                                     metadata: { title: caption_text, alt: item.meta.get('caption'), caption: caption_text },
                                     enableLightbox: true,
-                                    lightboxGroupIdentifier: 'mod_event_blog_reader_' ~ blog.id,
+                                    lightboxGroupIdentifier: 'event_blog_reader_' ~ blog.id,
                                     linkHref: item.href,
                                     options: { attr: { class: 'thumbnail responsive hide-figcaption' }, link_attr: { 'data-glightbox': glightbox_attr } }
                                 }) }}
@@ -83,7 +84,6 @@
                 {% endif %}
 
                 {% if tourProfile|default or tourTechDifficulty|default %}
-
                     <div class="event-info-box mt-3 d-flex">
                         <i class="pt-1 fa-solid fa-fw fa-hiking text-primary"></i>
                         <div class="ms-2">
@@ -153,5 +153,4 @@
             </div>
         </div>
     {% endif %}
-
-</div>
+{% endblock %}

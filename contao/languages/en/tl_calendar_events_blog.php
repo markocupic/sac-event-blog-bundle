@@ -13,7 +13,7 @@ declare(strict_types=1);
  */
 
 use Markocupic\SacEventBlogBundle\Config\PublishState;
-use Markocupic\SacEventBlogBundle\Controller\FrontendModule\MemberDashboardEventBlogWriteController;
+use Markocupic\SacEventBlogBundle\Controller\ContentElement\MemberDashboardEventBlogWriteController;
 
 // Operations
 $GLOBALS['TL_LANG']['tl_calendar_events_blog']['exportBlog'] = ['Blog exportieren', 'Blog mit ID %s exportieren'];
