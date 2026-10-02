@@ -30,9 +30,6 @@ class MarkocupicSacEventBlogBundle extends Bundle
         return new MarkocupicSacEventBlogExtension();
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function build(ContainerBuilder $container): void
     {
         parent::build($container);

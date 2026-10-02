@@ -23,9 +23,8 @@ class OnNewEventBlogNotificationType implements NotificationTypeInterface
 {
     public const string NAME = 'on_new_event_blog';
 
-    public function __construct(
-        private readonly TokenDefinitionFactoryInterface $factory,
-    ) {
+    public function __construct(private readonly TokenDefinitionFactoryInterface $factory)
+    {
     }
 
     public function getName(): string

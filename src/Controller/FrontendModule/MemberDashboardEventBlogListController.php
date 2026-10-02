@@ -41,10 +41,11 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-#[AsFrontendModule(MemberDashboardEventBlogListController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_member_dashboard_event_blog_list')]
+#[AsFrontendModule(MemberDashboardEventBlogListController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_member_dashboard_event_blog_list')]
 class MemberDashboardEventBlogListController extends AbstractFrontendModuleController
 {
     public const string TYPE = 'member_dashboard_event_blog_list';
+
     protected FrontendUser|null $user;
 
     public function __construct(
@@ -138,10 +139,10 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
                 }
 
                 // Check if event still exists
-                if (($objEvent = $calendarEventsModelAdapter->findByPk($objEventBlog->eventId)) !== null) {
+                if (($objEvent = $calendarEventsModelAdapter->findById($objEventBlog->eventId)) !== null) {
                     // Overwrite date if event still exists in tl_calendar_events
                     $arrEventBlog['date'] = $this->calendarEventsUtil->getEventPeriod($objEvent, $configAdapter->get('dateFormat'), false);
-                    $objPage = $pageModelAdapter->findByPk($model->eventBlogFormJumpTo);
+                    $objPage = $pageModelAdapter->findById($model->eventBlogFormJumpTo);
 
                     if (null !== $objPage) {
                         $arrEventBlog['blogLink'] = $this->urlParser->addQueryString('eventId='.$objEventBlog->eventId, $objPage->getFrontendUrl());
@@ -210,7 +211,7 @@ class MemberDashboardEventBlogListController extends AbstractFrontendModuleContr
             if ('form-create-new-event-blog' === $inputAdapter->post('FORM_SUBMIT')) {
                 $href = '';
                 $objWidget = $objForm->getWidget('event');
-                $objPage = $pageModelAdapter->findByPk($model->eventBlogFormJumpTo);
+                $objPage = $pageModelAdapter->findById($model->eventBlogFormJumpTo);
 
                 if (null !== $objPage) {
                     $href = $this->urlParser->addQueryString('eventId='.$objWidget->value, $objPage->getFrontendUrl());

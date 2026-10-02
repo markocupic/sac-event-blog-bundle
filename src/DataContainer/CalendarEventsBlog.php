@@ -100,7 +100,7 @@ class CalendarEventsBlog
         $id = $request->query->get('id');
 
         if ($id && 'exportBlog' === $request->query->get('action')) {
-            if (null !== ($objBlog = CalendarEventsBlogModel::findByPk($id))) {
+            if (null !== ($objBlog = CalendarEventsBlogModel::findById($id))) {
                 throw new ResponseException($this->exportBlog($objBlog));
             }
         }
@@ -116,7 +116,7 @@ class CalendarEventsBlog
         $stmt = $this->connection->executeQuery('SELECT * FROM tl_calendar_events_blog');
 
         while (false !== ($arrBlog = $stmt->fetchAssociative())) {
-            $blog = CalendarEventsBlogModel::findByPk($arrBlog['id']);
+            $blog = CalendarEventsBlogModel::findById($arrBlog['id']);
             $event = $blog->getRelated('eventId');
 
             if (null === $event) {
@@ -156,11 +156,11 @@ class CalendarEventsBlog
             $disabled = true;
         }
 
-        $args[0] = sprintf(
+        $args[0] = \sprintf(
             '<div class="list_icon_new" style="background-image:url(\'%s\')" data-icon="%s" data-icon-disabled="%s">&nbsp;</div>',
             Image::getPath($image),
             Image::getPath($disabled ? $image : rtrim($image, '_')),
-            Image::getPath(rtrim($image, '_').'_')
+            Image::getPath(rtrim($image, '_').'_'),
         );
 
         return $args;
@@ -172,7 +172,7 @@ class CalendarEventsBlog
      */
     private function exportBlog(CalendarEventsBlogModel $objBlog): BinaryFileResponse
     {
-        $objEvent = CalendarEventsModel::findByPk($objBlog->eventId);
+        $objEvent = CalendarEventsModel::findById($objBlog->eventId);
 
         if (null === $objEvent) {
             throw new \Exception('Event not found.');
@@ -185,13 +185,13 @@ class CalendarEventsBlog
         }
 
         // target dir & file
-        $targetDir = sprintf('system/tmp/blog_%s_%s', $objBlog->id, time());
-        $imageDir = sprintf('%s/images', $targetDir);
+        $targetDir = \sprintf('system/tmp/blog_%s_%s', $objBlog->id, time());
+        $imageDir = \sprintf('%s/images', $targetDir);
 
         // Create folder
         new Folder($imageDir);
 
-        $targetFile = sprintf('%s/event_blog_%s.docx', $targetDir, $objBlog->id);
+        $targetFile = \sprintf('%s/event_blog_%s.docx', $targetDir, $objBlog->id);
         $targetFile = Path::makeAbsolute($targetFile, $this->projectDir);
         $objPhpWord = new MsWordTemplateProcessor($docxTemplateSrc, $targetFile);
 
@@ -203,7 +203,7 @@ class CalendarEventsBlog
         $mainInstructorName = $this->calendarEventsUtil->getMainInstructorName($objEvent);
         $mainInstructorEmail = '';
 
-        if (null !== ($objInstructor = UserModel::findByPk($objEvent->mainInstructor))) {
+        if (null !== ($objInstructor = UserModel::findById($objEvent->mainInstructor))) {
             $mainInstructorEmail = $objInstructor->email;
         }
 
@@ -218,7 +218,7 @@ class CalendarEventsBlog
         $arrEventDates = $this->calendarEventsUtil->getEventTimestamps($objEvent);
         $arrEventDates = array_map(
             static fn ($tstamp) => date('Y-m-d', (int) $tstamp),
-            $arrEventDates
+            $arrEventDates,
         );
         $strEventDates = implode("\r\n", $arrEventDates);
 
@@ -311,12 +311,12 @@ class CalendarEventsBlog
 
         $objPhpWord->generate();
 
-        $zipSrc = sprintf(
+        $zipSrc = \sprintf(
             '%s/%s/blog_%s_%s.zip',
             $this->projectDir,
             $this->tempDir,
             $objBlog->id,
-            time()
+            time(),
         );
 
         // Create zip archive

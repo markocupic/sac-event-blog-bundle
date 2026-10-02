@@ -26,9 +26,6 @@ class CalendarEventsBlogModel extends Model
     protected static $strTable = 'tl_calendar_events_blog';
 
     /**
-     * @param $sacMemberId
-     * @param $eventId
-     *
      * @return static
      */
     public static function findOneBySacMemberIdAndEventId($sacMemberId, $eventId)

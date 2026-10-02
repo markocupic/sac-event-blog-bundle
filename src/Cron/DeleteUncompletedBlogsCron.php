@@ -42,7 +42,7 @@ class DeleteUncompletedBlogsCron
 
         foreach ($arrIds as $id) {
             $this->connection->delete('tl_calendar_events_blog', ['id' => $id]);
-            $this->contaoGeneralLogger?->info(sprintf('Deleted uncompleted and unpublished event blog with ID %d.', $id));
+            $this->contaoGeneralLogger?->info(\sprintf('Deleted uncompleted and unpublished event blog with ID %d.', $id));
         }
 
         // Deleted empty and uncompleted and unpublished event blogs (limit 60 d)
@@ -56,7 +56,7 @@ class DeleteUncompletedBlogsCron
 
         foreach ($arrIds as $id) {
             $this->connection->delete('tl_calendar_events_blog', ['id' => $id]);
-            $this->contaoGeneralLogger?->info(sprintf('Deleted empty and uncompleted and unpublished event blog with ID %d.', $id));
+            $this->contaoGeneralLogger?->info(\sprintf('Deleted empty and uncompleted and unpublished event blog with ID %d.', $id));
         }
     }
 }

@@ -17,6 +17,8 @@ namespace Markocupic\SacEventBlogBundle\Config;
 class PublishState
 {
     public const int STILL_IN_PROGRESS = 1;
+
     public const int APPROVED_FOR_REVIEW = 2;
+
     public const int PUBLISHED = 3;
 }

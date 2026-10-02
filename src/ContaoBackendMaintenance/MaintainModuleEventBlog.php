@@ -58,7 +58,7 @@ readonly class MaintainModuleEventBlog
 
                 if (!$this->connection->fetchOne('SELECT id FROM tl_calendar_events_blog WHERE id = ?', [(int) $basename])) {
                     // Log
-                    $strText = sprintf('Successfully deleted orphaned event blog media folder "%s".', $path);
+                    $strText = \sprintf('Successfully deleted orphaned event blog media folder "%s".', $path);
                     $this->logger->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, ContaoContext::GENERAL)]);
 
                     // Display the confirmation message in the Contao backend maintenance module.

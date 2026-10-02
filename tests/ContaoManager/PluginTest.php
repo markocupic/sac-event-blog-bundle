@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of SAC Event Blog Bundle.
  *
@@ -9,7 +11,6 @@
  * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/sac-event-blog-bundle
  */
-declare(strict_types=1);
 
 namespace Markocupic\SacEventBlogBundle\Tests\ContaoManager;
 
@@ -20,13 +21,10 @@ use Markocupic\SacEventBlogBundle\ContaoManager\Plugin;
 use Markocupic\SacEventBlogBundle\MarkocupicSacEventBlogBundle;
 use Markocupic\SacEventToolBundle\MarkocupicSacEventToolBundle;
 
-/**
- * @package Markocupic\SacEventBlogBundle\Tests\ContaoManager
- */
 class PluginTest extends ContaoTestCase
 {
     /**
-     * Test Contao manager plugin class instantiation
+     * Test Contao manager plugin class instantiation.
      */
     public function testInstantiation(): void
     {
@@ -34,7 +32,7 @@ class PluginTest extends ContaoTestCase
     }
 
     /**
-     * Test returns the bundles
+     * Test returns the bundles.
      */
     public function testGetBundles(): void
     {
@@ -48,5 +46,4 @@ class PluginTest extends ContaoTestCase
         $this->assertSame(MarkocupicSacEventBlogBundle::class, $bundles[0]->getName());
         $this->assertSame([MarkocupicSacEventToolBundle::class], $bundles[0]->getLoadAfter());
     }
-
 }

@@ -39,7 +39,6 @@ use Contao\Template;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Markocupic\ContaoFilepondUploader\Widget\FilepondFrontendWidget;
-use Markocupic\ContaoFilepondUploader\Widget\FrontendWidget;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventBlogBundle\Upload\Exception\ImageUploadException;
@@ -65,6 +64,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
     public const string TYPE = 'member_dashboard_write_event_blog';
 
     private FrontendUser|null $user;
+
     private PageModel|null $page;
 
     public function __construct(
@@ -196,7 +196,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             return $template->getResponse();
         }
 
-        $objEvent = $calendarEventsModelAdapter->findByPk($inputAdapter->get('eventId'));
+        $objEvent = $calendarEventsModelAdapter->findById($inputAdapter->get('eventId'));
 
         if (null === $objEvent) {
             $template->set('showDashboard', false);
@@ -282,7 +282,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
 
                 $this->connection->update('tl_calendar_events_blog', $set, ['id' => $insertId]);
 
-                $objBlog = $calendarEventsBlogModelAdapter->findByPk($insertId);
+                $objBlog = $calendarEventsBlogModelAdapter->findById($insertId);
             }
         }
 
@@ -435,26 +435,20 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $objForm->getWidget('text')->addAttribute('data-maxlength', self::getFormFieldConfig('text')['maxlength']);
 
         // Tour waypoints
-        $objForm->addFormField(
-            'tourWaypoints',
-            [
-                'label' => $this->translator->trans('FORM.md_write_event_blog_tourWaypoints', [], 'contao_default'),
-                'inputType' => 'textarea',
-                'eval' => self::getFormFieldConfig('tourWaypoints'),
-                'value' => $this->getTourWaypoints($objEventBlogModel),
-            ]
-        );
+        $objForm->addFormField('tourWaypoints', [
+            'label' => $this->translator->trans('FORM.md_write_event_blog_tourWaypoints', [], 'contao_default'),
+            'inputType' => 'textarea',
+            'eval' => self::getFormFieldConfig('tourWaypoints'),
+            'value' => $this->getTourWaypoints($objEventBlogModel),
+        ]);
 
         // Tour profile
-        $objForm->addFormField(
-            'tourProfile',
-            [
-                'label' => $this->translator->trans('FORM.md_write_event_blog_tourProfile', [], 'contao_default'),
-                'inputType' => 'textarea',
-                'eval' => self::getFormFieldConfig('tourProfile'),
-                'value' => $this->getTourProfile($objEventBlogModel),
-            ]
-        );
+        $objForm->addFormField('tourProfile', [
+            'label' => $this->translator->trans('FORM.md_write_event_blog_tourProfile', [], 'contao_default'),
+            'inputType' => 'textarea',
+            'eval' => self::getFormFieldConfig('tourProfile'),
+            'value' => $this->getTourProfile($objEventBlogModel),
+        ]);
 
         // Tour difficulties
         $objForm->addFormField('tourTechDifficulty', [
@@ -481,15 +475,12 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         ]);
 
         // YouTube ID
-        $objForm->addFormField(
-            'youTubeId',
-            [
-                'label' => $this->translator->trans('FORM.md_write_event_blog_youTubeId', [], 'contao_default'),
-                'inputType' => 'text',
-                'eval' => self::getFormFieldConfig('youTubeId'),
-                'value' => (string) $objEventBlogModel->youTubeId,
-            ]
-        );
+        $objForm->addFormField('youTubeId', [
+            'label' => $this->translator->trans('FORM.md_write_event_blog_youTubeId', [], 'contao_default'),
+            'inputType' => 'text',
+            'eval' => self::getFormFieldConfig('youTubeId'),
+            'value' => (string) $objEventBlogModel->youTubeId,
+        ]);
 
         // Let's add  a submit button
         $objForm->addFormField('submitEventReportTextFormBtn', [
@@ -543,7 +534,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             return $objEventBlogModel->title;
         }
 
-        $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
+        $objEvent = $calendarEventsModelAdapter->findById($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
             return '' !== $objEvent->title ? $stringUtilAdapter->substr($objEvent->title, self::getFormFieldConfig('title')['maxlength']) : '';
@@ -561,7 +552,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             return $objEventBlogModel->tourWaypoints;
         }
 
-        $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
+        $objEvent = $calendarEventsModelAdapter->findById($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
             $maxlength = self::getFormFieldConfig('tourWaypoints')['maxlength'];
@@ -580,7 +571,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             return $objEventBlogModel->tourProfile;
         }
 
-        $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
+        $objEvent = $calendarEventsModelAdapter->findById($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
             $arrData = $this->calendarEventsUtil->getTourProfileAsArray($objEvent);
@@ -599,7 +590,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
             return $objEventBlogModel->tourTechDifficulty;
         }
 
-        $objEvent = $calendarEventsModelAdapter->findByPk($objEventBlogModel->eventId);
+        $objEvent = $calendarEventsModelAdapter->findById($objEventBlogModel->eventId);
 
         if (null !== $objEvent) {
             $arrData = $this->calendarEventsUtil->getTourTechDifficultiesAsArray($objEvent);
@@ -681,7 +672,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 'addToDbafs' => false,
                 'multiple' => true,
                 'mSize' => 0, // infinite
-                 // Enable client side image resizing
+                // Enable client side image resizing
                 'imgResize' => true,
                 'imgResizeBrowser' => true,
                 'imgResizeWidth' => max($moduleModel->eventBlogMaxImageWidth, $moduleModel->eventBlogMaxImageHeight),
@@ -760,7 +751,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                         $this->translator->trans(
                             'FORM.md_write_event_confirmImageUploadSuccessful',
                             [$file->getFilename()],
-                            'contao_default'
+                            'contao_default',
                         ),
                     );
                 } catch (ImageUploadException $e) {
@@ -788,7 +779,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
                 $this->connection->commit();
 
                 // Log
-                $strText = sprintf('User with username %s has uploaded a new picture ("%s").', $this->user->username, $objFilesModel->path);
+                $strText = \sprintf('User with username %s has uploaded a new picture ("%s").', $this->user->username, $objFilesModel->path);
                 $logger?->log(LogLevel::INFO, $strText, ['contao' => new ContaoContext(__METHOD__, 'EVENT STORY PICTURE UPLOAD')]);
             }
 
@@ -810,7 +801,7 @@ class MemberDashboardEventBlogWriteController extends AbstractFrontendModuleCont
         $previewLink = '';
 
         if ($objModule->eventBlogReaderPage > 0) {
-            $objTarget = $pageModelAdapter->findByPk($objModule->eventBlogReaderPage);
+            $objTarget = $pageModelAdapter->findById($objModule->eventBlogReaderPage);
 
             if (null !== $objTarget) {
                 $previewLink = $stringUtilAdapter->ampersand($objTarget->getAbsoluteUrl('/'.$objBlog->id));

@@ -23,9 +23,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AsHook('addCustomRegexp', priority: 100)]
 readonly class AddCustomRegexpListener
 {
-    public function __construct(
-        private TranslatorInterface $translator,
-    ) {
+    public function __construct(private TranslatorInterface $translator)
+    {
     }
 
     /**

@@ -49,6 +49,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
     public const string TYPE = 'event_blog_reader';
 
     private CalendarEventsBlogModel|null $blog = null;
+
     private bool $isPreviewMode = false;
 
     public function __construct(
@@ -130,7 +131,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         $template->set('authorName', null !== $objAuthor ? $objAuthor->firstname.' '.$objAuthor->lastname : 'Unbekannt');
 
         // !!! $objEvent can be NULL, if the related event no more exists
-        $objEvent = $calendarEventsModelAdapter->findByPk($this->blog->eventId);
+        $objEvent = $calendarEventsModelAdapter->findById($this->blog->eventId);
         $template->set('event', $objEvent->row());
         $template->set('blog', $this->blog->row());
 
@@ -173,7 +174,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
                 $imageList[] = [
                     'uuid' => $filesystemItem->getUuid(),
                     'href' => $file->path,
-                    'meta' => ($filesystemItem->getExtraMetadata()['metadata'])->get($this->locale),
+                    'meta' => $filesystemItem->getExtraMetadata()['metadata']->get($this->locale),
                 ];
             }
         }
@@ -246,7 +247,7 @@ class EventBlogReaderController extends AbstractFrontendModuleController
         SymlinkUtil::symlink($objFolder->path, $webDir.'/'.$objFolder->path, $this->projectDir);
 
         // Generate path
-        $filepath = sprintf($objFolder->path.'/'.'eventBlogQRcode_%s.png', md5($url));
+        $filepath = \sprintf($objFolder->path.'/eventBlogQRcode_%s.png', md5($url));
 
         // Defaults
         $opt = [

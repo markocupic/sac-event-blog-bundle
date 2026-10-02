@@ -49,7 +49,7 @@ readonly class ImageUploadHandler
         $newId = $this->connection->fetchOne('SELECT MAX(id) AS maxId FROM tl_files') + 1;
 
         // Generate target Path
-        $targetPath = sprintf(
+        $targetPath = \sprintf(
             '%s/event-blog-%s-img-%s.%s',
             Path::makeRelative($destDir, $this->projectDir),
             $blogModel->id,
@@ -63,7 +63,7 @@ readonly class ImageUploadHandler
 
         // Copy image from temp directory to the target directory
         if (!$objFile->renameTo($targetPath)) {
-            throw new ImageUploadException(sprintf('Could not move the uploaded image "%s" to the target "%s" directory.', $splFileInfo->getRealPath(), $targetPath), $this->translator->trans('ERR.md_write_event_blog_couldNotMoveImageToTargetDir', [$splFileInfo->getFilename()], 'contao_default'));
+            throw new ImageUploadException(\sprintf('Could not move the uploaded image "%s" to the target "%s" directory.', $splFileInfo->getRealPath(), $targetPath), $this->translator->trans('ERR.md_write_event_blog_couldNotMoveImageToTargetDir', [$splFileInfo->getFilename()], 'contao_default'));
         }
 
         $this->removeTempDir($tempDir);
@@ -72,7 +72,7 @@ readonly class ImageUploadHandler
         $filesModel = $filesModelAdapter->findByPath($targetPath);
 
         if (null === $filesModel) {
-            throw new ImageUploadException(sprintf('Could not find image "%s" in the target directory.', $objFile->path), $this->translator->trans('ERR.md_write_event_blog_couldNotFindImageInTargetDir', [$splFileInfo->getFilename()], 'contao_default'));
+            throw new ImageUploadException(\sprintf('Could not find image "%s" in the target directory.', $objFile->path), $this->translator->trans('ERR.md_write_event_blog_couldNotFindImageInTargetDir', [$splFileInfo->getFilename()], 'contao_default'));
         }
 
         $this->updateTargetFolderHashes($objFile);

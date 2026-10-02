@@ -33,7 +33,7 @@ readonly class ImageUploadValidator
     public function validateFileExists(SplFileInfo $file): void
     {
         if (!is_file($file->getRealPath())) {
-            throw new ImageUploadException(sprintf('Could not find file "%s".', $file->getRealPath()), $this->translator->trans('ERR.md_write_event_blog_couldNotFindUploadedImage', [$file->getFilename()], 'contao_default'));
+            throw new ImageUploadException(\sprintf('Could not find file "%s".', $file->getRealPath()), $this->translator->trans('ERR.md_write_event_blog_couldNotFindUploadedImage', [$file->getFilename()], 'contao_default'));
         }
     }
 
@@ -50,12 +50,12 @@ readonly class ImageUploadValidator
 
         // Image exceeds max. image width
         if ($maxWidth > 0 && $file->width > $maxWidth) {
-            throw new ImageUploadException(sprintf('Image "%s" exceeds max. width.', $splFileInfo->getRealPath()), $this->translator->trans('ERR.filewidth', [$splFileInfo->getFilename()], 'contao_default'));
+            throw new ImageUploadException(\sprintf('Image "%s" exceeds max. width.', $splFileInfo->getRealPath()), $this->translator->trans('ERR.filewidth', [$splFileInfo->getFilename()], 'contao_default'));
         }
 
         // Image exceeds max. image height
         if ($maxHeight > 0 && $file->height > $maxHeight) {
-            throw new ImageUploadException(sprintf('Image "%s" exceeds max. height.', $splFileInfo->getRealPath()), $this->translator->trans('ERR.fileheight', [$splFileInfo->getFilename()], 'contao_default'));
+            throw new ImageUploadException(\sprintf('Image "%s" exceeds max. height.', $splFileInfo->getRealPath()), $this->translator->trans('ERR.fileheight', [$splFileInfo->getFilename()], 'contao_default'));
         }
     }
 
@@ -65,7 +65,7 @@ readonly class ImageUploadValidator
     public function validateSize(SplFileInfo $splFileInfo, int $maxSize): void
     {
         if (false === $splFileInfo->getSize() || $splFileInfo->getSize() > $maxSize) {
-            throw new ImageUploadException(sprintf('Uploaded image "%s" exceeds max. file size of "%s" bytes.', $splFileInfo->getRealPath(), $maxSize), $this->translator->trans('ERR.md_write_event_blog_uploadedFileExceedsMaxSize', [$splFileInfo->getFilename(), $maxSize], 'contao_default'));
+            throw new ImageUploadException(\sprintf('Uploaded image "%s" exceeds max. file size of "%s" bytes.', $splFileInfo->getRealPath(), $maxSize), $this->translator->trans('ERR.md_write_event_blog_uploadedFileExceedsMaxSize', [$splFileInfo->getFilename(), $maxSize], 'contao_default'));
         }
     }
 }

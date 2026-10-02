@@ -36,7 +36,7 @@ use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-#[AsFrontendModule(EventBlogListController::TYPE, category:'sac_event_tool_frontend_modules', template:'mod_event_blog_list')]
+#[AsFrontendModule(EventBlogListController::TYPE, category: 'sac_event_tool_frontend_modules', template: 'mod_event_blog_list')]
 class EventBlogListController extends AbstractFrontendModuleController
 {
     public const string TYPE = 'event_blog_list';
@@ -64,7 +64,7 @@ class EventBlogListController extends AbstractFrontendModuleController
             $objBlogs = $calendarEventsBlogModelAdapter->findBy(
                 ['tl_calendar_events_blog.publishState = ?'],
                 [PublishState::PUBLISHED],
-                $arrOptions
+                $arrOptions,
             );
 
             if (null !== $objBlogs) {
@@ -101,7 +101,7 @@ class EventBlogListController extends AbstractFrontendModuleController
         $objPageModel = null;
 
         if ($model->jumpTo) {
-            $objPageModel = $pageModelAdapter->findByPk($model->jumpTo);
+            $objPageModel = $pageModelAdapter->findById($model->jumpTo);
         }
 
         $arrBlogsAll = [];
