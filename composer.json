@@ -37,10 +37,11 @@
         "markocupic/contao-filepond-uploader": "^1.0"
     },
     "require-dev": {
+        "markocupic/easy-coding-standard": "^13.0",
+        "phpstan/phpstan": "^2.2",
         "contao/manager-plugin": "^2.4",
         "contao/test-case": "^5.3",
-        "phpunit/phpunit": "^9.3",
-        "contao/easy-coding-standard": "^6.0"
+        "phpunit/phpunit": "^9.5"
     },
     "autoload": {
         "psr-4": {
