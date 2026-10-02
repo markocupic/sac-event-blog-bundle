@@ -75,7 +75,6 @@ class FrontendModulesToContentElementsMigration extends AbstractMigration
     private const array CONTENT_COLUMNS = [
         'eventBlogOrganizers' => 'blob NULL',
         'eventBlogJumpTo' => 'int(10) unsigned NOT NULL default 0',
-        'eventBlogReaderElement' => 'int(10) unsigned NOT NULL default 0',
         'eventBlogLimit' => 'smallint(5) unsigned NOT NULL default 0',
         'eventBlogTimeSpanForCreatingNew' => 'int(10) unsigned NOT NULL default 0',
         'eventBlogFormJumpTo' => 'int(10) unsigned NOT NULL default 0',
@@ -115,9 +114,6 @@ class FrontendModulesToContentElementsMigration extends AbstractMigration
 
         // Former module ID => new content element ID
         $moduleToContent = [];
-
-        // New list content element ID => former reader module ID
-        $listElements = [];
 
         $messages = [];
         $converted = 0;
@@ -159,46 +155,9 @@ class FrontendModulesToContentElementsMigration extends AbstractMigration
 
             $moduleToContent[(int) $module['id']] ??= (int) $content['id'];
 
-            if (EventBlogListController::TYPE === $type) {
-                $listElements[(int) $content['id']] = (int) ($module['eventBlogReaderModule'] ?? 0);
-            }
-
             if (!empty($module['customTpl'])) {
                 $messages[] = \sprintf('Modul "%s" (ID %d) verwendet das eigene Template "%s". Bitte als Variante unter "content_element/%s/" neu anlegen und im Inhaltselement ID %d zuweisen.', $module['name'], $module['id'], $module['customTpl'], $type, $content['id']);
             }
-        }
-
-        // Link the list elements to their reader element
-        foreach ($listElements as $listElementId => $readerModuleId) {
-            $readerElementId = $moduleToContent[$readerModuleId] ?? null;
-
-            // The reader module was only used by the API and was not embedded in an article:
-            // Create a hidden reader content element next to the list element.
-            if (null === $readerElementId && isset($modules[$readerModuleId]) && EventBlogReaderController::TYPE === $modules[$readerModuleId]['type']) {
-                $listElement = $this->connection->fetchAssociative('SELECT pid, ptable, sorting FROM tl_content WHERE id = ?', [$listElementId]);
-
-                $this->connection->insert('tl_content', [
-                    'pid' => $listElement['pid'],
-                    'ptable' => $listElement['ptable'],
-                    'sorting' => (int) $listElement['sorting'] + 1,
-                    'tstamp' => time(),
-                    'type' => EventBlogReaderController::TYPE,
-                    'invisible' => '1',
-                ]);
-
-                $readerElementId = (int) $this->connection->lastInsertId();
-                $moduleToContent[$readerModuleId] = $readerElementId;
-
-                $messages[] = \sprintf('Für das Listen-Element ID %d wurde das versteckte Reader-Element ID %d angelegt.', $listElementId, $readerElementId);
-            }
-
-            if (null === $readerElementId) {
-                $messages[] = \sprintf('Für das Listen-Element ID %d konnte kein Reader-Element ermittelt werden. Bitte im Backend auswählen.', $listElementId);
-
-                continue;
-            }
-
-            $this->connection->update('tl_content', ['eventBlogReaderElement' => $readerElementId], ['id' => $listElementId]);
         }
 
         // Modules that are embedded elsewhere (page layout, insert tag) have not been converted

@@ -16,16 +16,17 @@ namespace Markocupic\SacEventBlogBundle\Controller\ContentElement;
 
 use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
-use Codefog\HasteBundle\UrlParser;
 use Contao\CalendarEventsModel;
 use Contao\ContentModel;
 use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Contao\CoreBundle\Exception\PageNotFoundException;
+use Contao\CoreBundle\Exception\ResponseException;
 use Contao\CoreBundle\Filesystem\FilesystemItem;
 use Contao\CoreBundle\Filesystem\FilesystemUtil;
 use Contao\CoreBundle\Filesystem\VirtualFilesystem;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Routing\ContentUrlGenerator;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\CoreBundle\Util\SymlinkUtil;
@@ -33,14 +34,25 @@ use Contao\FilesModel;
 use Contao\Folder;
 use Contao\Input;
 use Contao\MemberModel;
+use Contao\PageModel;
 use Contao\StringUtil;
 use Markocupic\SacEventBlogBundle\Config\PublishState;
+use Markocupic\SacEventBlogBundle\EventBlog\EventBlogListFinder;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventToolBundle\Util\CalendarEventsUtil;
 use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
+/**
+ * Shows an event blog on the reader page (auto_item = blog id).
+ *
+ * The "event blog list" element loads the reader with HTMX into its modal window:
+ * The HTMX request goes to the reader page and targets the modal body
+ * (HX-Target: event-blog-reader-<list element id>). In this case only the
+ * reader element is sent, including the prev/next navigation of the list.
+ */
 #[AsContentElement(EventBlogReaderController::TYPE, category: 'sac_event_blog')]
 class EventBlogReaderController extends AbstractContentElementController
 {
@@ -50,11 +62,17 @@ class EventBlogReaderController extends AbstractContentElementController
 
     private bool $isPreviewMode = false;
 
+    /**
+     * The list element that has loaded the reader into its modal window (HTMX request).
+     */
+    private ContentModel|null $listElement = null;
+
     public function __construct(
         private readonly CalendarEventsUtil $calendarEventsUtil,
         private readonly ContaoFramework $framework,
+        private readonly ContentUrlGenerator $contentUrlGenerator,
+        private readonly EventBlogListFinder $eventBlogListFinder,
         private readonly ScopeMatcher $scopeMatcher,
-        private readonly UrlParser $urlParser,
         private readonly VirtualFilesystem $filesStorage,
         private readonly string $projectDir,
         private readonly string $locale,
@@ -101,6 +119,8 @@ class EventBlogReaderController extends AbstractContentElementController
             if (null === $this->blog) {
                 throw new PageNotFoundException('Page not found: '.$request->getUri());
             }
+
+            $this->listElement = $this->getListElementFromHtmxRequest($request);
         }
 
         return parent::__invoke($request, $model, $section, $classes);
@@ -129,22 +149,15 @@ class EventBlogReaderController extends AbstractContentElementController
         $template->set('event', null !== $objEvent ? $objEvent->row() : []);
         $template->set('blog', $this->blog->row());
 
-        if (!$this->isPreviewMode) {
-            if ($request->query->has('referer')) {
-                $url = base64_decode($request->query->get('referer', ''), true);
-                $url = $this->urlParser->addQueryString('show_event_blog='.$this->blog->id, $url);
-            } else {
-                $url = $this->urlParser->addQueryString('show_event_blog='.$this->blog->id);
-            }
+        $page = $this->getPageModel();
 
-            // Remove facebook "fbclid" param
-            $url = $this->urlParser->removeQueryString(['fbclid'], $url);
+        // QR code and direct link point to the reader page
+        if (!$this->isPreviewMode && null !== $page) {
+            $url = $this->getReaderUrl($page, (int) $this->blog->id, UrlGeneratorInterface::ABSOLUTE_URL);
 
-            if (!empty($url)) {
-                if (null !== ($qrCodePath = $this->getQrCodeFromUrl($url))) {
-                    $template->qrCodePath = $qrCodePath;
-                    $template->directLink = $url;
-                }
+            if (null !== ($qrCodePath = $this->getQrCodeFromUrl($url))) {
+                $template->set('qrCodePath', $qrCodePath);
+                $template->set('directLink', $url);
             }
         }
 
@@ -237,7 +250,60 @@ class EventBlogReaderController extends AbstractContentElementController
             $template->set('tourPublicTransportInfo', nl2br((string) $this->blog->tourPublicTransportInfo));
         }
 
+        // HTMX request from the modal window of the list element: only send the reader element
+        if (null !== $this->listElement) {
+            $template->set('eventBlogNav', $this->getNavigation($page));
+
+            $response = $template->getResponse();
+            $response->setPrivate();
+            $response->headers->addCacheControlDirective('no-store');
+
+            throw new ResponseException($response);
+        }
+
         return $template->getResponse();
+    }
+
+    private function getListElementFromHtmxRequest(Request $request): ContentModel|null
+    {
+        if ('true' !== $request->headers->get('HX-Request')) {
+            return null;
+        }
+
+        $prefix = EventBlogListController::READER_TARGET_PREFIX;
+
+        if (!preg_match('/^'.preg_quote($prefix, '/').'(\d+)$/', (string) $request->headers->get('HX-Target'), $matches)) {
+            return null;
+        }
+
+        $listElement = $this->framework->getAdapter(ContentModel::class)->findById((int) $matches[1]);
+
+        if (null === $listElement || EventBlogListController::TYPE !== $listElement->type) {
+            return null;
+        }
+
+        return $listElement;
+    }
+
+    /**
+     * Prev/next links of the list element (modal window).
+     *
+     * @return array{target: string, prev: string|null, next: string|null}
+     */
+    private function getNavigation(PageModel|null $page): array
+    {
+        $siblings = $this->eventBlogListFinder->findSiblings($this->listElement, (int) $this->blog->id);
+
+        return [
+            'target' => EventBlogListController::READER_TARGET_PREFIX.$this->listElement->id,
+            'prev' => null !== $page && null !== $siblings['prev'] ? $this->getReaderUrl($page, $siblings['prev']) : null,
+            'next' => null !== $page && null !== $siblings['next'] ? $this->getReaderUrl($page, $siblings['next']) : null,
+        ];
+    }
+
+    private function getReaderUrl(PageModel $page, int $blogId, int $referenceType = UrlGeneratorInterface::ABSOLUTE_PATH): string
+    {
+        return $this->contentUrlGenerator->generate($page, ['parameters' => '/'.$blogId], $referenceType);
     }
 
     private function getQrCodeFromUrl(string $url): string|null

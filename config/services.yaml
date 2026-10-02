@@ -24,6 +24,8 @@ services:
     Markocupic\SacEventBlogBundle\Controller\ContentElement\EventBlogListController:
         arguments:
             - '@contao.framework'
+            - '@contao.routing.content_url_generator'
+            - '@Markocupic\SacEventBlogBundle\EventBlog\EventBlogListFinder'
             - '@contao.routing.scope_matcher'
             - '%kernel.project_dir%'
         public: true
@@ -33,8 +35,9 @@ services:
         arguments:
             - '@Markocupic\SacEventToolBundle\Util\CalendarEventsUtil'
             - '@contao.framework'
+            - '@contao.routing.content_url_generator'
+            - '@Markocupic\SacEventBlogBundle\EventBlog\EventBlogListFinder'
             - '@contao.routing.scope_matcher'
-            - '@Codefog\HasteBundle\UrlParser'
             - '@contao.filesystem.virtual.files'
             - '%kernel.project_dir%'
             - '%sacevt.locale%'
@@ -69,12 +72,6 @@ services:
             - '%sacevt.locale%'
             - '%kernel.project_dir%'
             - '%markocupic_contao_filepond_uploader.tmp_path%'
-        public: true
-
-    # Renders the event blog list/reader content elements for the Vue.js frontend app
-    Markocupic\SacEventBlogBundle\Controller\Api\EventBlogContentElementController:
-        arguments:
-            - '@contao.framework'
         public: true
 
     Markocupic\SacEventBlogBundle\Controller\Api\MemberDashboardWriteEventBlogController:

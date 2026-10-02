@@ -25,6 +25,11 @@ Encore
         to: 'vue/dist/[path][name].[hash:8].[ext]',
     })
     .copyFiles({
+        from: './node_modules/htmx.org/dist',
+        to: 'htmx/[path][name].[hash:8].[ext]',
+        pattern: /htmx\.min\.js$/,
+    })
+    .copyFiles({
         from: './node_modules/sortablejs',
         to: 'sortablejs/[path][name].[hash:8].[ext]',
         pattern: /(Sortable\.min\.js)$/,

@@ -18,7 +18,7 @@ use Markocupic\SacEventBlogBundle\Controller\ContentElement\MemberDashboardEvent
 use Markocupic\SacEventBlogBundle\Controller\ContentElement\MemberDashboardEventBlogWriteController;
 
 // Palettes
-$GLOBALS['TL_DCA']['tl_content']['palettes'][EventBlogListController::TYPE] = '{type_legend},type,headline;{config_legend},eventBlogOrganizers,eventBlogJumpTo,eventBlogReaderElement,eventBlogLimit,perPage;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
+$GLOBALS['TL_DCA']['tl_content']['palettes'][EventBlogListController::TYPE] = '{type_legend},type,headline;{config_legend},eventBlogOrganizers,eventBlogJumpTo,eventBlogLimit,perPage;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 $GLOBALS['TL_DCA']['tl_content']['palettes'][EventBlogReaderController::TYPE] = '{type_legend},type;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 $GLOBALS['TL_DCA']['tl_content']['palettes'][MemberDashboardEventBlogListController::TYPE] = '{type_legend},type,headline;{events_blog_legend},eventBlogTimeSpanForCreatingNew,eventBlogFormJumpTo;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
 $GLOBALS['TL_DCA']['tl_content']['palettes'][MemberDashboardEventBlogWriteController::TYPE] = '{type_legend},type,headline;{events_blog_legend},eventBlogReaderPage,eventBlogMaxImageWidth,eventBlogMaxImageHeight,eventBlogMaxImageFileSize,eventBlogTimeSpanForCreatingNew,eventBlogOnPublishNotification;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},cssID;{invisible_legend:hide},invisible,start,stop';
@@ -37,17 +37,9 @@ $GLOBALS['TL_DCA']['tl_content']['fields']['eventBlogJumpTo'] = [
     'exclude'    => true,
     'inputType'  => 'pageTree',
     'foreignKey' => 'tl_page.title',
-    'eval'       => ['fieldType' => 'radio', 'tl_class' => 'clr'],
+    'eval'       => ['mandatory' => true, 'fieldType' => 'radio', 'tl_class' => 'clr'],
     'sql'        => "int(10) unsigned NOT NULL default 0",
     'relation'   => ['type' => 'hasOne', 'load' => 'lazy'],
-];
-
-// The options are provided by Markocupic\SacEventBlogBundle\DataContainer\Content::getEventBlogReaderElementOptions()
-$GLOBALS['TL_DCA']['tl_content']['fields']['eventBlogReaderElement'] = [
-    'exclude'   => true,
-    'inputType' => 'select',
-    'eval'      => ['mandatory' => true, 'includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'clr'],
-    'sql'       => "int(10) unsigned NOT NULL default 0",
 ];
 
 $GLOBALS['TL_DCA']['tl_content']['fields']['eventBlogLimit'] = [

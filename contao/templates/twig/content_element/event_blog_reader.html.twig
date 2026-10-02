@@ -3,6 +3,18 @@
 {% set attributes = attrs(attributes|default).addClass('sac-event-blog-reader--modal block') %}
 
 {% block content %}
+    {% if eventBlogNav|default %}
+        {# Prev/next navigation in the modal window of the list element (HTMX request, see EventBlogReaderController) #}
+        <div class="event-blog-reader-nav d-flex justify-content-between justify-content-md-end mb-5" hx-target="#{{ eventBlogNav.target }}" hx-sync="#{{ eventBlogNav.target }}:replace" hx-push-url="false">
+            {% if eventBlogNav.prev %}
+                <button type="button" class="btn btn-primary ms-0" data-event-blog-nav="prev" hx-get="{{ eventBlogNav.prev }}"><i class="fa-solid fa-arrow-left"></i> Vorheriger Bericht</button>
+            {% endif %}
+            {% if eventBlogNav.next %}
+                <button type="button" class="btn btn-primary ms-2" data-event-blog-nav="next" hx-get="{{ eventBlogNav.next }}">Nächster Bericht <i class="fa-solid fa-arrow-right"></i></button>
+            {% endif %}
+        </div>
+    {% endif %}
+
     <h1 class="content-headline mt-0 mb-0 text-break">{{ blog.title }}</h1>
     <date class="d-block mt-4">vom: {{ eventDates|raw }}</date>
 

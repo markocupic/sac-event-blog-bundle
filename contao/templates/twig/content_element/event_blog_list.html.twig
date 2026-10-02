@@ -3,8 +3,8 @@
 {% set searchable = false %}
 
 {% block wrapper %}
-    {% if isAjaxRequest %}
-        {# Ajax request from the Vue.js app (see assets/js/event_blog_list_vue.js): only return the list items and the pagination #}
+    {% if htmx_fragment|default(false) %}
+        {# HTMX request from the pagination: only return the list items and the pagination #}
         {{ block('event_blog_list_items') }}
     {% else %}
         {{ parent() }}
@@ -12,63 +12,40 @@
 {% endblock %}
 
 {% block content %}
-    {% do addJavascriptResource(asset('js/event_blog_list_vue.js', 'markocupic_sac_event_blog')) %}
-    {% do addHtmlToBody('<script src="'~asset('vue/dist/vue.global.prod.js', 'markocupic_sac_event_blog')~'"></script>') %}
+    {% do addJavascriptResource(asset('htmx/htmx.min.js', 'markocupic_sac_event_blog')) %}
+    {% do addJavascriptResource(asset('js/event_blog_list.js', 'markocupic_sac_event_blog')) %}
 
-    <div id="eventBlogList{{ data.id }}">
-        <div class=" list-container" v-html="listContent"></div>
-        <!-- start modal -->
-        <div class="modal event-blog-reader-modal" tabindex="-1" role="dialog" aria-labelledby="eventBlogReaderModalTitle{{ data.id }}" aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-fullscreen-xl-down" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="eventBlogReaderModalTitle{{ data.id }}">Tourenberichte</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
-                    </div>
-                    <div class="modal-body px-3 px-sm-4 px-lg-5">
-                        <div class="d-flex justify-content-between justify-content-md-end">
-                            <button type="button" v-if="hasPrevItem()" v-on:click="goToPrevItem()" class="btn btn-primary ms-0"><i class="fa-solid fa-arrow-left"></i> Vorheriger Bericht</button>
-                            <button type="button" v-if="hasNextItem()" v-on:click="goToNextItem()" class="btn btn-primary ms-2">Nächster Bericht <i class="fa-solid fa-arrow-right"></i></button>
-                        </div>
-                        <div class="mt-5" v-html="readerContent"></div>
-                    </div>
-                    <div class="modal-footer d-none d-sm-block">{# Do not show the footer on mobile phones #}
-                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Schliessen</button>
-                    </div>
+    <div id="{{ htmx_target }}" class="event-blog-list">
+        {{ block('event_blog_list_items') }}
+    </div>
+
+    <!-- start modal -->
+    <div class="modal event-blog-reader-modal" tabindex="-1" role="dialog" aria-labelledby="eventBlogReaderModalTitle{{ data.id }}" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-fullscreen-xl-down" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="eventBlogReaderModalTitle{{ data.id }}">Tourenberichte</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schliessen"></button>
+                </div>
+                {# The reader is loaded into this element with HTMX #}
+                <div class="modal-body px-3 px-sm-4 px-lg-5" id="{{ reader_target }}"></div>
+                <div class="modal-footer d-none d-sm-block">{# Do not show the footer on mobile phones #}
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Schliessen</button>
                 </div>
             </div>
         </div>
-        <!-- end modal -->
     </div>
-{% endblock %}
-
-{% block script %}
-    {% if not isAjaxRequest %}
-        <script{{ attrs().setIfExists('nonce', csp_nonce('script-src')) }}>
-            document.addEventListener('DOMContentLoaded', function () {
-                // Instantiate ItemWatcher class
-                new EventBlogList('#eventBlogList{{ data.id }}', {
-                    'params': {
-                        'listElementId': '{{ data.id }}',
-                        'readerElementId': '{{ data.eventBlogReaderElement|default('') }}',
-                        'elementUrl': '{{ path('sac_event_blog_content_element', {id: 0}) }}',
-                        'perPage': '{{ data.perPage }}',
-                        'itemIds': [{{ arrBlogIds|join(',') }}],
-                        'language': '{{ language }}',
-                    }
-                });
-            }, false);
-        </script>
-    {% endif %}
+    <!-- end modal -->
 {% endblock %}
 
 {% block event_blog_list_items %}
-    <div class="grid-card equal-height block">
+    {# The reader is loaded with HTMX into the modal window (see EventBlogReaderController) #}
+    <div class="grid-card equal-height block" hx-target="#{{ reader_target }}" hx-sync="#{{ reader_target }}:replace" hx-push-url="false">
         {% for blog in blogs %}
             <div itemscope itemtype="http://schema.org/Article">
                 <div class="card event-item bg-white">
                     <div class="image-zoom-in">
-                        <a href="{{ blog.href }}" class="item-reader-link" aria-label="{{ blog.title|escape('html_attr') }}">
+                        <a href="{{ blog.href }}"{% if blog.href %} hx-get="{{ blog.href }}"{% endif %} class="item-reader-link" aria-label="{{ blog.title|escape('html_attr') }}">
                             {% if blog.singleSRC|default and blog.singleSRC.uuid|default %}
                                 {{ insert_tag('image::' ~ blog.singleSRC.uuid ~ '?width=450&height=300&mode=crop&class=card-img-top')|raw }}
                             {% else %}
@@ -78,7 +55,7 @@
                         </a>
                     </div>
                     <div class="card-body bg-white p-3">
-                        <a href="{{ blog.href }}" title="weiterlesen" class="text-decoration-none item-reader-link">
+                        <a href="{{ blog.href }}"{% if blog.href %} hx-get="{{ blog.href }}"{% endif %} title="weiterlesen" class="text-decoration-none item-reader-link">
                             <h6 class="card-title mt-0">{{ substr(blog.title,55) }}</h6>
                         </a>
                         <p class="card-news-teaser mb-0">{{ substr(blog.text,80)|raw }}</p>
@@ -104,5 +81,10 @@
             </div>
         {% endfor %}
     </div>
-    {{ pagination|raw }}
+    {% if pagination|default %}
+        {# The pagination links are loaded with HTMX into the list container (see EventBlogListController) #}
+        <div class="event-blog-list-pagination" hx-boost="true" hx-target="#{{ htmx_target }}" hx-swap="innerHTML show:#{{ htmx_target }}:top" hx-sync="#{{ htmx_target }}:replace">
+            {{ pagination|raw }}
+        </div>
+    {% endif %}
 {% endblock %}

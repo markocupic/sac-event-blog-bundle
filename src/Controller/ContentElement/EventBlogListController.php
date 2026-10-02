@@ -19,32 +19,54 @@ use Contao\ContentModel;
 use Contao\CoreBundle\Controller\ContentElement\AbstractContentElementController;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsContentElement;
 use Contao\CoreBundle\Exception\PageNotFoundException;
+use Contao\CoreBundle\Exception\RedirectResponseException;
+use Contao\CoreBundle\Exception\ResponseException;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Routing\ContentUrlGenerator;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Twig\FragmentTemplate;
-use Contao\CoreBundle\Util\LocaleUtil;
-use Contao\Environment;
 use Contao\FilesModel;
 use Contao\MemberModel;
-use Contao\Model\Collection;
 use Contao\PageModel;
 use Contao\Pagination;
 use Contao\StringUtil;
 use Contao\Validator;
-use Markocupic\SacEventBlogBundle\Config\PublishState;
+use Markocupic\SacEventBlogBundle\EventBlog\EventBlogListFinder;
 use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
+/**
+ * Lists the event blogs as cards. The pagination and the reader (in a modal window)
+ * are loaded with HTMX: A HTMX request goes to the current page and this controller
+ * answers it with the list items only (see self::HTMX_TARGET_PREFIX).
+ */
 #[AsContentElement(EventBlogListController::TYPE, category: 'sac_event_blog')]
 class EventBlogListController extends AbstractContentElementController
 {
     public const string TYPE = 'event_blog_list';
 
-    private Collection|null $blogs = null;
+    /**
+     * The HTML id of the list container is HTMX_TARGET_PREFIX.<content element id>.
+     */
+    public const string HTMX_TARGET_PREFIX = 'event-blog-list-';
+
+    /**
+     * The HTML id of the modal body is READER_TARGET_PREFIX.<content element id>.
+     * The reader element uses it to find the list element (prev/next navigation).
+     */
+    public const string READER_TARGET_PREFIX = 'event-blog-reader-';
+
+    /**
+     * @var list<int>
+     */
+    private array $blogIds = [];
 
     public function __construct(
         private readonly ContaoFramework $framework,
+        private readonly ContentUrlGenerator $contentUrlGenerator,
+        private readonly EventBlogListFinder $eventBlogListFinder,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly string $projectDir,
     ) {
@@ -58,33 +80,23 @@ class EventBlogListController extends AbstractContentElementController
         }
 
         if ($this->scopeMatcher->isFrontendRequest($request)) {
-            // Adapters
-            $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
-            $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
-            $arrIds = [];
-            $arrOptions = ['order' => 'dateAdded DESC'];
-
-            // Find all published blogs
-            $objBlogs = $calendarEventsBlogModelAdapter->findBy(
-                ['tl_calendar_events_blog.publishState = ?'],
-                [PublishState::PUBLISHED],
-                $arrOptions,
-            );
-
-            if (null !== $objBlogs) {
-                while ($objBlogs->next()) {
-                    $arrOrganizers = $stringUtilAdapter->deserialize($objBlogs->organizers, true);
-
-                    if (\count(array_intersect($arrOrganizers, $stringUtilAdapter->deserialize($model->eventBlogOrganizers, true))) > 0) {
-                        $arrIds[] = $objBlogs->id;
-                    }
-                }
+            // Old direct links and QR codes (?show_event_blog=123) point to the list page: redirect to the reader page
+            if (!$this->isHtmxRequest($request, $model) && ($blogId = (int) $request->query->get('show_event_blog')) > 0 && null !== ($readerPage = $this->getReaderPage($model))) {
+                throw new RedirectResponseException($this->contentUrlGenerator->generate($readerPage, ['parameters' => '/'.$blogId], UrlGeneratorInterface::ABSOLUTE_URL), Response::HTTP_MOVED_PERMANENTLY);
             }
 
-            $this->blogs = $calendarEventsBlogModelAdapter->findMultipleByIds($arrIds, $arrOptions);
+            $this->blogIds = $this->eventBlogListFinder->findIds($model);
 
-            if (null === $this->blogs) {
+            if ([] === $this->blogIds) {
+                // HTMX request from the pagination: send an empty list instead of the full page
+                if ($this->isHtmxRequest($request, $model)) {
+                    $response = new Response('');
+                    $response->setPrivate();
+                    $response->headers->addCacheControlDirective('no-store');
+
+                    throw new ResponseException($response);
+                }
+
                 return new Response('', Response::HTTP_NO_CONTENT);
             }
         }
@@ -92,110 +104,129 @@ class EventBlogListController extends AbstractContentElementController
         return parent::__invoke($request, $model, $section, $classes);
     }
 
+    public static function isHtmxRequestFor(Request $request, string $targetId): bool
+    {
+        return 'true' === $request->headers->get('HX-Request') && $targetId === $request->headers->get('HX-Target');
+    }
+
     protected function getResponse(FragmentTemplate $template, ContentModel $model, Request $request): Response
     {
-        // Adapters
-        $memberModelModelAdapter = $this->framework->getAdapter(MemberModel::class);
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-        $configAdapter = $this->framework->getAdapter(Config::class);
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
-        $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
-        $environmentAdapter = $this->framework->getAdapter(Environment::class);
-        $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
+        // Prepare the pagination
+        $total = \count($this->blogIds);
+        $offset = 0;
+        $limit = $total;
 
-        $objPageModel = null;
+        if ($model->perPage > 0) {
+            $id = 'page_e'.$model->id;
+            $page = (int) ($request->query->get($id) ?: 1);
 
-        if ($model->eventBlogJumpTo) {
-            $objPageModel = $pageModelAdapter->findById($model->eventBlogJumpTo);
+            // Do not index or cache the page if the page number is outside the range
+            if ($page < 1 || $page > max(ceil($total / $model->perPage), 1)) {
+                throw new PageNotFoundException('Page not found: '.$request->getUri());
+            }
+
+            $offset = ($page - 1) * $model->perPage;
+            $limit = (int) $model->perPage;
+
+            $objPagination = new Pagination($total, $model->perPage, $this->framework->getAdapter(Config::class)->get('maxPaginationLinks'), $id);
+            $template->set('pagination', $objPagination->generate(' '));
         }
 
-        $arrBlogsAll = [];
-        $arrBlogIds = [];
+        $template->set('blogs', $this->getBlogs(\array_slice($this->blogIds, $offset, $limit), $model));
+        $template->set('htmx_target', self::HTMX_TARGET_PREFIX.$model->id);
+        $template->set('reader_target', self::READER_TARGET_PREFIX.$model->id);
 
-        while ($this->blogs->next()) {
-            $arrBlog = $this->blogs->row();
-            $arrBlogIds[] = $arrBlog['id'];
+        // HTMX request from the pagination: only send the list items and the pagination
+        if ($this->isHtmxRequest($request, $model)) {
+            $template->set('htmx_fragment', true);
+
+            $response = $template->getResponse();
+            $response->setPrivate();
+            $response->headers->addCacheControlDirective('no-store');
+
+            throw new ResponseException($response);
+        }
+
+        return $template->getResponse();
+    }
+
+    private function isHtmxRequest(Request $request, ContentModel $model): bool
+    {
+        return self::isHtmxRequestFor($request, self::HTMX_TARGET_PREFIX.$model->id);
+    }
+
+    private function getReaderPage(ContentModel $model): PageModel|null
+    {
+        if (!$model->eventBlogJumpTo) {
+            return null;
+        }
+
+        return $this->framework->getAdapter(PageModel::class)->findById($model->eventBlogJumpTo);
+    }
+
+    /**
+     * @param list<int> $ids
+     */
+    private function getBlogs(array $ids, ContentModel $model): array
+    {
+        if ([] === $ids) {
+            return [];
+        }
+
+        // Adapters
+        $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+        $validatorAdapter = $this->framework->getAdapter(Validator::class);
+        $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
+
+        $readerPage = $this->getReaderPage($model);
+
+        $objBlogs = $this->framework->getAdapter(CalendarEventsBlogModel::class)->findMultipleByIds($ids, ['order' => 'dateAdded DESC, id DESC']);
+
+        if (null === $objBlogs) {
+            return [];
+        }
+
+        $arrBlogs = [];
+
+        while ($objBlogs->next()) {
+            $arrBlog = $objBlogs->row();
+
             // If the profile has been deleted, $objMember will be null!
-            $objMember = $memberModelModelAdapter->findOneBySacMemberId($arrBlog['sacMemberId']);
+            $objMember = $memberModelAdapter->findOneBySacMemberId($arrBlog['sacMemberId']);
             $arrBlog['author'] = null !== $objMember ? $objMember->row() : [];
             $arrBlog['author']['model'] = $objMember;
-            $arrBlog['author']['name'] = null !== $objMember ? $objMember->firstname.' '.$objMember->lastname : $this->blogs->authorname;
-            $arrBlog['href'] = null !== $objPageModel ? $stringUtilAdapter->ampersand($objPageModel->getFrontendUrl('/'.$this->blogs->id)) : null;
-
-            $multiSRC = $stringUtilAdapter->deserialize($arrBlog['multiSRC'], true);
+            $arrBlog['author']['name'] = null !== $objMember ? $objMember->firstname.' '.$objMember->lastname : $objBlogs->authorName;
+            $arrBlog['href'] = null !== $readerPage ? $this->contentUrlGenerator->generate($readerPage, ['parameters' => '/'.$objBlogs->id]) : null;
 
             // Add a random image to the list
             $arrBlog['singleSRC'] = null;
 
-            if (!empty($multiSRC) && \is_array($multiSRC)) {
-                $k = array_rand($multiSRC);
-                $singleSRC = $multiSRC[$k];
+            $multiSRC = $stringUtilAdapter->deserialize($arrBlog['multiSRC'], true);
+
+            if (!empty($multiSRC)) {
+                $singleSRC = $multiSRC[array_rand($multiSRC)];
 
                 if ($validatorAdapter->isUuid($singleSRC)) {
-                    $objFiles = $filesModelAdapter->findByUuid($singleSRC);
+                    $objFile = $filesModelAdapter->findByUuid($singleSRC);
 
-                    if (null !== $objFiles) {
-                        if (is_file($this->projectDir.'/'.$objFiles->path)) {
-                            $arrBlog['singleSRC'] = [
-                                'id' => $objFiles->id,
-                                'path' => $objFiles->path,
-                                'uuid' => $stringUtilAdapter->binToUuid($objFiles->uuid),
-                                'name' => $objFiles->name,
-                                'singleSRC' => $objFiles->path,
-                                'title' => $stringUtilAdapter->specialchars($objFiles->name),
-                                'filesModel' => $objFiles->current(),
-                            ];
-                        }
+                    if (null !== $objFile && is_file($this->projectDir.'/'.$objFile->path)) {
+                        $arrBlog['singleSRC'] = [
+                            'id' => $objFile->id,
+                            'path' => $objFile->path,
+                            'uuid' => $stringUtilAdapter->binToUuid($objFile->uuid),
+                            'name' => $objFile->name,
+                            'singleSRC' => $objFile->path,
+                            'title' => $stringUtilAdapter->specialchars($objFile->name),
+                            'filesModel' => $objFile->current(),
+                        ];
                     }
                 }
             }
 
-            $arrBlogsAll[] = $arrBlog;
+            $arrBlogs[] = $arrBlog;
         }
 
-        $template->set('arrBlogIds', $arrBlogIds);
-
-        // Prepare the pagination
-        $total = \count($arrBlogsAll);
-        $limit = $total;
-        $offset = 0;
-
-        if ($model->eventBlogLimit > 0) {
-            $total = min($model->eventBlogLimit, $total);
-            $limit = $total;
-        }
-
-        if ($model->perPage > 0) {
-            $id = 'page_e'.$model->id;
-
-            $page = !empty($request->query->get($id)) ? $request->query->get($id) : 1;
-
-            // Do not index or cache the page if the page number is outside the range
-            if ($page < 1 || $page > max(ceil($total / $model->perPage), 1)) {
-                throw new PageNotFoundException('Page not found: '.$environmentAdapter->get('uri'));
-            }
-
-            $offset = ($page - 1) * $model->perPage;
-            $limit = min($model->perPage + $offset, $total);
-
-            $objPagination = new Pagination($total, $model->perPage, $configAdapter->get('maxPaginationLinks'), $id);
-            $template->set('pagination', $objPagination->generate(' '));
-        }
-
-        // Add blogs to the template
-        $arrBlogs = [];
-
-        for ($i = $offset; $i < $limit; ++$i) {
-            if (!isset($arrBlogsAll[$i]) || !\is_array($arrBlogsAll[$i])) {
-                continue;
-            }
-            $arrBlogs[] = $arrBlogsAll[$i];
-        }
-
-        $template->set('blogs', $arrBlogs);
-        $template->set('language', LocaleUtil::formatAsLanguageTag($request->getLocale()));
-        $template->set('isAjaxRequest', $environmentAdapter->get('isAjaxRequest'));
-
-        return $template->getResponse();
+        return $arrBlogs;
     }
 }
