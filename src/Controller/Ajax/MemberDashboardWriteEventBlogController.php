@@ -33,6 +33,7 @@ use Markocupic\SacEventBlogBundle\Model\CalendarEventsBlogModel;
 use Markocupic\SacEventBlogBundle\NotificationType\OnNewEventBlogNotificationType;
 use Markocupic\SacEventToolBundle\Image\RotateImage;
 use Markocupic\SacEventToolBundle\Model\EventOrganizerModel;
+use Markocupic\SacEventToolBundle\Model\UserRoleModel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
@@ -56,18 +57,19 @@ class MemberDashboardWriteEventBlogController extends AbstractController
      * @throws \Exception
      */
     public function __construct(
-        private readonly Connection $connection,
-        private readonly ContaoFramework $framework,
-        private readonly RequestStack $requestStack,
-        private readonly RotateImage $rotateImage,
-        private readonly RouterInterface $router,
-        private readonly Security $security,
+        private readonly Connection          $connection,
+        private readonly ContaoFramework     $framework,
+        private readonly RequestStack        $requestStack,
+        private readonly RotateImage         $rotateImage,
+        private readonly RouterInterface     $router,
+        private readonly Security            $security,
         private readonly TranslatorInterface $translator,
-        private readonly UrlParser $urlParser,
-        private readonly NotificationCenter $notificationCenter,
-        private readonly string $projectDir,
-        private readonly string $locale,
-    ) {
+        private readonly UrlParser           $urlParser,
+        private readonly NotificationCenter  $notificationCenter,
+        private readonly string              $projectDir,
+        private readonly string              $locale,
+    )
+    {
     }
 
     /**
@@ -88,6 +90,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         $calendarEventsBlogModelAdapter = $this->framework->getAdapter(CalendarEventsBlogModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
         $userModelAdapter = $this->framework->getAdapter(UserModel::class);
+        $userRoleModelAdapter = $this->framework->getAdapter(UserRoleModel::class);
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
         $pageModelAdapter = $this->framework->getAdapter(PageModel::class);
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
@@ -145,7 +148,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         }
 
         // Notify back office via terminal42/notification_center if there is a new blog entry.
-        if (PublishState::APPROVED_FOR_REVIEW === (int) $request->request->get('publishState') && $objBlog->publishState < PublishState::APPROVED_FOR_REVIEW && $request->request->get('moduleId')) {
+        if (PublishState::APPROVED_FOR_REVIEW === (int)$request->request->get('publishState') && $objBlog->publishState < PublishState::APPROVED_FOR_REVIEW && $request->request->get('moduleId')) {
             $objModule = $moduleModelAdapter->findByPk($request->request->get('moduleId'));
 
             $notificationId = false;
@@ -172,54 +175,56 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                     $objTarget = $pageModelAdapter->findByPk($objModule->eventBlogReaderPage);
 
                     if (null !== $objTarget) {
-                        $previewLink = $stringUtilAdapter->ampersand($objTarget->getAbsoluteUrl('/'.$objBlog->id));
-                        $previewLink = $this->urlParser->addQueryString('securityToken='.$objBlog->securityToken, $previewLink);
+                        $previewLink = $stringUtilAdapter->ampersand($objTarget->getAbsoluteUrl('/' . $objBlog->id));
+                        $previewLink = $this->urlParser->addQueryString('securityToken=' . $objBlog->securityToken, $previewLink);
                     }
                 }
 
                 // Notify webmaster
-                $arrNotifyEmail = [];
+                $arrRecipients = [];
                 $arrOrganizers = $stringUtilAdapter->deserialize($objEvent->organizers, true);
 
                 foreach ($arrOrganizers as $orgId) {
                     $objEventOrganizer = $eventOrganizerModelAdapter->findByPk($orgId);
 
                     if (null !== $objEventOrganizer) {
-                        $arrUsers = $stringUtilAdapter->deserialize($objEventOrganizer->notifyWebmasterOnNewEventBlog, true);
+                        $recipients = $stringUtilAdapter->deserialize($objEventOrganizer->notifyWebmasterOnNewEventBlog, true);
 
-                        foreach ($arrUsers as $userId) {
-                            $objWebmaster = $userModelAdapter->findByPk($userId);
+                        foreach ($recipients as $recipient) {
+                            $email = '';
 
-                            if (null !== $objWebmaster) {
-                                if ('' !== $objWebmaster->email) {
-                                    if ($validatorAdapter->isEmail($objWebmaster->email)) {
-                                        $arrNotifyEmail[] = $objWebmaster->email;
-                                    }
-                                }
+                            if (preg_match('/^user_id:(\d+)$/', $recipient, $matches)) {
+                                $email = $userModelAdapter->findById((int)$matches[1])?->email;
+                            } elseif (preg_match('/^user_role_id:(\d+)$/', $recipient, $matches)) {
+                                $email = $userRoleModelAdapter->findById((int)$matches[1])?->email;
+                            }
+
+                            if ($validatorAdapter->isEmail($email)) {
+                                $arrRecipients[] = $email;
                             }
                         }
                     }
                 }
 
-                $webmasterEmail = implode(',', $arrNotifyEmail);
+                $webmasterEmail = implode(',', $arrRecipients);
 
                 $arrTokens = [];
 
                 if (null !== $objEvent) {
                     $arrTokens = array_merge($arrTokens, [
-                        'event_title' => $objEvent->title,
-                        'event_id' => $objEvent->id,
-                        'instructor_name' => '' !== $instructorName ? $instructorName : $this->translator->trans('MSC.md_write_event_blog_instructorNameNotSpecified', [], 'contao_default'),
-                        'instructor_email' => $instructorEmail,
-                        'webmaster_email' => '' !== $webmasterEmail ? $webmasterEmail : '',
-                        'author_name' => $objUser->firstname.' '.$objUser->lastname,
-                        'author_email' => $objUser->email,
+                        'event_title'          => $this->decode($objEvent->title),
+                        'event_id'             => $objEvent->id,
+                        'instructor_name'      => '' !== $instructorName ? $this->decode($instructorName) : $this->translator->trans('MSC.md_write_event_blog_instructorNameNotSpecified', [], 'contao_default'),
+                        'instructor_email'     => $instructorEmail,
+                        'webmaster_email'      => $webmasterEmail,
+                        'author_name'          => $this->decode($objUser->firstname . ' ' . $objUser->lastname),
+                        'author_email'         => $objUser->email,
                         'author_sac_member_id' => $objUser->sacMemberId,
-                        'hostname' => $environmentAdapter->get('host'),
-                        'blog_link_backend' => $this->router->generate('contao_backend', ['do' => 'sac_calendar_events_blog_tool', 'act' => 'edit', 'id' => $objBlog->id], UrlGeneratorInterface::ABSOLUTE_URL),
-                        'blog_link_frontend' => $previewLink,
-                        'blog_title' => $objBlog->title,
-                        'blog_text' => $objBlog->text,
+                        'hostname'             => $environmentAdapter->get('host'),
+                        'blog_link_backend'    => $this->router->generate('contao_backend', ['do' => 'sac_calendar_events_blog_tool', 'act' => 'edit', 'id' => $objBlog->id], UrlGeneratorInterface::ABSOLUTE_URL),
+                        'blog_link_frontend'   => $previewLink,
+                        'blog_title'           => $this->decode($objBlog->title),
+                        'blog_text'            => $this->decode($objBlog->text),
                     ]);
                 }
 
@@ -232,7 +237,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         $objBlog->save();
 
         $json = [
-            'status' => 'success',
+            'status'       => 'success',
             'publishState' => $objBlog->publishState,
         ];
 
@@ -283,7 +288,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
         $arrSorting = json_decode($request->request->get('uuids'));
         $arrSorting = array_map(
-            static fn ($uuid) => $stringUtilAdapter->uuidToBin($uuid),
+            static fn($uuid) => $stringUtilAdapter->uuidToBin($uuid),
             $arrSorting
         );
 
@@ -362,7 +367,7 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
         if (null !== $filesModel) {
             $fs = new Filesystem();
-            $fs->remove($this->projectDir.'/'.$filesModel->path);
+            $fs->remove($this->projectDir . '/' . $filesModel->path);
 
             $filesModel->delete();
         }
@@ -429,18 +434,18 @@ class MemberDashboardWriteEventBlogController extends AbstractController
                 }
 
                 if (!isset($arrMeta[$this->locale]['photographer'])) {
-                    $photographer = $objUser->firstname.' '.$objUser->lastname;
+                    $photographer = $objUser->firstname . ' ' . $objUser->lastname;
                 } else {
                     $photographer = $arrMeta[$this->locale]['photographer'];
 
                     if ('' === $photographer) {
-                        $photographer = $objUser->firstname.' '.$objUser->lastname;
+                        $photographer = $objUser->firstname . ' ' . $objUser->lastname;
                     }
                 }
 
                 return new JsonResponse([
-                    'status' => 'success',
-                    'caption' => html_entity_decode((string) $caption),
+                    'status'       => 'success',
+                    'caption'      => html_entity_decode((string)$caption),
                     'photographer' => $photographer,
                 ]);
             }
@@ -479,15 +484,15 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
                 if (!isset($arrMeta[$this->locale])) {
                     $arrMeta[$this->locale] = [
-                        'title' => '',
-                        'alt' => '',
-                        'link' => '',
-                        'caption' => '',
+                        'title'        => '',
+                        'alt'          => '',
+                        'link'         => '',
+                        'caption'      => '',
                         'photographer' => '',
                     ];
                 }
                 $arrMeta[$this->locale]['caption'] = $request->request->get('caption');
-                $arrMeta[$this->locale]['photographer'] = $request->request->get('photographer') ?: $objUser->firstname.' '.$objUser->lastname;
+                $arrMeta[$this->locale]['photographer'] = $request->request->get('photographer') ?: $objUser->firstname . ' ' . $objUser->lastname;
 
                 $objFile->meta = serialize($arrMeta);
                 $objFile->save();
@@ -518,5 +523,10 @@ class MemberDashboardWriteEventBlogController extends AbstractController
         if (!$request->isXmlHttpRequest()) {
             throw $this->createNotFoundException('The route "/ajaxMemberDashboardWriteEventBlog" is allowed to XMLHttpRequest requests only.');
         }
+    }
+
+    private function decode(string $value): string
+    {
+        return trim(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
     }
 }
