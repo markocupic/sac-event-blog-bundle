@@ -96,7 +96,6 @@ services:
     Markocupic\SacEventBlogBundle\ContaoBackendMaintenance\MaintainModuleEventBlog:
         public: true
         arguments:
-            - '@contao.framework'
             - '@database_connection'
             - '%kernel.project_dir%'
             - '%sac_event_blog.asset_dir%'
