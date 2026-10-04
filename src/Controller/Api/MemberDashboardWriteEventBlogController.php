@@ -37,6 +37,7 @@ use Markocupic\SacEventToolBundle\Model\UserRoleModel;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Filesystem\Path;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\Routing\Annotation\Route;
@@ -390,16 +391,19 @@ class MemberDashboardWriteEventBlogController extends AbstractController
 
         $filesModelAdapter = $this->framework->getAdapter(FilesModel::class);
 
-        // Get the image rotate service
         $objFiles = $filesModelAdapter->findOneById($fileId);
 
-        if ($this->rotateImage->rotate($objFiles, 270)) {
-            $json = ['status' => 'success'];
-        } else {
-            $json = ['status' => 'error'];
+        if (null === $objFiles) {
+            return new JsonResponse(['status' => 'error']);
         }
 
-        return new JsonResponse($json);
+        try {
+            $this->rotateImage->rotate(Path::join($this->projectDir, $objFiles->path), 270);
+        } catch (\InvalidArgumentException|\RuntimeException) {
+            return new JsonResponse(['status' => 'error']);
+        }
+
+        return new JsonResponse(['status' => 'success']);
     }
 
     /**
