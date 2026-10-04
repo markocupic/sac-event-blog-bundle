@@ -27,8 +27,9 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
         'closed'           => true,
         'sql'              => [
             'keys' => [
-                'id'      => 'primary',
-                'eventId' => 'index',
+                'id'          => 'primary',
+                'eventId'     => 'index',
+                'sacMemberId' => 'index',
             ],
         ],
     ],
@@ -170,8 +171,8 @@ $GLOBALS['TL_DCA']['tl_calendar_events_blog'] = [
             'search'    => true,
             'exclude'   => true,
             'inputType' => 'text',
-            'eval'      => ['mandatory' => true, 'doNotShow' => true, 'doNotCopy' => true, 'maxlength' => 255, 'tl_class' => 'w50', 'readonly' => true],
-            'sql'       => "varchar(255) NOT NULL default ''",
+            'eval'      => ['mandatory' => true, 'doNotShow' => true, 'doNotCopy' => true, 'rgxp' => 'natural', 'maxlength' => 10, 'tl_class' => 'w50', 'readonly' => true],
+            'sql'       => "int(10) unsigned NOT NULL default 0",
         ],
         'multiSRC'                => [
             'exclude'   => true,

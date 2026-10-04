@@ -255,7 +255,7 @@ class CalendarEventsBlog
         $objPhpWord->replace('title', $objBlog->title, $options);
         $objPhpWord->replace('text', $objBlog->text, $options);
         $objPhpWord->replace('authorName', $objBlog->authorName, $options);
-        $objPhpWord->replace('sacMemberId', $objBlog->sacMemberId, $options);
+        $objPhpWord->replace('sacMemberId', (int) $objBlog->sacMemberId > 0 ? (string) $objBlog->sacMemberId : '', $options);
         $objPhpWord->replace('authorEmail', $strAuthorEmail, $options);
         $objPhpWord->replace('dateAdded', date('Y-m-d', (int) $objBlog->dateAdded), $options);
         $objPhpWord->replace('tourTypes', implode(', ', $arrTourTypes), $options);
