@@ -31,7 +31,7 @@
         "markocupic/contao-component-vue-js": "^3.3",
         "markocupic/contao-twig-assets": "^1.0",
         "markocupic/phpoffice-bundle": "^1.3",
-        "markocupic/sac-event-tool-bundle": "dev-contao5",
+        "markocupic/sac-event-tool-bundle": "dev-contao5 || dev-contao6",
         "markocupic/zip-bundle": "^1.1",
         "terminal42/notification_center": "^2.0",
         "markocupic/contao-filepond-uploader": "^1.0"
