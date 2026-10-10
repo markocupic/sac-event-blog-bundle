@@ -74,11 +74,13 @@ final class EventBlogSacMemberIdToIntMigrationTest extends TestCase
 
         $connection
             ->method('executeStatement')
-            ->willReturnCallback(static function (string $sql) use (&$statements): int {
-                $statements[] = $sql;
+            ->willReturnCallback(
+                static function (string $sql) use (&$statements): int {
+                    $statements[] = $sql;
 
-                return 0;
-            })
+                    return 0;
+                },
+            )
         ;
 
         $result = (new EventBlogSacMemberIdToIntMigration($connection))->run();
@@ -92,14 +94,27 @@ final class EventBlogSacMemberIdToIntMigrationTest extends TestCase
     private function createConnection(Type $type, bool $tableExists = true): Connection&MockObject
     {
         $column = $this->createMock(Column::class);
-        $column->method('getType')->willReturn($type);
+        $column
+            ->method('getType')
+            ->willReturn($type)
+        ;
 
         $schemaManager = $this->createMock(AbstractSchemaManager::class);
-        $schemaManager->method('tablesExist')->willReturn($tableExists);
-        $schemaManager->method('listTableColumns')->willReturn(['sacmemberid' => $column]);
+        $schemaManager
+            ->method('tablesExist')
+            ->willReturn($tableExists)
+        ;
+
+        $schemaManager
+            ->method('listTableColumns')
+            ->willReturn(['sacmemberid' => $column])
+        ;
 
         $connection = $this->createMock(Connection::class);
-        $connection->method('createSchemaManager')->willReturn($schemaManager);
+        $connection
+            ->method('createSchemaManager')
+            ->willReturn($schemaManager)
+        ;
 
         return $connection;
     }

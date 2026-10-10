@@ -7,16 +7,25 @@
 
 ![Listenansicht](docs/images/sac_event_blog_bundle.gif)
 
-Dieses Bundle für das Contao CMS ist eine Erweiterung zum [**SAC Event Tool**]('https://github.com/markocupic/sac-event-blog-bundle') und enthält die Back- und Frontend-Erweiterungen, um SAC Tourenberichte auf der Sektionswebseite zu administrieren und zu veröffentlichen. Neben Bild und Text kann auch ein Youtube Film angezeigt werden. [**Demo**](https://www.sac-pilatus.ch/home.html#eventBlogList335)
+Dieses Bundle für das Contao CMS ist eine Erweiterung zum [**SAC Event Tool**](https://github.com/markocupic/sac-event-tool-bundle) und enthält die Back- und Frontend-Erweiterungen, um SAC Tourenberichte auf der Sektionswebseite zu administrieren und zu veröffentlichen. Neben Bild und Text kann auch ein Youtube Film angezeigt werden. [**Demo**](https://www.sac-pilatus.ch/home.html#eventBlogList335)
 
-Mit dieser Erweiterung können folgende **Contao Frontend Module** erstellt werden:
+## Voraussetzungen
+
+- PHP 8.4 oder höher
+- Contao 5.3 oder höher (Contao 4.13 wird auf dem Branch `contao4` gepflegt)
+- [SAC Event Tool](https://github.com/markocupic/sac-event-tool-bundle)
+- Im Seitenlayout muss die Lightbox (GLightbox) aktiviert sein, damit die Bilder eines Tourenberichts in der Lightbox geöffnet werden.
+
+Der Code ist für Contao 6 vorbereitet. Installierbar ist das Bundle unter Contao 6 erst, wenn auch `codefog/contao-haste` und das SAC Event Tool Contao 6 unterstützen.
+
+Mit dieser Erweiterung können folgende **Contao Inhaltselemente** erstellt werden:
 
 | Bezeichnung                                             | Erklärung                                                                                                              |
 |---------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------|
 | SAC Mitgliederkonto Dashboard - Meine Tourenberichte    | Mitglieder sehen auf ihrem Profil eine Auflistung ihrer Tourenberichte.                                                |
 | SAC Mitgliederkonto Dashboard - Tourenbericht schreiben | Mitglieder können zu einer Tour, an der sie teilgenommen haben, aus ihrem Profil heraus einen Tourenbericht erstellen. |
-| SAC Tourenberichte Listen Modul                         | Tourenberichte lassen sich im Frontend auflisten.                                                                      |
-| SAC Tourenberichte Reader Modul                         | Tourenberichte Reader-Modul                                                                                            |
+| SAC Tourenberichte Liste                                | Tourenberichte lassen sich im Frontend auflisten.                                                                      |
+| SAC Tourenberichte Reader                               | Zeigt einen Tourenbericht im Modal-Fenster der Liste an.                                                               |
 
 Mit dieser Erweiterung kann folgendes **Backend Modul** erstellt werden:
 
@@ -26,7 +35,7 @@ Mit dieser Erweiterung kann folgendes **Backend Modul** erstellt werden:
 
 ## Abhängigkeiten
 
-Dieses Bundle setzt als Abhängigkeit das [**SAC Event Tool**]('https://github.com/markocupic/sac-event-blog-bundle') voraus.
+Dieses Bundle setzt als Abhängigkeit das [**SAC Event Tool**](https://github.com/markocupic/sac-event-tool-bundle) voraus.
 
 ## Installation
 

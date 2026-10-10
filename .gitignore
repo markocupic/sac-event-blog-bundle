@@ -1,13 +1,8 @@
-.git/
-/node_modules
-/node_modules/*
-# Jetbrains
-/.idea/*
-
-# tools
+/node_modules/
+/.idea/
 /vendor/
-/tools/*/vendor
 /composer.lock
-/.php-cs-fixer.cache
-/tools/phpunit/.phpunit.result.cache
-/contao/languages/de/*
+/tools/*/vendor/
+/tools/*/composer.lock
+/.phpunit.result.cache
+/.phpunit.cache/

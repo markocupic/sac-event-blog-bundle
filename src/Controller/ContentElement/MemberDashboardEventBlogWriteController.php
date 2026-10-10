@@ -35,7 +35,6 @@ use Contao\Message;
 use Contao\PageModel;
 use Contao\StringUtil;
 use Contao\System;
-use Contao\Template;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
 use Markocupic\ContaoFilepondUploader\Widget\FilepondFrontendWidget;
@@ -860,7 +859,7 @@ class MemberDashboardEventBlogWriteController extends AbstractContentElementCont
     /**
      * Add messages from session to template.
      */
-    private function addMessagesToTemplate(Template $template): void
+    private function addMessagesToTemplate(FragmentTemplate $template): void
     {
         // Set adapters
         $messageAdapter = $this->framework->getAdapter(Message::class);

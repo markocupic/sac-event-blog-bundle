@@ -23,7 +23,7 @@
         "source": "https://github.com/markocupic/sac-event-blog-bundle"
     },
     "require": {
-        "php": "^8.3",
+        "php": "^8.4",
         "ext-iconv": "*",
         "contao/core-bundle": "^5.3 || ^6.0",
         "chillerlan/php-qrcode": "^5.0",
@@ -37,15 +37,20 @@
         "markocupic/contao-filepond-uploader": "^1.0"
     },
     "require-dev": {
-        "markocupic/easy-coding-standard": "^13.0",
-        "phpstan/phpstan": "^2.2",
-        "contao/manager-plugin": "^2.4",
-        "contao/test-case": "^5.3",
-        "phpunit/phpunit": "^9.5"
+        "contao/manager-plugin": "^2.12",
+        "contao/test-case": "^5.3 || ^6.0"
+    },
+    "conflict": {
+        "contao/manager-plugin": "<2.0 || >=3.0"
     },
     "autoload": {
         "psr-4": {
             "Markocupic\\SacEventBlogBundle\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Markocupic\\SacEventBlogBundle\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -53,11 +58,19 @@
     },
     "config": {
         "allow-plugins": {
+            "contao-components/installer": false,
+            "contao/manager-plugin": false,
+            "php-http/discovery": false,
             "composer/package-versions-deprecated": true,
-            "contao-components/installer": true,
-            "dealerdirect/phpcodesniffer-composer-installer": true,
             "contao-community-alliance/composer-plugin": true,
-            "contao/manager-plugin": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "markocupic/composer-file-copier-plugin": false
         }
+    },
+    "scripts": {
+        "cs-fixer": "@php tools/ecs/vendor/bin/ecs check --config tools/ecs/config/default.php --fix --ansi",
+        "cs-check": "@php tools/ecs/vendor/bin/ecs check --config tools/ecs/config/default.php --ansi",
+        "phpstan": "@php tools/phpstan/vendor/bin/phpstan analyse src tests",
+        "unit-tests": "@php vendor/bin/phpunit --colors=always"
     }
 }

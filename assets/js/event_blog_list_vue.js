@@ -114,6 +114,10 @@ class EventBlogList {
 
     const {createApp} = Vue
 
+    // The GLightbox instance of the reader modal. It is kept outside the Vue data,
+    // because Vue must not wrap it in a reactive proxy.
+    let lightbox = null;
+
     // Instantiate vue.js application
     const app = createApp({
       data() {
@@ -325,6 +329,10 @@ class EventBlogList {
             if (!this.isModalOpen()) {
               modal.show();
             }
+
+            // Wait until Vue has rendered the new reader content (v-html),
+            // otherwise GLightbox would not find the new image links.
+            await this.$nextTick();
 
             this._initLightbox();
 
@@ -546,14 +554,21 @@ class EventBlogList {
          * @private
          */
         _initLightbox: function _initLightbox() {
-          const self = this;
+          // Remove the lightbox of the previously displayed report
+          if (null !== lightbox) {
+            lightbox.destroy();
+            lightbox = null;
+          }
 
           // Initialize GLightbox (Vanilla)
-          if ('undefined' !== typeof GLightbox) {
-            GLightbox({
-              selector: '.sac-event-blog-reader--modal a[data-lightbox]'
-            });
+          if ('undefined' === typeof GLightbox) {
+            console.warn('GLightbox is not loaded. Please enable the lightbox in the page layout.');
+            return;
           }
+
+          lightbox = GLightbox({
+            selector: elId + ' .sac-event-blog-reader--modal a[data-lightbox]'
+          });
         },
       }
     });
