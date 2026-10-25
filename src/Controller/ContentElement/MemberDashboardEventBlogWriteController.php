@@ -271,7 +271,8 @@ class MemberDashboardEventBlogWriteController extends AbstractContentElementCont
                 'organizers' => $objEvent->organizers,
                 'eventDates' => serialize($aDates),
                 'authorName' => $this->user->firstname.' '.$this->user->lastname,
-                'sacMemberId' => $this->user->sacMemberId,
+                // tl_member.sacMemberId is NULL if the member has no SAC member id
+                'sacMemberId' => (int) $this->user->sacMemberId,
                 'eventId' => $inputAdapter->get('eventId'),
                 'tstamp' => time(),
                 'dateAdded' => time(),
